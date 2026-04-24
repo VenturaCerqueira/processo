@@ -26,7 +26,14 @@ export const listarProcessos = async (req, res) => {
 
 export const obterProcesso = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    const [rows] = await pool.query(`
+      SELECT p.*, e.nome as especie_nome, e.mensagem_customizada as especie_mensagem,
+             e.prazo_minimo as especie_prazo_minimo, e.prazo_maximo as especie_prazo_maximo,
+             e.dias_uteis as especie_dias_uteis
+      FROM processos p
+      LEFT JOIN especies_processo e ON p.especie_id = e.id
+      WHERE p.id = ?
+    `, [req.params.id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Processo não encontrado.' });
     }
@@ -55,12 +62,12 @@ export const obterProcesso = async (req, res) => {
 
 export const criarProcesso = async (req, res) => {
   try {
-    const { tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo } = req.body;
+    const { tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id } = req.body;
     const numero = gerarNumeroProcesso();
     const [result] = await pool.query(
-      `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, criadoPor) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [numero, tipo, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, prioridade || 'normal', prazo || null, req.user.id]
+      `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id, criadoPor)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [numero, tipo, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, prioridade || 'normal', prazo || null, especie_id || null, req.user.id]
     );
     
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);

@@ -95,10 +95,20 @@ function DetalheProcesso() {
           <div className="detail-item"><span className="label">Setor Atual</span><span className="value">{processo.setorAtual}</span></div>
           <div className="detail-item"><span className="label">Data de Recebimento</span><span className="value">{new Date(processo.dataRecebimento).toLocaleDateString('pt-BR')}</span></div>
           <div className="detail-item"><span className="label">Prazo</span><span className="value">{processo.prazo ? new Date(processo.prazo).toLocaleDateString('pt-BR') : '—'}</span></div>
+          {processo.especie_nome && <div className="detail-item"><span className="label">Especie</span><span className="value">{processo.especie_nome}</span></div>}
         </div>
         {processo.descricao && <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--gray-100)' }}>
           <span className="label">Descrição</span>
           <p style={{ marginTop: 6, color: 'var(--gray-600)', fontSize: 14, lineHeight: 1.6 }}>{processo.descricao}</p>
+        </div>}
+        {processo.especie_mensagem && <div className="alert alert-info" style={{ marginTop: 16 }}>
+          <strong>Mensagem da Especie ({processo.especie_nome}):</strong><br />
+          {processo.especie_mensagem}
+          {processo.especie_prazo_minimo && processo.especie_prazo_maximo && (
+            <div style={{ marginTop: 6, fontSize: 12 }}>
+              Prazo estabelecido: {processo.especie_prazo_minimo} a {processo.especie_prazo_maximo} dias{processo.especie_dias_uteis ? ' uteis' : ' corridos'}
+            </div>
+          )}
         </div>}
         <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
           <button className="btn btn-primary" onClick={() => setMostrarEncaminhar(true)}>

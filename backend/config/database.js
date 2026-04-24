@@ -211,6 +211,37 @@ export async function initDatabase() {
     `);
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS especies_processo (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        tipo_processo_id INT,
+        setor_id INT,
+        prazo_minimo INT,
+        prazo_maximo INT,
+        dias_uteis TINYINT DEFAULT 0,
+        mensagem_customizada TEXT,
+        ativo TINYINT DEFAULT 1,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (tipo_processo_id) REFERENCES tipos_processo(id),
+        FOREIGN KEY (setor_id) REFERENCES setores(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Adicionar especie_id na tabela processos se nao existir
+    try {
+      await connection.query(`ALTER TABLE processos ADD COLUMN especie_id INT NULL`);
+    } catch {
+      // Coluna ja existe ou erro nao critico
+    }
+
+    try {
+      await connection.query(`ALTER TABLE processos ADD CONSTRAINT fk_processo_especie FOREIGN KEY (especie_id) REFERENCES especies_processo(id)`);
+    } catch {
+      // Constraint ja existe ou erro nao critico
+    }
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS requerentes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,

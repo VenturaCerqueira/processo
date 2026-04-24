@@ -17,6 +17,7 @@ import CadastroPrioridades from './components/CadastroPrioridades';
 import CadastroRequerentes from './components/CadastroRequerentes';
 import CadastroEntidades from './components/CadastroEntidades';
 import CadastroNiveisAcesso from './components/CadastroNiveisAcesso';
+import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
 import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
@@ -91,6 +92,7 @@ function AppContent() {
           <Route path="/cadastros/requerentes" element={user ? <CadastroRequerentes /> : <Navigate to="/login" />} />
           <Route path="/cadastros/entidades" element={user ? <CadastroEntidades /> : <Navigate to="/login" />} />
           <Route path="/cadastros/niveis-acesso" element={user?.nivelAcesso === 'admin' ? <CadastroNiveisAcesso /> : <Navigate to="/" />} />
+          <Route path="/cadastros/especies-processo" element={user ? <CadastroEspeciesProcesso /> : <Navigate to="/login" />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

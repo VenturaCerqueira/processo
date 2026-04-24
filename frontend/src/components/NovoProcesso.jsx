@@ -4,13 +4,15 @@ import api from '../api';
 
 function NovoProcesso() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '' });
+  const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '', especie_id: '' });
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
   const [tipos, setTipos] = useState([]);
   const [setores, setSetores] = useState([]);
   const [prioridades, setPrioridades] = useState([]);
   const [requerentes, setRequerentes] = useState([]);
+  const [especies, setEspecies] = useState([]);
+  const [especieSelecionada, setEspecieSelecionada] = useState(null);
 
   useEffect(() => {
     async function carregarOpcoes() {
@@ -29,6 +31,52 @@ function NovoProcesso() {
     }
     carregarOpcoes();
   }, []);
+
+  useEffect(() => {
+    async function carregarEspecies() {
+      setEspecieSelecionada(null);
+      setForm(prev => ({ ...prev, especie_id: '' }));
+      if (!form.tipo || !form.setorAtual) {
+        setEspecies([]);
+        return;
+      }
+      try {
+        const tipoObj = tipos.find(t => t.nome === form.tipo);
+        const setorObj = setores.find(s => s.nome === form.setorAtual);
+        if (!tipoObj || !setorObj) return;
+        const res = await api.get(`/especies-processo?tipo=${tipoObj.id}&setor=${setorObj.id}`);
+        setEspecies(res.data);
+      } catch (error) { console.error('Erro ao carregar especies:', error); }
+    }
+    carregarEspecies();
+  }, [form.tipo, form.setorAtual, tipos, setores]);
+
+  const calcularPrazo = (dias, diasUteis) => {
+    if (!dias) return '';
+    const data = new Date();
+    let diasAdicionados = 0;
+    while (diasAdicionados < dias) {
+      data.setDate(data.getDate() + 1);
+      if (diasUteis) {
+        const diaSemana = data.getDay();
+        if (diaSemana !== 0 && diaSemana !== 6) diasAdicionados++;
+      } else {
+        diasAdicionados++;
+      }
+    }
+    return data.toISOString().split('T')[0];
+  };
+
+  const handleEspecieChange = (e) => {
+    const especieId = e.target.value;
+    const esp = especies.find(ep => ep.id === parseInt(especieId));
+    setEspecieSelecionada(esp || null);
+    setForm(prev => ({ ...prev, especie_id: especieId }));
+    if (esp?.prazo_maximo) {
+      const novoPrazo = calcularPrazo(esp.prazo_maximo, !!esp.dias_uteis);
+      setForm(prev => ({ ...prev, prazo: novoPrazo }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,9 +140,34 @@ function NovoProcesso() {
             <label>Endereço</label>
             <input type="text" className="form-control" value={form.endereco} onChange={e => setForm({...form, endereco: e.target.value})} />
           </div>
-          <div className="form-row">
-            <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
-          </div>
+          {especies.length > 0 && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Especie de Processo</label>
+                <select className="form-control" value={form.especie_id} onChange={handleEspecieChange}>
+                  <option value="">Selecione a especie</option>
+                  {especies.map(ep => <option key={ep.id} value={ep.id}>{ep.nome}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+            </div>
+          )}
+          {especieSelecionada?.mensagem_customizada && (
+            <div className="alert alert-info" style={{ marginBottom: 16 }}>
+              <strong>Mensagem da Especie:</strong><br />
+              {especieSelecionada.mensagem_customizada}
+              {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
+                <div style={{ marginTop: 6, fontSize: 12 }}>
+                  Prazo: {especieSelecionada.prazo_minimo} a {especieSelecionada.prazo_maximo} dias{especieSelecionada.dias_uteis ? ' uteis' : ' corridos'}
+                </div>
+              )}
+            </div>
+          )}
+          {especies.length === 0 && (
+            <div className="form-row">
+              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+            </div>
+          )}
           <div className="form-group">
             <label>Descrição</label>
             <textarea className="form-control" rows="4" value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})} placeholder="Descreva detalhes adicionais do processo..." />

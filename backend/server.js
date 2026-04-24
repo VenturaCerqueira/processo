@@ -14,6 +14,7 @@ import prioridadesRoutes from './routes/prioridades.js';
 import requerentesRoutes from './routes/requerentes.js';
 import entidadesRoutes from './routes/entidades.js';
 import niveisAcessoRoutes from './routes/niveisAcesso.js';
+import especiesProcessoRoutes from './routes/especiesProcesso.js';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/prioridades', prioridadesRoutes);
 app.use('/api/requerentes', requerentesRoutes);
 app.use('/api/entidades', entidadesRoutes);
 app.use('/api/niveis-acesso', niveisAcessoRoutes);
+app.use('/api/especies-processo', especiesProcessoRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
