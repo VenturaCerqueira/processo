@@ -35,6 +35,7 @@ function CaixaEntrada() {
     { key: 'aprovado', label: 'Aprovado', color: 'green' },
     { key: 'pausado', label: 'Pausado', color: 'purple' },
     { key: 'arquivado', label: 'Arquivado', color: 'red' },
+    { key: 'indeferido', label: 'Indeferido', color: 'red' },
   ];
 
   const meusProcessos = user?.id

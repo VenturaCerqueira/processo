@@ -70,11 +70,6 @@ function DetalheProcesso() {
     } catch (error) { alert(error.response?.data?.message || 'Erro ao fazer upload'); }
   };
 
-  const handleStatusChange = async (novoStatus) => {
-    try { await api.put(`/processos/${id}`, { status: novoStatus }); carregarProcesso(); }
-    catch { alert('Erro ao atualizar status'); }
-  };
-
   if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
   if (!processo) return <div className="page-content"><div className="alert alert-danger">Processo não encontrado</div></div>;
 
@@ -90,12 +85,6 @@ function DetalheProcesso() {
           <p style={{ color: 'var(--gray-500)', fontSize: 14 }}>{processo.tipo}</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <select className="form-control" style={{ width: 'auto', minWidth: 140 }} value={processo.status} onChange={e => handleStatusChange(e.target.value)}>
-            <option value="tramitando">Tramitando</option>
-            <option value="aguardando">Aguardando</option>
-            <option value="concluido">Concluído</option>
-            <option value="arquivado">Arquivado</option>
-          </select>
           <button className="btn btn-secondary" onClick={() => navigate('/processos')}>Voltar</button>
         </div>
       </div>
@@ -144,6 +133,7 @@ function DetalheProcesso() {
           {processo.situacao === 'recebido' && (
             <>
               <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Aprovar</button>
+              <button className="btn btn-danger" onClick={() => handleSituacaoAcao('indeferir')}>Indeferir</button>
               <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>Pausar</button>
               <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
             </>
@@ -160,7 +150,7 @@ function DetalheProcesso() {
               <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
             </>
           )}
-          {processo.situacao === 'arquivado' && (
+          {(processo.situacao === 'arquivado' || processo.situacao === 'indeferido') && (
             <button className="btn btn-primary" onClick={() => handleSituacaoAcao('receber')}>Reabrir</button>
           )}
         </div>

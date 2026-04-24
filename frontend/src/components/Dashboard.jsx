@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
 function Dashboard() {
-  const [estatisticas, setEstatisticas] = useState({ total: 0, tramitando: 0, aguardando: 0, concluido: 0, urgentes: 0 });
+  const [estatisticas, setEstatisticas] = useState({ total: 0, tramitando: 0, aguardando: 0, concluido: 0, indeferido: 0, urgentes: 0 });
   const [caixaResumo, setCaixaResumo] = useState({ novo: 0, recebido: 0, aprovado: 0, pausado: 0, arquivado: 0 });
   const [processosRecentes, setProcessosRecentes] = useState([]);
   const [processosUrgentes, setProcessosUrgentes] = useState([]);
@@ -59,6 +59,7 @@ function Dashboard() {
           tramitando: processos.filter(p => p.status === 'tramitando').length,
           aguardando: processos.filter(p => p.status === 'aguardando').length,
           concluido: processos.filter(p => p.status === 'concluido').length,
+          indeferido: processos.filter(p => p.status === 'indeferido').length,
           urgentes: processos.filter(p => p.prioridade === 'urgente').length
         });
         setCaixaResumo({
@@ -66,7 +67,8 @@ function Dashboard() {
           recebido: meusProcessos.filter(p => p.situacao === 'recebido').length,
           aprovado: meusProcessos.filter(p => p.situacao === 'aprovado').length,
           pausado: meusProcessos.filter(p => p.situacao === 'pausado').length,
-          arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length
+          arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length,
+          indeferido: meusProcessos.filter(p => p.situacao === 'indeferido').length
         });
         setProcessosRecentes(meusProcessos.slice(0, 5));
         setProcessosUrgentes(meusProcessos.filter(p => p.prioridade === 'urgente').slice(0, 5));
@@ -98,6 +100,7 @@ function Dashboard() {
     { key: 'tramitando', label: 'Em Tramitação', color: 'yellow' },
     { key: 'aguardando', label: 'Aguardando', color: 'purple' },
     { key: 'concluido', label: 'Concluídos', color: 'green' },
+    { key: 'indeferido', label: 'Indeferidos', color: 'red' },
     { key: 'urgentes', label: 'Urgentes', color: 'red' },
   ];
 
@@ -200,6 +203,7 @@ function Dashboard() {
           { key: 'aprovado', label: 'Aprovados', color: 'green' },
           { key: 'pausado', label: 'Pausados', color: 'purple' },
           { key: 'arquivado', label: 'Arquivados', color: 'red' },
+          { key: 'indeferido', label: 'Indeferidos', color: 'red' },
         ];
         return (
           <div className="card" style={{ marginBottom: 24 }}>

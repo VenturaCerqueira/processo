@@ -563,6 +563,8 @@ tr:hover td {
 .badge-concluido::before { background: var(--success); }
 .badge-arquivado { background: var(--gray-100); color: var(--gray-500); }
 .badge-arquivado::before { background: var(--gray-400); }
+.badge-indeferido { background: var(--danger-light); color: var(--danger); }
+.badge-indeferido::before { background: var(--danger); }
 
 .badge-encaminhado { background: var(--info-light); color: var(--info); }
 .badge-encaminhado::before { background: var(--info); }

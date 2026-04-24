@@ -9,6 +9,7 @@ import {
   aprovarProcesso,
   pausarProcesso,
   arquivarProcesso,
+  indeferirProcesso,
   listarCaixaEntrada,
   adicionarObservacao,
   relatorioAndamento
@@ -28,6 +29,7 @@ router.post('/:id/receber', auth, receberProcesso);
 router.post('/:id/aprovar', auth, aprovarProcesso);
 router.post('/:id/pausar', auth, pausarProcesso);
 router.post('/:id/arquivar', auth, arquivarProcesso);
+router.post('/:id/indeferir', auth, indeferirProcesso);
 router.post('/:id/observacao', auth, adicionarObservacao);
 
 export default router;

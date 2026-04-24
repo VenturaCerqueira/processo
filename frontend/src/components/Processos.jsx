@@ -64,6 +64,7 @@ function Processos() {
               <option value="aguardando">Aguardando</option>
               <option value="concluido">Concluído</option>
               <option value="arquivado">Arquivado</option>
+              <option value="indeferido">Indeferido</option>
             </select>
             <select className="form-control" value={filtros.tipo} onChange={e => setFiltros({...filtros, tipo: e.target.value})}>
               <option value="">Todos os Tipos</option>

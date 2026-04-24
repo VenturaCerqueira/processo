@@ -12,26 +12,24 @@ function NovoProcesso() {
   const [prioridades, setPrioridades] = useState([]);
   const [requerentes, setRequerentes] = useState([]);
   const [especies, setEspecies] = useState([]);
-  const [usuarios, setUsuarios] = useState([]);
+
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
 
   useEffect(() => {
     async function carregarOpcoes() {
       try {
-        const [tRes, sRes, pRes, cRes, eRes, uRes] = await Promise.all([
+        const [tRes, sRes, pRes, cRes, eRes] = await Promise.all([
           api.get('/tipos-processo'),
           api.get('/setores'),
           api.get('/prioridades'),
           api.get('/requerentes'),
-          api.get('/especies-processo'),
-          api.get('/auth/usuarios-ativos')
+          api.get('/especies-processo')
         ]);
         setTipos(tRes.data);
         setSetores(sRes.data);
         setPrioridades(pRes.data);
         setRequerentes(cRes.data);
         setEspecies(eRes.data);
-        setUsuarios(uRes.data);
       } catch (error) { console.error('Erro ao carregar opcoes:', error); }
     }
     carregarOpcoes();
@@ -131,24 +129,13 @@ function NovoProcesso() {
             </div>
             <div className="form-group">
               <label>Setor de Entrada *</label>
-              <select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value, usuarioResponsavel: ''})} required>
+<select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value})} required>
                 <option value="">Selecione o setor</option>
               {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
               </select>
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Usuário Responsável</label>
-              <select className="form-control" value={form.usuarioResponsavel} onChange={e => setForm({...form, usuarioResponsavel: e.target.value})}>
-                <option value="">Selecione o usuário (opcional)</option>
-                {usuarios.filter(u => !form.setorAtual || u.setor === form.setorAtual).map(u => (
-                  <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group"></div>
-          </div>
+
           <div className="form-row">
             <div className="form-group">
               <label>Assunto *</label>

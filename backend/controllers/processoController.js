@@ -100,9 +100,13 @@ export const atualizarProcesso = async (req, res) => {
     const campos = [];
     const valores = [];
     Object.keys(req.body).forEach(key => {
+      if (key === 'status') return;
       campos.push(`${key} = ?`);
       valores.push(req.body[key]);
     });
+    if (campos.length === 0) {
+      return res.status(400).json({ message: 'Nenhum campo válido para atualizar.' });
+    }
     valores.push(req.params.id);
     
     await pool.query(`UPDATE processos SET ${campos.join(', ')} WHERE id = ?`, valores);
@@ -187,6 +191,16 @@ export const pausarProcesso = async (req, res) => {
 export const arquivarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['arquivado', 'arquivado', req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const indeferirProcesso = async (req, res) => {
+  try {
+    await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['indeferido', 'indeferido', req.params.id]);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
