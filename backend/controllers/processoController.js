@@ -124,6 +124,9 @@ export const encaminharProcesso = async (req, res) => {
     if (processo.situacao === 'encaminhado') {
       return res.status(400).json({ message: 'Processo já encaminhado. Aguarde o recebimento para reencaminhar.' });
     }
+    if (paraUsuario && parseInt(paraUsuario) === req.user.id) {
+      return res.status(400).json({ message: 'Você não pode encaminhar um processo para si mesmo.' });
+    }
     await pool.query(
       'INSERT INTO movimentacoes (processoId, de, para, usuarioDestino, usuario, parecer) VALUES (?, ?, ?, ?, ?, ?)',
       [req.params.id, processo.setorAtual, para, paraUsuario || null, req.user.id, parecer || null]

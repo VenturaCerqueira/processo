@@ -43,8 +43,13 @@ function Dashboard() {
           }
         }
 
-        const response = await api.get('/processos');
-        const processos = response.data || [];
+        const [processosRes, caixaRes] = await Promise.all([
+          api.get('/processos'),
+          api.get('/processos/caixa-entrada')
+        ]);
+        const processos = processosRes.data || [];
+        const caixaData = caixaRes.data || { processos: [] };
+        const meusProcessos = caixaData.processos || [];
 
         if (!mounted) return;
 
@@ -56,8 +61,6 @@ function Dashboard() {
           concluido: processos.filter(p => p.status === 'concluido').length,
           urgentes: processos.filter(p => p.prioridade === 'urgente').length
         });
-        const userId = userData.id;
-        const meusProcessos = processos.filter(p => p.usuarioResponsavel === userId || p.usuarioResponsavel == userId);
         setCaixaResumo({
           encaminhado: meusProcessos.filter(p => p.situacao === 'encaminhado').length,
           recebido: meusProcessos.filter(p => p.situacao === 'recebido').length,
@@ -65,8 +68,8 @@ function Dashboard() {
           pausado: meusProcessos.filter(p => p.situacao === 'pausado').length,
           arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length
         });
-        setProcessosRecentes(processos.slice(0, 5));
-        setProcessosUrgentes(processos.filter(p => p.prioridade === 'urgente').slice(0, 5));
+        setProcessosRecentes(meusProcessos.slice(0, 5));
+        setProcessosUrgentes(meusProcessos.filter(p => p.prioridade === 'urgente').slice(0, 5));
       } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
       } finally {
@@ -161,13 +164,13 @@ function Dashboard() {
           </div>
           <span>Novo Processo</span>
         </button>
-        <button className="quick-action-card" onClick={() => navigate('/processos')}>
+        <button className="quick-action-card" onClick={() => navigate('/caixa-entrada')}>
           <div className="quick-action-icon purple">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </div>
-          <span>Ver Processos</span>
+          <span>Caixa de Entrada</span>
         </button>
         <button className="quick-action-card" onClick={() => navigate('/relatorios')}>
           <div className="quick-action-icon green">
@@ -267,7 +270,7 @@ function Dashboard() {
               <span className="card-title">Processos Recentes</span>
               <p className="card-subtitle">Últimos processos cadastrados no sistema</p>
             </div>
-            <Link to="/processos" className="btn btn-secondary btn-sm">Ver todos</Link>
+            <Link to="/caixa-entrada" className="btn btn-secondary btn-sm">Ver todos</Link>
           </div>
           <div className="table-container">
             <table className="dashboard-table">

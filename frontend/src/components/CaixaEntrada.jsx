@@ -20,8 +20,8 @@ function CaixaEntrada() {
   const carregarProcessos = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/processos');
-      setProcessos(response.data || []);
+      const response = await api.get('/processos/caixa-entrada');
+      setProcessos(response.data.processos || []);
     } catch (error) {
       console.error('Erro ao carregar processos:', error);
     } finally {

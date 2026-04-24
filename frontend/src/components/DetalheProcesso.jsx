@@ -16,6 +16,7 @@ function DetalheProcesso() {
   const [setores, setSetores] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [paraUsuario, setParaUsuario] = useState('');
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     carregarProcesso();
@@ -37,6 +38,10 @@ function DetalheProcesso() {
 
   const handleEncaminhar = async (e) => {
     e.preventDefault();
+    if (paraUsuario && parseInt(paraUsuario) === currentUser.id) {
+      alert('Você não pode encaminhar um processo para si mesmo.');
+      return;
+    }
     try {
       await api.post(`/processos/${id}/encaminhar`, { para: paraSetor, parecer, paraUsuario });
       setMostrarEncaminhar(false); setParaSetor(''); setParaUsuario(''); setParecer(''); carregarProcesso();
@@ -244,7 +249,7 @@ function DetalheProcesso() {
                   <label>Usuário Destino</label>
                   <select className="form-control" value={paraUsuario} onChange={e => setParaUsuario(e.target.value)}>
                     <option value="">Selecione o usuário (opcional)</option>
-                    {usuarios.filter(u => !paraSetor || u.setor === paraSetor).map(u => (
+                    {usuarios.filter(u => u.id !== currentUser.id && (!paraSetor || u.setor === paraSetor)).map(u => (
                       <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
                     ))}
                   </select>
