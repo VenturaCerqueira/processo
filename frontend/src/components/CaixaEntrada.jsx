@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 
 function CaixaEntrada() {
+  const navigate = useNavigate();
   const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabAtiva, setTabAtiva] = useState('encaminhado');
@@ -51,8 +52,14 @@ function CaixaEntrada() {
 
   return (
     <div className="page-content">
-      <div className="top-bar" style={{ marginBottom: 24 }}>
+      <div className="top-bar" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Caixa de Entrada</h2>
+        <button className="btn btn-primary" onClick={() => navigate('/processos/novo')}>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Novo Processo
+        </button>
       </div>
 
       <div className="card" style={{ marginBottom: 24, padding: '12px 24px' }}>

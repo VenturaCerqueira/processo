@@ -84,7 +84,7 @@ function AppContent() {
           <Route path="/esqueci-senha" element={!user ? <EsqueciSenha /> : <Navigate to="/" />} />
           <Route path="/redefinir-senha" element={!user ? <RedefinirSenha /> : <Navigate to="/" />} />
           <Route path="/caixa-entrada" element={user ? <CaixaEntrada /> : <Navigate to="/login" />} />
-          <Route path="/processos" element={user ? <Processos /> : <Navigate to="/login" />} />
+          <Route path="/processos" element={user ? <Navigate to="/caixa-entrada" /> : <Navigate to="/login" />} />
           <Route path="/processos/novo" element={user ? <NovoProcesso /> : <Navigate to="/login" />} />
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />
           <Route path="/relatorios" element={user ? <Relatorios /> : <Navigate to="/login" />} />

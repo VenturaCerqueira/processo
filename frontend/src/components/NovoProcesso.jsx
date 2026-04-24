@@ -85,7 +85,7 @@ function NovoProcesso() {
   return (
     <div className="page-content">
       <div className="breadcrumb">
-        <Link to="/processos">Processos</Link>
+        <Link to="/caixa-entrada">Caixa de Entrada</Link>
         <span>/</span>
         <span>Novo Processo</span>
       </div>
@@ -181,7 +181,7 @@ function NovoProcesso() {
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? <><span className="spinner" style={{ width: 16, height: 16 }} />Salvando...</> : 'Criar Processo'}
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/processos')}>Cancelar</button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/caixa-entrada')}>Cancelar</button>
           </div>
         </form>
       </div>

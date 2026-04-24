@@ -9,7 +9,7 @@ function Navbar({ user, onLogout }) {
       <div>
         <strong>Processo Eletrônico</strong>
         <Link to="/">Dashboard</Link>
-        <Link to="/processos">Processos</Link>
+        <Link to="/caixa-entrada">Caixa de Entrada</Link>
         <Link to="/relatorios">Relatórios</Link>
         {user.nivelAcesso === 'admin' && (
           <Link to="/usuarios">Usuários</Link>
