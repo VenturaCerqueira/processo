@@ -1,0 +1,115 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import api from '../api';
+
+function NovoProcesso() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '' });
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [tipos, setTipos] = useState([]);
+  const [setores, setSetores] = useState([]);
+  const [prioridades, setPrioridades] = useState([]);
+  const [requerentes, setRequerentes] = useState([]);
+
+  useEffect(() => {
+    async function carregarOpcoes() {
+      try {
+        const [tRes, sRes, pRes, cRes] = await Promise.all([
+          api.get('/tipos-processo'),
+          api.get('/setores'),
+          api.get('/prioridades'),
+          api.get('/requerentes')
+        ]);
+        setTipos(tRes.data);
+        setSetores(sRes.data);
+        setPrioridades(pRes.data);
+        setRequerentes(cRes.data);
+      } catch (error) { console.error('Erro ao carregar opcoes:', error); }
+    }
+    carregarOpcoes();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErro('');
+    try {
+      const response = await api.post('/processos', form);
+      navigate(`/processos/${response.data.id}`);
+    } catch (error) { setErro(error.response?.data?.message || 'Erro ao criar processo'); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="page-content">
+      <div className="breadcrumb">
+        <Link to="/processos">Processos</Link>
+        <span>/</span>
+        <span>Novo Processo</span>
+      </div>
+      <h2 className="section-title">Novo Processo</h2>
+      {erro && <div className="alert alert-danger">{erro}</div>}
+      <div className="card">
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Tipo de Processo *</label>
+              <select className="form-control" value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})} required>
+                <option value="">Selecione o tipo</option>
+              {tipos.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Setor de Entrada *</label>
+              <select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value})} required>
+                <option value="">Selecione o setor</option>
+              {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Assunto *</label>
+              <input type="text" className="form-control" value={form.assunto} onChange={e => setForm({...form, assunto: e.target.value})} required placeholder="Descreva o assunto do processo" />
+            </div>
+            <div className="form-group">
+              <label>Prioridade</label>
+              <select className="form-control" value={form.prioridade} onChange={e => setForm({...form, prioridade: e.target.value})}>
+                {prioridades.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>Requerente *</label><input type="text" className="form-control" value={form.requerente} onChange={e => setForm({...form, requerente: e.target.value})} required /></div>
+            <div className="form-group"><label>CPF/CNPJ</label><input type="text" className="form-control" value={form.cpfCnpj} onChange={e => setForm({...form, cpfCnpj: e.target.value})} placeholder="000.000.000-00" /></div>
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>Telefone</label><input type="text" className="form-control" value={form.telefone} onChange={e => setForm({...form, telefone: e.target.value})} /></div>
+            <div className="form-group"><label>Email</label><input type="email" className="form-control" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
+          </div>
+          <div className="form-group">
+            <label>Endereço</label>
+            <input type="text" className="form-control" value={form.endereco} onChange={e => setForm({...form, endereco: e.target.value})} />
+          </div>
+          <div className="form-row">
+            <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+          </div>
+          <div className="form-group">
+            <label>Descrição</label>
+            <textarea className="form-control" rows="4" value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})} placeholder="Descreva detalhes adicionais do processo..." />
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <><span className="spinner" style={{ width: 16, height: 16 }} />Salvando...</> : 'Criar Processo'}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/processos')}>Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default NovoProcesso;
+
