@@ -47,10 +47,17 @@ export async function initDatabase() {
         setor VARCHAR(255) NOT NULL,
         nivelAcesso VARCHAR(50) DEFAULT 'operador',
         ativo TINYINT DEFAULT 1,
+        primeiroAcesso TINYINT DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS primeiroAcesso TINYINT DEFAULT 0`);
+    } catch {
+      // Coluna já existe ou erro não crítico
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS processos (

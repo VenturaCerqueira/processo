@@ -11,7 +11,8 @@ function CadastroUsuarios() {
   const [mensagem, setMensagem] = useState('');
   const [setores, setSetores] = useState([]);
 
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', cargo: '', setor: '', nivelAcesso: 'operador' });
+  const [form, setForm] = useState({ nome: '', email: '', cargo: '', setor: '', nivelAcesso: 'operador' });
+  const [senhaGerada, setSenhaGerada] = useState('');
   const [niveisAcesso, setNiveisAcesso] = useState([]);
 
   useEffect(() => {
@@ -40,7 +41,13 @@ function CadastroUsuarios() {
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setErro(''); setMensagem('');
-    try { await api.post('/auth/registrar', form); setMensagem('Usuário cadastrado!'); setForm({ nome: '', email: '', senha: '', cargo: '', setor: '', nivelAcesso: 'operador' }); setMostrarForm(false); carregarUsuarios(); }
+    try {
+      const response = await api.post('/auth/registrar', form);
+      setSenhaGerada(response.data.senhaTemporaria);
+      setMensagem(`Usuário cadastrado! Senha temporária: ${response.data.senhaTemporaria}`);
+      setForm({ nome: '', email: '', cargo: '', setor: '', nivelAcesso: 'operador' });
+      carregarUsuarios();
+    }
     catch (error) { setErro(error.response?.data?.message || 'Erro ao cadastrar'); }
   };
 
@@ -84,7 +91,13 @@ function CadastroUsuarios() {
                   <td>{u.cargo}</td>
                   <td>{u.setor}</td>
                   <td><span className="badge" style={{ background: u.nivelAcesso === 'admin' ? '#dbeafe' : '#f3f4f6', color: u.nivelAcesso === 'admin' ? '#1e40af' : '#374151' }}>{u.nivelAcesso}</span></td>
-                  <td><span className={`badge badge-${u.ativo ? 'concluido' : 'arquivado'}`}>{u.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                  <td>
+                    {u.primeiroAcesso === 1 ? (
+                      <span className="badge badge-pendente">Pendente</span>
+                    ) : (
+                      <span className={`badge badge-${u.ativo ? 'concluido' : 'arquivado'}`}>{u.ativo ? 'Ativo' : 'Inativo'}</span>
+                    )}
+                  </td>
                   <td>
                     <button className="btn btn-warning btn-sm" style={{ marginRight: 6 }} onClick={() => { setUsuarioEditando(u); setMostrarEditar(true); }}>Editar</button>
                     <button className="btn btn-secondary btn-sm" onClick={() => handleResetarSenha(u.id)}>Resetar Senha</button>
@@ -107,10 +120,7 @@ function CadastroUsuarios() {
                   <div className="form-group"><label>Email *</label><input type="email" className="form-control" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required /></div>
                 </div>
                 <div className="form-row">
-                  <div className="form-group"><label>Senha *</label><input type="password" className="form-control" value={form.senha} onChange={e => setForm({...form, senha: e.target.value})} required placeholder="Mínimo 6 caracteres" autoComplete="new-password" /></div>
                   <div className="form-group"><label>Cargo *</label><input type="text" className="form-control" value={form.cargo} onChange={e => setForm({...form, cargo: e.target.value})} required /></div>
-                </div>
-                <div className="form-row">
                   <div className="form-group">
                     <label>Setor *</label>
                     <select className="form-control" value={form.setor} onChange={e => setForm({...form, setor: e.target.value})} required>
@@ -118,6 +128,8 @@ function CadastroUsuarios() {
                       {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
                     </select>
                   </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Nível de Acesso</label>
                     <select className="form-control" value={form.nivelAcesso} onChange={e => setForm({...form, nivelAcesso: e.target.value})}>

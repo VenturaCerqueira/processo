@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
+import PrimeiroAcesso from './components/PrimeiroAcesso';
 import EsqueciSenha from './components/EsqueciSenha';
 import RedefinirSenha from './components/RedefinirSenha';
 import Dashboard from './components/Dashboard';
@@ -18,6 +19,7 @@ import CadastroEntidades from './components/CadastroEntidades';
 import CadastroNiveisAcesso from './components/CadastroNiveisAcesso';
 import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
+import NotFound from './components/NotFound';
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -52,7 +54,7 @@ function AppContent() {
     setUser(null);
   };
 
-  const isPublicRoute = ['/login', '/esqueci-senha', '/redefinir-senha'].includes(location.pathname);
+  const isPublicRoute = ['/login', '/primeiro-acesso', '/esqueci-senha', '/redefinir-senha'].includes(location.pathname);
   const appLayoutClass = isPublicRoute || !user
     ? ''
     : `app-layout${sidebarCollapsed ? ' app-layout-collapsed' : ''}`;
@@ -74,6 +76,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={user ? <Dashboard /> : <LandingPage />} />
           <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
+          <Route path="/primeiro-acesso" element={!user ? <PrimeiroAcesso onLogin={handleLogin} /> : <Navigate to="/" />} />
           <Route path="/esqueci-senha" element={!user ? <EsqueciSenha /> : <Navigate to="/" />} />
           <Route path="/redefinir-senha" element={!user ? <RedefinirSenha /> : <Navigate to="/" />} />
           <Route path="/processos" element={user ? <Processos /> : <Navigate to="/login" />} />
@@ -88,6 +91,7 @@ function AppContent() {
           <Route path="/cadastros/requerentes" element={user ? <CadastroRequerentes /> : <Navigate to="/login" />} />
           <Route path="/cadastros/entidades" element={user ? <CadastroEntidades /> : <Navigate to="/login" />} />
           <Route path="/cadastros/niveis-acesso" element={user?.nivelAcesso === 'admin' ? <CadastroNiveisAcesso /> : <Navigate to="/" />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </div>
