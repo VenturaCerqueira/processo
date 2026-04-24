@@ -121,6 +121,9 @@ export const encaminharProcesso = async (req, res) => {
       return res.status(404).json({ message: 'Processo não encontrado.' });
     }
     const processo = rows[0];
+    if (processo.situacao === 'encaminhado') {
+      return res.status(400).json({ message: 'Processo já encaminhado. Aguarde o recebimento para reencaminhar.' });
+    }
     await pool.query(
       'INSERT INTO movimentacoes (processoId, de, para, usuarioDestino, usuario, parecer) VALUES (?, ?, ?, ?, ?, ?)',
       [req.params.id, processo.setorAtual, para, paraUsuario || null, req.user.id, parecer || null]
