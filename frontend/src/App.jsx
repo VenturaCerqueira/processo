@@ -6,6 +6,7 @@ import PrimeiroAcesso from './components/PrimeiroAcesso';
 import EsqueciSenha from './components/EsqueciSenha';
 import RedefinirSenha from './components/RedefinirSenha';
 import Dashboard from './components/Dashboard';
+import CaixaEntrada from './components/CaixaEntrada';
 import Processos from './components/Processos';
 import NovoProcesso from './components/NovoProcesso';
 import DetalheProcesso from './components/DetalheProcesso';
@@ -21,6 +22,7 @@ import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
 import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
+import ToastContainer from './components/ToastContainer';
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -73,6 +75,7 @@ function AppContent() {
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
         />
       )}
+      {user && <ToastContainer />}
       <div className={mainContentClass}>
         <Routes>
           <Route path="/" element={user ? <Dashboard /> : <LandingPage />} />
@@ -80,6 +83,7 @@ function AppContent() {
           <Route path="/primeiro-acesso" element={!user ? <PrimeiroAcesso onLogin={handleLogin} /> : <Navigate to="/" />} />
           <Route path="/esqueci-senha" element={!user ? <EsqueciSenha /> : <Navigate to="/" />} />
           <Route path="/redefinir-senha" element={!user ? <RedefinirSenha /> : <Navigate to="/" />} />
+          <Route path="/caixa-entrada" element={user ? <CaixaEntrada /> : <Navigate to="/login" />} />
           <Route path="/processos" element={user ? <Processos /> : <Navigate to="/login" />} />
           <Route path="/processos/novo" element={user ? <NovoProcesso /> : <Navigate to="/login" />} />
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />

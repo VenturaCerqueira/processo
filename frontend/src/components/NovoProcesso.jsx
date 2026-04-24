@@ -12,44 +12,30 @@ function NovoProcesso() {
   const [prioridades, setPrioridades] = useState([]);
   const [requerentes, setRequerentes] = useState([]);
   const [especies, setEspecies] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
 
   useEffect(() => {
     async function carregarOpcoes() {
       try {
-        const [tRes, sRes, pRes, cRes] = await Promise.all([
+        const [tRes, sRes, pRes, cRes, eRes, uRes] = await Promise.all([
           api.get('/tipos-processo'),
           api.get('/setores'),
           api.get('/prioridades'),
-          api.get('/requerentes')
+          api.get('/requerentes'),
+          api.get('/especies-processo'),
+          api.get('/auth/usuarios-ativos')
         ]);
         setTipos(tRes.data);
         setSetores(sRes.data);
         setPrioridades(pRes.data);
         setRequerentes(cRes.data);
+        setEspecies(eRes.data);
+        setUsuarios(uRes.data);
       } catch (error) { console.error('Erro ao carregar opcoes:', error); }
     }
     carregarOpcoes();
   }, []);
-
-  useEffect(() => {
-    async function carregarEspecies() {
-      setEspecieSelecionada(null);
-      setForm(prev => ({ ...prev, especie_id: '' }));
-      if (!form.tipo || !form.setorAtual) {
-        setEspecies([]);
-        return;
-      }
-      try {
-        const tipoObj = tipos.find(t => t.nome === form.tipo);
-        const setorObj = setores.find(s => s.nome === form.setorAtual);
-        if (!tipoObj || !setorObj) return;
-        const res = await api.get(`/especies-processo?tipo=${tipoObj.id}&setor=${setorObj.id}`);
-        setEspecies(res.data);
-      } catch (error) { console.error('Erro ao carregar especies:', error); }
-    }
-    carregarEspecies();
-  }, [form.tipo, form.setorAtual, tipos, setores]);
 
   const calcularPrazo = (dias, diasUteis) => {
     if (!dias) return '';
@@ -71,10 +57,17 @@ function NovoProcesso() {
     const especieId = e.target.value;
     const esp = especies.find(ep => ep.id === parseInt(especieId));
     setEspecieSelecionada(esp || null);
-    setForm(prev => ({ ...prev, especie_id: especieId }));
-    if (esp?.prazo_maximo) {
-      const novoPrazo = calcularPrazo(esp.prazo_maximo, !!esp.dias_uteis);
-      setForm(prev => ({ ...prev, prazo: novoPrazo }));
+
+    if (esp) {
+      setForm(prev => ({
+        ...prev,
+        especie_id: especieId,
+        tipo: esp.tipo_processo_nome || prev.tipo,
+        setorAtual: esp.setor_nome || prev.setorAtual,
+        prazo: esp.prazo_maximo ? calcularPrazo(esp.prazo_maximo, !!esp.dias_uteis) : prev.prazo
+      }));
+    } else {
+      setForm(prev => ({ ...prev, especie_id: '', prazo: '' }));
     }
   };
 
@@ -100,6 +93,34 @@ function NovoProcesso() {
       {erro && <div className="alert alert-danger">{erro}</div>}
       <div className="card">
         <form onSubmit={handleSubmit}>
+          {especies.length > 0 && (
+            <div className="form-row">
+              <div className="form-group">
+                <label>Especie de Processo</label>
+                <select className="form-control" value={form.especie_id} onChange={handleEspecieChange}>
+                  <option value="">Selecione a especie (opcional)</option>
+                  {especies.map(ep => <option key={ep.id} value={ep.id}>{ep.nome}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+            </div>
+          )}
+          {especieSelecionada?.mensagem_customizada && (
+            <div className="alert alert-info" style={{ marginBottom: 16 }}>
+              <strong>Mensagem da Especie:</strong><br />
+              {especieSelecionada.mensagem_customizada}
+              {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
+                <div style={{ marginTop: 6, fontSize: 12 }}>
+                  Prazo: {especieSelecionada.prazo_minimo} a {especieSelecionada.prazo_maximo} dias{especieSelecionada.dias_uteis ? ' uteis' : ' corridos'}
+                </div>
+              )}
+            </div>
+          )}
+          {especies.length === 0 && (
+            <div className="form-row">
+              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+            </div>
+          )}
           <div className="form-row">
             <div className="form-group">
               <label>Tipo de Processo *</label>
@@ -110,11 +131,23 @@ function NovoProcesso() {
             </div>
             <div className="form-group">
               <label>Setor de Entrada *</label>
-              <select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value})} required>
+              <select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value, usuarioResponsavel: ''})} required>
                 <option value="">Selecione o setor</option>
               {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
               </select>
             </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Usuário Responsável</label>
+              <select className="form-control" value={form.usuarioResponsavel} onChange={e => setForm({...form, usuarioResponsavel: e.target.value})}>
+                <option value="">Selecione o usuário (opcional)</option>
+                {usuarios.filter(u => !form.setorAtual || u.setor === form.setorAtual).map(u => (
+                  <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group"></div>
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -140,34 +173,6 @@ function NovoProcesso() {
             <label>Endereço</label>
             <input type="text" className="form-control" value={form.endereco} onChange={e => setForm({...form, endereco: e.target.value})} />
           </div>
-          {especies.length > 0 && (
-            <div className="form-row">
-              <div className="form-group">
-                <label>Especie de Processo</label>
-                <select className="form-control" value={form.especie_id} onChange={handleEspecieChange}>
-                  <option value="">Selecione a especie</option>
-                  {especies.map(ep => <option key={ep.id} value={ep.id}>{ep.nome}</option>)}
-                </select>
-              </div>
-              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
-            </div>
-          )}
-          {especieSelecionada?.mensagem_customizada && (
-            <div className="alert alert-info" style={{ marginBottom: 16 }}>
-              <strong>Mensagem da Especie:</strong><br />
-              {especieSelecionada.mensagem_customizada}
-              {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
-                <div style={{ marginTop: 6, fontSize: 12 }}>
-                  Prazo: {especieSelecionada.prazo_minimo} a {especieSelecionada.prazo_maximo} dias{especieSelecionada.dias_uteis ? ' uteis' : ' corridos'}
-                </div>
-              )}
-            </div>
-          )}
-          {especies.length === 0 && (
-            <div className="form-row">
-              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
-            </div>
-          )}
           <div className="form-group">
             <label>Descrição</label>
             <textarea className="form-control" rows="4" value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})} placeholder="Descreva detalhes adicionais do processo..." />

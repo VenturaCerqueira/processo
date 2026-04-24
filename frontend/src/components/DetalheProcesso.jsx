@@ -14,16 +14,19 @@ function DetalheProcesso() {
   const [observacao, setObservacao] = useState('');
   const [arquivo, setArquivo] = useState(null);
   const [setores, setSetores] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [paraUsuario, setParaUsuario] = useState('');
 
   useEffect(() => {
     carregarProcesso();
-    async function carregarSetores() {
+    async function carregarOpcoes() {
       try {
-        const res = await api.get('/setores');
-        setSetores(res.data);
-      } catch (error) { console.error('Erro ao carregar setores:', error); }
+        const [sRes, uRes] = await Promise.all([api.get('/setores'), api.get('/auth/usuarios-ativos')]);
+        setSetores(sRes.data);
+        setUsuarios(uRes.data);
+      } catch (error) { console.error('Erro ao carregar opcoes:', error); }
     }
-    carregarSetores();
+    carregarOpcoes();
   }, [id]);
 
   const carregarProcesso = async () => {
@@ -34,8 +37,15 @@ function DetalheProcesso() {
 
   const handleEncaminhar = async (e) => {
     e.preventDefault();
-    try { await api.post(`/processos/${id}/encaminhar`, { para: paraSetor, parecer }); setMostrarEncaminhar(false); setParaSetor(''); setParecer(''); carregarProcesso(); }
-    catch (error) { alert(error.response?.data?.message || 'Erro ao encaminhar'); }
+    try {
+      await api.post(`/processos/${id}/encaminhar`, { para: paraSetor, parecer, paraUsuario });
+      setMostrarEncaminhar(false); setParaSetor(''); setParaUsuario(''); setParecer(''); carregarProcesso();
+    } catch (error) { alert(error.response?.data?.message || 'Erro ao encaminhar'); }
+  };
+
+  const handleSituacaoAcao = async (acao) => {
+    try { await api.post(`/processos/${id}/${acao}`); carregarProcesso(); }
+    catch (error) { alert(error.response?.data?.message || 'Erro ao executar ação'); }
   };
 
   const handleObservacao = async (e) => {
@@ -91,8 +101,10 @@ function DetalheProcesso() {
           <div className="detail-item"><span className="label">Requerente</span><span className="value">{processo.requerente}</span></div>
           <div className="detail-item"><span className="label">CPF/CNPJ</span><span className="value">{processo.cpfCnpj || '—'}</span></div>
           <div className="detail-item"><span className="label">Status</span><span className="value"><span className={`badge badge-${processo.status}`}>{processo.status}</span></span></div>
+          <div className="detail-item"><span className="label">Situação</span><span className="value"><span className={`badge badge-${processo.situacao}`}>{processo.situacao}</span></span></div>
           <div className="detail-item"><span className="label">Prioridade</span><span className={`value priority-${processo.prioridade}`}>{processo.prioridade}</span></div>
           <div className="detail-item"><span className="label">Setor Atual</span><span className="value">{processo.setorAtual}</span></div>
+          <div className="detail-item"><span className="label">Usuário Responsável</span><span className="value">{processo.usuarioResponsavelNome || '—'}</span></div>
           <div className="detail-item"><span className="label">Data de Recebimento</span><span className="value">{new Date(processo.dataRecebimento).toLocaleDateString('pt-BR')}</span></div>
           <div className="detail-item"><span className="label">Prazo</span><span className="value">{processo.prazo ? new Date(processo.prazo).toLocaleDateString('pt-BR') : '—'}</span></div>
           {processo.especie_nome && <div className="detail-item"><span className="label">Especie</span><span className="value">{processo.especie_nome}</span></div>}
@@ -110,7 +122,7 @@ function DetalheProcesso() {
             </div>
           )}
         </div>}
-        <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+        <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={() => setMostrarEncaminhar(true)}>
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
             Encaminhar
@@ -119,6 +131,31 @@ function DetalheProcesso() {
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             Observação
           </button>
+          {processo.situacao === 'encaminhado' && (
+            <button className="btn btn-success" onClick={() => handleSituacaoAcao('receber')}>Receber</button>
+          )}
+          {processo.situacao === 'recebido' && (
+            <>
+              <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Aprovar</button>
+              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>Pausar</button>
+              <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
+            </>
+          )}
+          {processo.situacao === 'aprovado' && (
+            <>
+              <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
+              <button className="btn btn-primary" onClick={() => handleSituacaoAcao('receber')}>Reabrir</button>
+            </>
+          )}
+          {processo.situacao === 'pausado' && (
+            <>
+              <button className="btn btn-primary" onClick={() => handleSituacaoAcao('receber')}>Retomar</button>
+              <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
+            </>
+          )}
+          {processo.situacao === 'arquivado' && (
+            <button className="btn btn-primary" onClick={() => handleSituacaoAcao('receber')}>Reabrir</button>
+          )}
         </div>
       </div>
 
@@ -196,9 +233,18 @@ function DetalheProcesso() {
               <form id="form-encaminhar" onSubmit={handleEncaminhar}>
                 <div className="form-group">
                   <label>Setor de Destino *</label>
-                  <select className="form-control" value={paraSetor} onChange={e => setParaSetor(e.target.value)} required>
+                  <select className="form-control" value={paraSetor} onChange={e => { setParaSetor(e.target.value); setParaUsuario(''); }} required>
                     <option value="">Selecione</option>
                     {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Usuário Destino</label>
+                  <select className="form-control" value={paraUsuario} onChange={e => setParaUsuario(e.target.value)}>
+                    <option value="">Selecione o usuário (opcional)</option>
+                    {usuarios.filter(u => !paraSetor || u.setor === paraSetor).map(u => (
+                      <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">

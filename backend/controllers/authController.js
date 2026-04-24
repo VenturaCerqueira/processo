@@ -136,6 +136,15 @@ export const listarUsuarios = async (req, res) => {
   }
 };
 
+export const listarUsuariosAtivos = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT id, nome, email, cargo, setor, nivelAcesso FROM users WHERE ativo = 1 ORDER BY nome');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const obterUsuario = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT id, nome, email, cargo, setor, nivelAcesso, ativo, primeiroAcesso, createdAt FROM users WHERE id = ?', [req.params.id]);

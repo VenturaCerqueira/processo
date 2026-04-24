@@ -4,6 +4,7 @@ import api from '../api';
 
 function Dashboard() {
   const [estatisticas, setEstatisticas] = useState({ total: 0, tramitando: 0, aguardando: 0, concluido: 0, urgentes: 0 });
+  const [caixaResumo, setCaixaResumo] = useState({ novo: 0, recebido: 0, aprovado: 0, pausado: 0, arquivado: 0 });
   const [processosRecentes, setProcessosRecentes] = useState([]);
   const [processosUrgentes, setProcessosUrgentes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,15 @@ function Dashboard() {
           aguardando: processos.filter(p => p.status === 'aguardando').length,
           concluido: processos.filter(p => p.status === 'concluido').length,
           urgentes: processos.filter(p => p.prioridade === 'urgente').length
+        });
+        const userId = userData.id;
+        const meusProcessos = processos.filter(p => p.usuarioResponsavel === userId || p.usuarioResponsavel == userId);
+        setCaixaResumo({
+          encaminhado: meusProcessos.filter(p => p.situacao === 'encaminhado').length,
+          recebido: meusProcessos.filter(p => p.situacao === 'recebido').length,
+          aprovado: meusProcessos.filter(p => p.situacao === 'aprovado').length,
+          pausado: meusProcessos.filter(p => p.situacao === 'pausado').length,
+          arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length
         });
         setProcessosRecentes(processos.slice(0, 5));
         setProcessosUrgentes(processos.filter(p => p.prioridade === 'urgente').slice(0, 5));
@@ -176,6 +186,47 @@ function Dashboard() {
           <span>Usuários</span>
         </button>
       </div>
+
+      {/* Caixa de Entrada Resumo */}
+      {user.id && (() => {
+        const totalMeus = Object.values(caixaResumo).reduce((a, b) => a + b, 0);
+        if (totalMeus === 0) return null;
+        const caixaConfig = [
+          { key: 'encaminhado', label: 'Encaminhados', color: 'blue' },
+          { key: 'recebido', label: 'Recebidos', color: 'yellow' },
+          { key: 'aprovado', label: 'Aprovados', color: 'green' },
+          { key: 'pausado', label: 'Pausados', color: 'purple' },
+          { key: 'arquivado', label: 'Arquivados', color: 'red' },
+        ];
+        return (
+          <div className="card" style={{ marginBottom: 24 }}>
+            <div className="card-header">
+              <div>
+                <span className="card-title">Minha Caixa de Entrada</span>
+                <p className="card-subtitle">Processos atribuídos a você</p>
+              </div>
+              <Link to="/caixa-entrada" className="btn btn-secondary btn-sm">Ver todos</Link>
+            </div>
+            <div className="stats-grid" style={{ marginBottom: 0 }}>
+              {caixaConfig.map(cfg => (
+                <div className="stat-card" key={cfg.key} style={{ cursor: 'pointer' }} onClick={() => navigate('/caixa-entrada')}>
+                  <div className="stat-card-top">
+                    <div className={`stat-icon ${cfg.color}`}>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <div className="stat-content">
+                      <h3>{caixaResumo[cfg.key]}</h3>
+                      <p>{cfg.label}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Stats Grid */}
       <div className="stats-grid">

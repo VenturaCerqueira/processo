@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import api from '../api';
 
 const mainItems = [
   { path: '/', label: 'Dashboard', icon: (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+  )},
+  { path: '/caixa-entrada', label: 'Caixa de Entrada', icon: (
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
   )},
   { path: '/processos', label: 'Processos', icon: (
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -47,7 +51,26 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
   const location = useLocation();
   const isCadastroRoute = location.pathname.startsWith('/cadastros');
   const [openGroups, setOpenGroups] = useState({ cadastros: isCadastroRoute, usuario: false });
+  const [notificacoes, setNotificacoes] = useState({ encaminhado: 0, recebido: 0, pausado: 0 });
   const userInitials = user.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    async function carregarNotificacoes() {
+      try {
+        const response = await api.get('/processos');
+        const processos = response.data || [];
+        const meus = processos.filter(p => p.usuarioResponsavel === user.id || p.usuarioResponsavel == user.id);
+        setNotificacoes({
+          encaminhado: meus.filter(p => p.situacao === 'encaminhado').length,
+          recebido: meus.filter(p => p.situacao === 'recebido').length,
+          pausado: meus.filter(p => p.situacao === 'pausado').length,
+        });
+      } catch (error) {
+        console.error('Erro ao carregar notificações:', error);
+      }
+    }
+    if (user?.id) carregarNotificacoes();
+  }, [user]);
 
   const toggleGroup = (group) => {
     setOpenGroups(prev => {
@@ -92,19 +115,54 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
       </div>
 
       <nav className="sidebar-nav">
-        {mainItems.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={location.pathname === item.path ? 'active' : ''}
-            title={collapsed ? item.label : ''}
-          >
-            {item.icon}
-            <span className="nav-label">{item.label}</span>
-          </Link>
-        ))}
+        {mainItems.map(item => {
+          const isCaixa = item.path === '/caixa-entrada';
+          return (
+            <div
+              key={item.path}
+              className={`sidebar-nav-item${isCaixa ? ' has-submenu' : ''}`}
+            >
+              <Link
+                to={item.path}
+                className={location.pathname === item.path ? 'active' : ''}
+                title={collapsed ? item.label : ''}
+              >
+                {item.icon}
+                <span className="nav-label">{item.label}</span>
+                {isCaixa && !collapsed && (
+                  <span className="nav-chevron">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                )}
+              </Link>
 
-        {/* Grupo Cadastros */}
+              {isCaixa && !collapsed && (
+                <div className="sidebar-submenu">
+                  <div className="sidebar-submenu-inner">
+                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                      <span className="sidebar-submenu-dot yellow" />
+                      <span>Encaminhado</span>
+                      <span className="sidebar-submenu-badge yellow">{notificacoes.encaminhado}</span>
+                    </Link>
+                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                      <span className="sidebar-submenu-dot green" />
+                      <span>Recebido</span>
+                      <span className="sidebar-submenu-badge green">{notificacoes.recebido}</span>
+                    </Link>
+                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                      <span className="sidebar-submenu-dot red" />
+                      <span>Pausado</span>
+                      <span className="sidebar-submenu-badge red">{notificacoes.pausado}</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {!collapsed && (
           <div className={`sidebar-group${openGroups.cadastros ? ' open' : ''}`}>
             <button
@@ -154,7 +212,6 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
           </Link>
         ))}
 
-        {/* Grupo Usuário */}
         {!collapsed && (
           <div className={`sidebar-group${openGroups.usuario ? ' open' : ''}`}>
             <button
@@ -187,7 +244,6 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
                     <span className="nav-label">{item.label}</span>
                   </Link>
                 ))}
-
               </div>
             )}
           </div>
@@ -229,4 +285,3 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
 }
 
 export default Sidebar;
-

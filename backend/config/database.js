@@ -74,6 +74,7 @@ export async function initDatabase() {
         setorAtual VARCHAR(255) NOT NULL,
         usuarioResponsavel INT,
         status VARCHAR(50) DEFAULT 'tramitando',
+        situacao VARCHAR(50) DEFAULT 'novo',
         prioridade VARCHAR(50) DEFAULT 'normal',
         prazo DATE,
         dataRecebimento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -85,6 +86,20 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    // Adicionar coluna situacao se nao existir
+    try {
+      await connection.query(`ALTER TABLE processos ADD COLUMN situacao VARCHAR(50) DEFAULT 'novo'`);
+    } catch {
+      // Coluna ja existe ou erro nao critico
+    }
+
+    // Adicionar FK de usuarioResponsavel se nao existir
+    try {
+      await connection.query(`ALTER TABLE processos ADD CONSTRAINT fk_processo_usuario_resp FOREIGN KEY (usuarioResponsavel) REFERENCES users(id)`);
+    } catch {
+      // Constraint ja existe ou erro nao critico
+    }
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS movimentacoes (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,12 +107,25 @@ export async function initDatabase() {
         de VARCHAR(255) NOT NULL,
         para VARCHAR(255) NOT NULL,
         usuario INT NOT NULL,
+        usuarioDestino INT,
         parecer TEXT,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (processoId) REFERENCES processos(id) ON DELETE CASCADE,
         FOREIGN KEY (usuario) REFERENCES users(id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    try {
+      await connection.query(`ALTER TABLE movimentacoes ADD COLUMN usuarioDestino INT NULL`);
+    } catch {
+      // Coluna ja existe ou erro nao critico
+    }
+
+    try {
+      await connection.query(`ALTER TABLE movimentacoes ADD CONSTRAINT fk_mov_usuario_destino FOREIGN KEY (usuarioDestino) REFERENCES users(id)`);
+    } catch {
+      // Constraint ja existe ou erro nao critico
+    }
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS documentos (
@@ -261,6 +289,28 @@ export async function initDatabase() {
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS notificacoes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuarioId INT NOT NULL,
+        processoId INT,
+        titulo VARCHAR(255) NOT NULL,
+        mensagem TEXT,
+        tipo VARCHAR(50) DEFAULT 'info',
+        prioridade VARCHAR(50) DEFAULT 'normal',
+        lida TINYINT DEFAULT 0,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuarioId) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (processoId) REFERENCES processos(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    try {
+      await connection.query(`ALTER TABLE notificacoes ADD COLUMN prioridade VARCHAR(50) DEFAULT 'normal'`);
+    } catch {
+      // Coluna ja existe ou erro nao critico
+    }
 
     try {
       await connection.query('RENAME TABLE contribuintes TO requerentes');

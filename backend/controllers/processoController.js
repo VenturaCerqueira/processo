@@ -1,21 +1,24 @@
 import pool from '../config/database.js';
 import { gerarNumeroProcesso } from '../utils/helpers.js';
+import { criarNotificacao } from './notificacaoController.js';
 
 export const listarProcessos = async (req, res) => {
   try {
-    const { status, tipo, setor, busca } = req.query;
-    let sql = 'SELECT * FROM processos WHERE 1=1';
+    const { status, tipo, setor, busca, situacao, usuarioResponsavel } = req.query;
+    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id WHERE 1=1';
     const params = [];
     
-    if (status) { sql += ' AND status = ?'; params.push(status); }
-    if (tipo) { sql += ' AND tipo = ?'; params.push(tipo); }
-    if (setor) { sql += ' AND setorAtual = ?'; params.push(setor); }
+    if (status) { sql += ' AND p.status = ?'; params.push(status); }
+    if (situacao) { sql += ' AND p.situacao = ?'; params.push(situacao); }
+    if (tipo) { sql += ' AND p.tipo = ?'; params.push(tipo); }
+    if (setor) { sql += ' AND p.setorAtual = ?'; params.push(setor); }
+    if (usuarioResponsavel) { sql += ' AND p.usuarioResponsavel = ?'; params.push(usuarioResponsavel); }
     if (busca) {
-      sql += ' AND (numero LIKE ? OR requerente LIKE ? OR assunto LIKE ?)';
+      sql += ' AND (p.numero LIKE ? OR p.requerente LIKE ? OR p.assunto LIKE ?)';
       const like = `%${busca}%`;
       params.push(like, like, like);
     }
-    sql += ' ORDER BY createdAt DESC';
+    sql += ' ORDER BY p.createdAt DESC';
     
     const [processos] = await pool.query(sql, params);
     res.json(processos);
@@ -29,9 +32,10 @@ export const obterProcesso = async (req, res) => {
     const [rows] = await pool.query(`
       SELECT p.*, e.nome as especie_nome, e.mensagem_customizada as especie_mensagem,
              e.prazo_minimo as especie_prazo_minimo, e.prazo_maximo as especie_prazo_maximo,
-             e.dias_uteis as especie_dias_uteis
+             e.dias_uteis as especie_dias_uteis, u.nome as usuarioResponsavelNome
       FROM processos p
       LEFT JOIN especies_processo e ON p.especie_id = e.id
+      LEFT JOIN users u ON p.usuarioResponsavel = u.id
       WHERE p.id = ?
     `, [req.params.id]);
     if (rows.length === 0) {
@@ -39,8 +43,11 @@ export const obterProcesso = async (req, res) => {
     }
     const processo = rows[0];
     const [movimentacoes] = await pool.query(
-      `SELECT m.*, u.nome as usuarioNome FROM movimentacoes m 
-       LEFT JOIN users u ON m.usuario = u.id WHERE m.processoId = ? ORDER BY m.data DESC`,
+      `SELECT m.*, u.nome as usuarioNome, ud.nome as usuarioDestinoNome 
+       FROM movimentacoes m 
+       LEFT JOIN users u ON m.usuario = u.id 
+       LEFT JOIN users ud ON m.usuarioDestino = ud.id 
+       WHERE m.processoId = ? ORDER BY m.data DESC`,
       [req.params.id]
     );
     const [documentos] = await pool.query(
@@ -62,13 +69,24 @@ export const obterProcesso = async (req, res) => {
 
 export const criarProcesso = async (req, res) => {
   try {
-    const { tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id } = req.body;
+    const { tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id, usuarioResponsavel } = req.body;
     const numero = gerarNumeroProcesso();
     const [result] = await pool.query(
-      `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id, criadoPor)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [numero, tipo, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, prioridade || 'normal', prazo || null, especie_id || null, req.user.id]
+      `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [numero, tipo, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id]
     );
+    
+    if (usuarioResponsavel) {
+      await criarNotificacao(
+        usuarioResponsavel,
+        result.insertId,
+        'Novo processo na Caixa de Entrada',
+        `O processo ${numero} foi criado e atribuído a você no setor ${setorAtual}.`,
+        'info',
+        prioridade || 'normal'
+      );
+    }
     
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
@@ -97,20 +115,102 @@ export const atualizarProcesso = async (req, res) => {
 
 export const encaminharProcesso = async (req, res) => {
   try {
-    const { para, parecer } = req.body;
+    const { para, parecer, paraUsuario } = req.body;
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     if (rows.length === 0) {
       return res.status(404).json({ message: 'Processo não encontrado.' });
     }
     const processo = rows[0];
     await pool.query(
-      'INSERT INTO movimentacoes (processoId, de, para, usuario, parecer) VALUES (?, ?, ?, ?, ?)',
-      [req.params.id, processo.setorAtual, para, req.user.id, parecer || null]
+      'INSERT INTO movimentacoes (processoId, de, para, usuarioDestino, usuario, parecer) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.params.id, processo.setorAtual, para, paraUsuario || null, req.user.id, parecer || null]
     );
-    await pool.query('UPDATE processos SET setorAtual = ? WHERE id = ?', [para, req.params.id]);
+    await pool.query(
+      'UPDATE processos SET setorAtual = ?, usuarioResponsavel = ?, situacao = ? WHERE id = ?',
+      [para, paraUsuario || null, 'encaminhado', req.params.id]
+    );
+    
+    if (paraUsuario) {
+      await criarNotificacao(
+        paraUsuario,
+        req.params.id,
+        'Processo encaminhado para você',
+        `O processo ${processo.numero} foi encaminhado para o setor ${para} com você como responsável.`,
+        'info',
+        processo.prioridade || 'normal'
+      );
+    }
     
     const [atualizado] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(atualizado[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const receberProcesso = async (req, res) => {
+  try {
+    await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['recebido', 'tramitando', req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const aprovarProcesso = async (req, res) => {
+  try {
+    await pool.query('UPDATE processos SET situacao = ? WHERE id = ?', ['aprovado', req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const pausarProcesso = async (req, res) => {
+  try {
+    await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['pausado', 'aguardando', req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const arquivarProcesso = async (req, res) => {
+  try {
+    await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['arquivado', 'arquivado', req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const listarCaixaEntrada = async (req, res) => {
+  try {
+    const { situacao } = req.query;
+    const usuarioId = req.user.id;
+    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id WHERE p.usuarioResponsavel = ?';
+    const params = [usuarioId];
+    
+    if (situacao) {
+      sql += ' AND p.situacao = ?';
+      params.push(situacao);
+    } else {
+      sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado')";
+    }
+    sql += ' ORDER BY p.prioridade DESC, p.createdAt DESC';
+    
+    const [processos] = await pool.query(sql, params);
+    
+    const contagemSql = 'SELECT situacao, COUNT(*) as total FROM processos WHERE usuarioResponsavel = ? GROUP BY situacao';
+    const [contagem] = await pool.query(contagemSql, [usuarioId]);
+    const contagemPorSituacao = {};
+    contagem.forEach(c => { contagemPorSituacao[c.situacao] = c.total; });
+    
+    res.json({ processos, contagem: contagemPorSituacao });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
