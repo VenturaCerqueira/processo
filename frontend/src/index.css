@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   --primary: #0f4c81;
@@ -294,6 +293,8 @@ body {
   border: 1px solid var(--gray-200);
   padding: 24px;
   transition: var(--transition);
+  max-width: 100%;
+  overflow: hidden;
 }
 
 @media (hover: hover) {
@@ -1154,6 +1155,141 @@ tr:hover td {
   font-size: 13px;
 }
 
+/* Inbox Status Cards */
+.inbox-status-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.inbox-status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 16px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.inbox-status-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.inbox-status-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.1), var(--shadow-md);
+}
+
+.inbox-status-card.blue .inbox-status-icon { background: var(--info-light); color: var(--info); }
+.inbox-status-card.yellow .inbox-status-icon { background: var(--warning-light); color: var(--warning); }
+.inbox-status-card.green .inbox-status-icon { background: var(--success-light); color: var(--success); }
+.inbox-status-card.purple .inbox-status-icon { background: #f3e8ff; color: #7c3aed; }
+.inbox-status-card.gray .inbox-status-icon { background: var(--gray-100); color: var(--gray-500); }
+.inbox-status-card.red .inbox-status-icon { background: var(--danger-light); color: var(--danger); }
+
+.inbox-status-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inbox-status-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inbox-status-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inbox-status-count {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+}
+
+.inbox-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-top: 4px;
+}
+
+.inbox-status-desc {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 2px;
+}
+
+.inbox-status-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* Inbox Actions */
+.inbox-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.inbox-actions .btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* Button XS */
+.btn-xs {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  gap: 4px;
+}
+
+/* Fade In List */
+@keyframes fadeInList {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-list tr {
+  animation: fadeInList 0.25s ease both;
+}
+
+.fade-in-list tr:nth-child(1) { animation-delay: 0.02s; }
+.fade-in-list tr:nth-child(2) { animation-delay: 0.04s; }
+.fade-in-list tr:nth-child(3) { animation-delay: 0.06s; }
+.fade-in-list tr:nth-child(4) { animation-delay: 0.08s; }
+.fade-in-list tr:nth-child(5) { animation-delay: 0.10s; }
+.fade-in-list tr:nth-child(6) { animation-delay: 0.12s; }
+.fade-in-list tr:nth-child(7) { animation-delay: 0.14s; }
+.fade-in-list tr:nth-child(8) { animation-delay: 0.16s; }
+.fade-in-list tr:nth-child(9) { animation-delay: 0.18s; }
+.fade-in-list tr:nth-child(10) { animation-delay: 0.20s; }
+
 /* Animations */
 @keyframes fadeInUp {
   from {
@@ -1395,40 +1531,120 @@ tr:hover td {
   display: none;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
+/* Inbox Status Responsive */
+.inbox-status-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  overflow: hidden;
+}
+
+.inbox-status-card {
+  flex: unset;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inbox-status-info {
+  overflow: hidden;
+}
+
+.inbox-status-label,
+.inbox-status-desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .inbox-status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
+  .inbox-status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
-  .main-content {
-    margin-left: 0;
-  }
-  .page-content {
-    padding: 16px;
-  }
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  .login-card {
-    padding: 32px 24px;
-  }
-  .welcome-section {
+  .inbox-status-card {
+    padding: 8px 4px;
+    gap: 4px;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    text-align: center;
+    border-radius: 8px;
+    min-width: 0;
   }
-  .card:hover,
-  .stat-card:hover,
-  .btn:hover,
-  .quick-action-card:hover {
-    transform: none;
-    box-shadow: none;
+  .inbox-status-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  .inbox-status-icon svg {
+    width: 12px;
+    height: 12px;
+  }
+  .inbox-status-count {
+    font-size: 16px;
+  }
+  .inbox-status-label {
+    font-size: 10px;
+    margin-top: 1px;
+    white-space: nowrap;
+  }
+  .inbox-status-desc {
+    display: none;
+  }
+  .inbox-actions {
+    justify-content: flex-start;
+    gap: 2px;
+  }
+  .inbox-actions .btn,
+  .btn-xs {
+    padding: 2px 5px;
+    font-size: 9px;
+    border-radius: 4px;
+  }
+  .table-container {
+    font-size: 10px;
+  }
+  th, td {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inbox-status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .inbox-status-card {
+    padding: 6px 3px;
+    gap: 3px;
+    min-width: 0;
+  }
+  .inbox-status-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .inbox-status-icon svg {
+    width: 10px;
+    height: 10px;
+  }
+  .inbox-status-count {
+    font-size: 14px;
+  }
+  .inbox-status-label {
+    font-size: 9px;
+  }
+  .inbox-actions .btn,
+  .btn-xs {
+    padding: 2px 4px;
+    font-size: 8px;
+  }
+  th, td {
+    padding: 5px 6px;
   }
 }
 
