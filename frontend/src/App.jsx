@@ -27,7 +27,16 @@ import ToastContainer from './components/ToastContainer';
 function AppContent() {
   const [user, setUser] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     try {
@@ -40,6 +49,10 @@ function AppContent() {
       localStorage.removeItem('user');
     }
   }, []);
+
+  useEffect(() => {
+    setSidebarMobileOpen(false);
+  }, [location.pathname]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -60,10 +73,10 @@ function AppContent() {
   const isPublicRoute = ['/login', '/primeiro-acesso', '/esqueci-senha', '/redefinir-senha'].includes(location.pathname);
   const appLayoutClass = isPublicRoute || !user
     ? ''
-    : `app-layout${sidebarCollapsed ? ' app-layout-collapsed' : ''}`;
+    : `app-layout${sidebarCollapsed ? ' app-layout-collapsed' : ''}${isMobile ? ' app-layout-mobile' : ''}`;
   const mainContentClass = isPublicRoute || !user
     ? ''
-    : `main-content${sidebarCollapsed ? ' main-content-collapsed' : ''}`;
+    : `main-content${sidebarCollapsed ? ' main-content-collapsed' : ''}${isMobile ? ' main-content-mobile' : ''}`;
 
   return (
     <div className={appLayoutClass}>
@@ -73,10 +86,27 @@ function AppContent() {
           onLogout={handleLogout}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
+          mobileOpen={sidebarMobileOpen}
+          onMobileToggle={() => setSidebarMobileOpen(v => !v)}
+          isMobile={isMobile}
         />
+      )}
+      {sidebarMobileOpen && isMobile && (
+        <div className="sidebar-mobile-overlay" onClick={() => setSidebarMobileOpen(false)} />
       )}
       {user && <ToastContainer />}
       <div className={mainContentClass}>
+        {isMobile && user && !isPublicRoute && (
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setSidebarMobileOpen(v => !v)}
+            aria-label="Abrir menu"
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
         <Routes>
           <Route path="/" element={user ? <Dashboard /> : <LandingPage />} />
           <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />

@@ -181,7 +181,41 @@ function CaixaEntrada() {
     <div className="page-content">
       <div className="top-bar" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          <h2>Caixa de Entrada</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            Caixa de Entrada
+            {user?.nome && (
+              <span style={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 13, 
+                fontWeight: 600, 
+                color: '#1e40af', 
+                background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', 
+                padding: '6px 14px 6px 10px', 
+                borderRadius: 24,
+                border: '1px solid #93c5fd',
+                boxShadow: '0 1px 3px rgba(59, 130, 246, 0.12)',
+                letterSpacing: 0.2
+              }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: '#3b82f6',
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 700
+                }}>
+                  {user.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </span>
+                {user.nome}
+              </span>
+            )}
+          </h2>
           <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 2 }}>Gerencie seus processos por status e execute ações rapidamente</p>
         </div>
         <button className="btn btn-primary" onClick={() => navigate('/processos/novo')}>

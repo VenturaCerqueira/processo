@@ -2075,3 +2075,116 @@ tr:hover td {
   }
 }
 
+
+
+/* =========================================
+   RESPONSIVIDADE GERAL
+   ========================================= */
+
+@media (max-width: 1024px) {
+  .page-content { padding: 24px; }
+  .top-bar { padding: 14px 24px; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .form-row { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .detail-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .welcome-section { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* Mobile (até 767px) */
+@media (max-width: 768px) {
+  .sidebar { width: 260px; transform: translateX(-100%); transition: transform 0.3s ease; z-index: 200; box-shadow: var(--shadow-xl); }
+  .sidebar.collapsed { width: 260px; transform: translateX(-100%); }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-toggle { display: none; }
+  .sidebar-mobile-close { position: absolute; top: 16px; right: 12px; background: rgba(255,255,255,0.1); border: none; color: var(--gray-300); width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
+  .sidebar-mobile-close:hover { background: rgba(255,255,255,0.2); color: var(--white); }
+  .sidebar-mobile-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); z-index: 150; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .main-content, .main-content-collapsed { margin-left: 0; }
+  .mobile-menu-toggle { position: fixed; top: 12px; left: 12px; z-index: 90; background: var(--white); border: 1px solid var(--gray-200); width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow); color: var(--gray-700); transition: var(--transition); }
+  .mobile-menu-toggle:hover { background: var(--gray-50); box-shadow: var(--shadow-md); }
+  .page-content { padding: 16px; padding-top: 56px; }
+  .top-bar { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+  .top-bar h2 { font-size: 18px; }
+  .dashboard-grid { grid-template-columns: 1fr; gap: 16px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { padding: 16px; }
+  .stat-content h3 { font-size: 22px; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; gap: 12px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .welcome-section { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .welcome-title { font-size: 20px; }
+  .modal-content { max-width: 100%; margin: 0 10px; }
+  .modal-header { padding: 20px 20px 0; }
+  .modal-body { padding: 20px; }
+  .modal-footer { padding: 0 20px 20px; }
+  .table-container { font-size: 12px; }
+  th, td { padding: 10px 12px; }
+  .card { padding: 16px; }
+  .card-header { flex-wrap: wrap; gap: 10px; }
+  .breadcrumb { font-size: 12px; margin-bottom: 14px; }
+  .section-title { font-size: 18px; margin-bottom: 16px; }
+  .login-card { padding: 32px 24px; }
+  .notfound-title { font-size: 32px; }
+  .permissoes-editor { grid-template-columns: 1fr; }
+  .toast-container { top: 12px; right: 12px; left: 12px; max-width: none; }
+  .toast-item { min-width: auto; max-width: 100%; padding: 14px 16px; }
+  .toast-icon { width: 36px; height: 36px; }
+}
+
+/* Mobile pequeno (até 480px) */
+@media (max-width: 480px) {
+  .page-content { padding: 12px; padding-top: 52px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 12px; gap: 10px; }
+  .stat-card-top { gap: 10px; }
+  .stat-icon { width: 36px; height: 36px; }
+  .stat-icon svg { width: 18px; height: 18px; }
+  .stat-content h3 { font-size: 18px; }
+  .stat-content p { font-size: 11px; }
+  .quick-actions { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .quick-action-card { padding: 12px; font-size: 11px; gap: 8px; }
+  .quick-action-icon { width: 32px; height: 32px; }
+  .quick-action-icon svg { width: 16px; height: 16px; }
+  .top-bar { padding: 10px 12px; }
+  .top-bar h2 { font-size: 16px; }
+  .card { padding: 14px; }
+  .table-container { font-size: 11px; }
+  th, td { padding: 8px 10px; }
+  .btn { padding: 8px 14px; font-size: 13px; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .welcome-title { font-size: 18px; }
+  .welcome-date { font-size: 12px; }
+  .section-title { font-size: 16px; }
+  .inbox-status-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .inbox-status-card { padding: 10px 6px; gap: 6px; flex-direction: column; align-items: center; text-align: center; }
+  .inbox-status-icon { width: 28px; height: 28px; }
+  .inbox-status-icon svg { width: 14px; height: 14px; }
+  .inbox-status-count { font-size: 18px; }
+  .inbox-status-label { font-size: 10px; }
+  .inbox-status-desc { display: none; }
+  .modal-content { margin: 0 6px; border-radius: var(--radius); }
+  .modal-header { padding: 16px 16px 0; }
+  .modal-header h3 { font-size: 16px; }
+  .modal-body { padding: 16px; }
+  .modal-footer { padding: 0 16px 16px; flex-wrap: wrap; justify-content: center; }
+  .modal-footer .btn { flex: 1; min-width: 100px; }
+  .login-card { padding: 24px 16px; }
+  .login-card h2 { font-size: 20px; }
+  .detail-grid { gap: 12px; }
+  .dashboard-table td { padding: 10px 12px; font-size: 12px; }
+  .priority-item { padding: 10px; gap: 8px; }
+  .priority-dot { width: 8px; height: 8px; }
+  .priority-number { font-size: 12px; }
+  .priority-meta { font-size: 11px; }
+  .form-control { padding: 8px 12px; font-size: 13px; }
+  .form-group label { font-size: 13px; }
+  .empty-state { padding: 40px 16px; }
+  .empty-state svg { width: 48px; height: 48px; }
+  .empty-state h4 { font-size: 14px; }
+  .empty-state p { font-size: 12px; }
+  .search-box { flex-direction: column; gap: 8px; }
+  .search-box input { width: 100%; }
+}

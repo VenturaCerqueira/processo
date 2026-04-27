@@ -44,7 +44,7 @@ const userItemsBase = [
   )},
 ];
 
-function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
+function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMobileToggle, isMobile }) {
   const location = useLocation();
   const isCadastroRoute = location.pathname.startsWith('/cadastros');
   const [openGroups, setOpenGroups] = useState({ cadastros: isCadastroRoute, usuario: false });
@@ -88,7 +88,18 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse }) {
   ];
 
   return (
-    <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
+    <aside className={`sidebar${collapsed ? ' collapsed' : ''}${mobileOpen ? ' mobile-open' : ''}`}>
+      {isMobile && (
+        <button
+          className="sidebar-mobile-close"
+          onClick={onMobileToggle}
+          title="Fechar menu"
+        >
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
       <button
         className="sidebar-toggle"
         onClick={onToggleCollapse}
