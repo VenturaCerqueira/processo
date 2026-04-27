@@ -219,7 +219,7 @@ export const listarCaixaEntrada = async (req, res) => {
       sql += ' AND p.situacao = ?';
       params.push(situacao);
     } else {
-      sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado')";
+      sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado', 'arquivado', 'indeferido')";
     }
     sql += ' ORDER BY p.prioridade DESC, p.createdAt DESC';
     
