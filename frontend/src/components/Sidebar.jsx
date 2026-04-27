@@ -59,7 +59,7 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
         const meus = processos.filter(p => p.usuarioResponsavel === user.id || p.usuarioResponsavel == user.id);
         setNotificacoes({
           encaminhado: meus.filter(p => p.situacao === 'encaminhado').length,
-          recebido: meus.filter(p => p.situacao === 'recebido').length,
+          recebido: meus.filter(p => p.situacao === 'recebido' || p.situacao === 'retornado').length,
           pausado: meus.filter(p => p.situacao === 'pausado').length,
         });
       } catch (error) {

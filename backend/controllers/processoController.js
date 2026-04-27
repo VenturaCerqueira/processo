@@ -172,6 +172,69 @@ export const receberProcesso = async (req, res) => {
   }
 };
 
+export const voltarProcesso = async (req, res) => {
+  try {
+    const { observacao } = req.body;
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Processo não encontrado.' });
+    }
+    const processo = rows[0];
+    if (processo.situacao !== 'encaminhado') {
+      return res.status(400).json({ message: 'O processo não está em situação de encaminhado.' });
+    }
+
+    // Buscar a última movimentação para saber de onde veio
+    const [movimentacoes] = await pool.query(
+      'SELECT * FROM movimentacoes WHERE processoId = ? ORDER BY data DESC LIMIT 1',
+      [req.params.id]
+    );
+    if (movimentacoes.length === 0) {
+      return res.status(400).json({ message: 'Nenhuma movimentação encontrada para este processo.' });
+    }
+    const ultimaMov = movimentacoes[0];
+
+    const parecer = observacao ? `Processo devolvido: ${observacao}` : 'Processo devolvido ao remetente';
+
+    // Inserir movimentação de retorno
+    await pool.query(
+      'INSERT INTO movimentacoes (processoId, de, para, usuarioDestino, usuario, parecer) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.params.id, processo.setorAtual, ultimaMov.de, ultimaMov.usuario, req.user.id, parecer]
+    );
+
+    // Atualizar processo: voltar para o setor e usuário de origem com situacao retornado
+    await pool.query(
+      'UPDATE processos SET setorAtual = ?, usuarioResponsavel = ?, situacao = ? WHERE id = ?',
+      [ultimaMov.de, ultimaMov.usuario, 'retornado', req.params.id]
+    );
+
+    // Registrar observacao do retorno
+    if (observacao) {
+      await pool.query(
+        'INSERT INTO observacoes (processoId, texto, usuario) VALUES (?, ?, ?)',
+        [req.params.id, observacao, req.user.id]
+      );
+    }
+
+    // Notificar o usuário de origem
+    if (ultimaMov.usuario) {
+      await criarNotificacao(
+        ultimaMov.usuario,
+        req.params.id,
+        'Processo devolvido',
+        `O processo ${processo.numero} foi devolvido para o setor ${ultimaMov.de}.`,
+        'warning',
+        processo.prioridade || 'normal'
+      );
+    }
+
+    const [atualizado] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(atualizado[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const aprovarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ? WHERE id = ?', ['aprovado', req.params.id]);
@@ -223,7 +286,7 @@ export const listarCaixaEntrada = async (req, res) => {
       sql += ' AND p.situacao = ?';
       params.push(situacao);
     } else {
-      sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado', 'arquivado', 'indeferido')";
+      sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado', 'arquivado', 'indeferido', 'retornado')";
     }
     sql += ' ORDER BY favorito DESC, p.prioridade DESC, p.createdAt DESC';
     

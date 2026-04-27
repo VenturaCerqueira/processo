@@ -6,6 +6,7 @@ import {
   atualizarProcesso,
   encaminharProcesso,
   receberProcesso,
+  voltarProcesso,
   aprovarProcesso,
   pausarProcesso,
   arquivarProcesso,
@@ -28,6 +29,7 @@ router.post('/', auth, criarProcesso);
 router.put('/:id', auth, atualizarProcesso);
 router.post('/:id/encaminhar', auth, encaminharProcesso);
 router.post('/:id/receber', auth, receberProcesso);
+router.post('/:id/voltar', auth, voltarProcesso);
 router.post('/:id/aprovar', auth, aprovarProcesso);
 router.post('/:id/pausar', auth, pausarProcesso);
 router.post('/:id/arquivar', auth, arquivarProcesso);

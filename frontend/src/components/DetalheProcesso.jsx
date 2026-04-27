@@ -132,9 +132,12 @@ function DetalheProcesso() {
             Criar Processo Filho
           </button>
           {processo.situacao === 'encaminhado' && (
-            <button className="btn btn-success" onClick={() => handleSituacaoAcao('receber')}>Receber</button>
+            <>
+              <button className="btn btn-success" onClick={() => handleSituacaoAcao('receber')}>Receber</button>
+              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('voltar')}>Voltar Processo</button>
+            </>
           )}
-          {processo.situacao === 'recebido' && (
+          {(processo.situacao === 'recebido' || processo.situacao === 'retornado') && (
             <>
               <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Aprovar</button>
               <button className="btn btn-danger" onClick={() => handleSituacaoAcao('indeferir')}>Indeferir</button>

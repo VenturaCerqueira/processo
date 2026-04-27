@@ -362,6 +362,7 @@ body {
 .stat-icon.yellow { background: var(--warning-light); color: var(--warning); }
 .stat-icon.red { background: var(--danger-light); color: var(--danger); }
 .stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+.stat-icon.orange { background: #fff7ed; color: #ea580c; }
 
 .stat-content h3 {
   font-size: 28px;
@@ -575,6 +576,8 @@ tr:hover td {
 .badge-aprovado::before { background: var(--success); }
 .badge-pausado { background: #f3e8ff; color: #7c3aed; }
 .badge-pausado::before { background: #7c3aed; }
+.badge-retornado { background: #fff7ed; color: #ea580c; }
+.badge-retornado::before { background: #ea580c; }
 
 /* Alerts */
 .alert {
@@ -1195,6 +1198,7 @@ tr:hover td {
 .inbox-status-card.purple .inbox-status-icon { background: #f3e8ff; color: #7c3aed; }
 .inbox-status-card.gray .inbox-status-icon { background: var(--gray-100); color: var(--gray-500); }
 .inbox-status-card.red .inbox-status-icon { background: var(--danger-light); color: var(--danger); }
+.inbox-status-card.orange .inbox-status-icon { background: #fff7ed; color: #ea580c; }
 
 .inbox-status-icon {
   width: 40px;
@@ -1516,6 +1520,8 @@ tr:hover td {
 .sidebar-submenu-badge.yellow { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 .sidebar-submenu-badge.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 .sidebar-submenu-badge.green { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.sidebar-submenu-dot.orange { background: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
+.sidebar-submenu-badge.orange { background: rgba(249, 115, 22, 0.15); color: #fb923c; }
 
 /* Sidebar Groups */
 .sidebar-group {

@@ -178,7 +178,9 @@ function CaixaEntrada() {
   };
 
   const processosFiltrados = processos.filter(p => {
-    const matchTab = p.situacao === tabAtiva;
+    const matchTab = tabAtiva === 'recebido'
+      ? (p.situacao === 'recebido' || p.situacao === 'retornado')
+      : p.situacao === tabAtiva;
     const matchBusca = !busca ||
       (p.numero && p.numero.toLowerCase().includes(busca.toLowerCase())) ||
       (p.requerente && p.requerente.toLowerCase().includes(busca.toLowerCase())) ||
@@ -188,7 +190,10 @@ function CaixaEntrada() {
     return matchTab && matchBusca && matchPrioridade && matchFavorito;
   });
 
-  const totalAba = processos.filter(p => p.situacao === tabAtiva).length;
+  const totalAba = processos.filter(p => {
+    if (tabAtiva === 'recebido') return p.situacao === 'recebido' || p.situacao === 'retornado';
+    return p.situacao === tabAtiva;
+  }).length;
 
   const toggleFavorito = async (processoId) => {
     try {
@@ -247,13 +252,16 @@ function CaixaEntrada() {
     const iconObs = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>;
     const iconReabrir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
     const iconRetomar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+    const iconVoltar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>;
 
     switch (p.situacao) {
       case 'encaminhado':
         return [
           { label: 'Receber', variant: 'success', icon: iconReceber, onClick: () => executarAcao('receber', p.id) },
+          { label: 'Voltar', variant: 'warning', icon: iconVoltar, onClick: () => executarAcao('voltar', p.id) },
         ];
       case 'recebido':
+      case 'retornado':
         return [
           { label: 'Encaminhar', variant: 'primary', icon: iconEncaminhar, onClick: () => abrirEncaminhar(p) },
           { label: 'Aprovar', variant: 'success', icon: iconAprovar, onClick: () => executarAcao('aprovar', p.id) },

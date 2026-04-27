@@ -64,7 +64,7 @@ function Dashboard() {
         });
         setCaixaResumo({
           encaminhado: meusProcessos.filter(p => p.situacao === 'encaminhado').length,
-          recebido: meusProcessos.filter(p => p.situacao === 'recebido').length,
+          recebido: meusProcessos.filter(p => p.situacao === 'recebido' || p.situacao === 'retornado').length,
           aprovado: meusProcessos.filter(p => p.situacao === 'aprovado').length,
           pausado: meusProcessos.filter(p => p.situacao === 'pausado').length,
           arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length,
