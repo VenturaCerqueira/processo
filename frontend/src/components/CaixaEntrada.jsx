@@ -10,7 +10,7 @@ import api from '../api';
 function ActionsDropdown({ actions }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
-  const menuStyle = useRef({ top: 0, left: 0 });
+  const [menuStyle, setMenuStyle] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     if (open && btnRef.current) {
@@ -29,14 +29,14 @@ function ActionsDropdown({ actions }) {
         top = rect.top - menuHeight - 6;
       }
 
-      menuStyle.current = {
+      setMenuStyle({
         position: 'fixed',
         top,
         left: rect.left + rect.width / 2,
         transform: 'translateX(-50%)',
         minWidth: 170,
         zIndex: 99999,
-      };
+      });
     }
   }, [open, actions.length]);
 
@@ -81,14 +81,15 @@ function ActionsDropdown({ actions }) {
 
       {open &&
         createPortal(
-          <div className="actions-dropdown-fixed-menu" style={menuStyle.current}>
+          <div className="actions-dropdown-fixed-menu" style={menuStyle}>
             {actions.map((a, i) => (
               <button
                 key={i}
                 className={`actions-dropdown-item ${a.variant ? `item-${a.variant}` : ''}`}
                 onClick={() => { setOpen(false); a.onClick(); }}
               >
-                {a.label}
+                {a.icon && <span className="actions-dropdown-item-icon">{a.icon}</span>}
+                <span>{a.label}</span>
               </button>
             ))}
           </div>,
@@ -237,34 +238,44 @@ function CaixaEntrada() {
   };
 
   const acoesPorSituacao = (p) => {
+    const iconReceber = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>;
+    const iconEncaminhar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 12h14"/></svg>;
+    const iconAprovar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+    const iconIndeferir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>;
+    const iconPausar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+    const iconArquivar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>;
+    const iconObs = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>;
+    const iconReabrir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
+    const iconRetomar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+
     switch (p.situacao) {
       case 'encaminhado':
         return [
-          { label: 'Receber', variant: 'success', onClick: () => executarAcao('receber', p.id) },
+          { label: 'Receber', variant: 'success', icon: iconReceber, onClick: () => executarAcao('receber', p.id) },
         ];
       case 'recebido':
         return [
-          { label: 'Encaminhar', variant: 'primary', onClick: () => abrirEncaminhar(p) },
-          { label: 'Aprovar', variant: 'success', onClick: () => executarAcao('aprovar', p.id) },
-          { label: 'Indeferir', variant: 'danger', onClick: () => executarAcao('indeferir', p.id) },
-          { label: 'Pausar', variant: 'warning', onClick: () => executarAcao('pausar', p.id) },
-          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
-          { label: 'Observação', variant: 'secondary', onClick: () => abrirObservacao(p) },
+          { label: 'Encaminhar', variant: 'primary', icon: iconEncaminhar, onClick: () => abrirEncaminhar(p) },
+          { label: 'Aprovar', variant: 'success', icon: iconAprovar, onClick: () => executarAcao('aprovar', p.id) },
+          { label: 'Indeferir', variant: 'danger', icon: iconIndeferir, onClick: () => executarAcao('indeferir', p.id) },
+          { label: 'Pausar', variant: 'warning', icon: iconPausar, onClick: () => executarAcao('pausar', p.id) },
+          { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
+          { label: 'Observação', variant: 'secondary', icon: iconObs, onClick: () => abrirObservacao(p) },
         ];
       case 'aprovado':
         return [
-          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
-          { label: 'Reabrir', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
+          { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
+          { label: 'Reabrir', variant: 'primary', icon: iconReabrir, onClick: () => executarAcao('receber', p.id) },
         ];
       case 'pausado':
         return [
-          { label: 'Retomar', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
-          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
+          { label: 'Retomar', variant: 'primary', icon: iconRetomar, onClick: () => executarAcao('receber', p.id) },
+          { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
         ];
       case 'arquivado':
       case 'indeferido':
         return [
-          { label: 'Reabrir', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
+          { label: 'Reabrir', variant: 'primary', icon: iconReabrir, onClick: () => executarAcao('receber', p.id) },
         ];
       default:
         return [];
