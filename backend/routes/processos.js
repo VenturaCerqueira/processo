@@ -12,7 +12,8 @@ import {
   indeferirProcesso,
   listarCaixaEntrada,
   adicionarObservacao,
-  relatorioAndamento
+  relatorioAndamento,
+  favoritarProcesso
 } from '../controllers/processoController.js';
 import { auth } from '../middleware/auth.js';
 
@@ -31,6 +32,7 @@ router.post('/:id/pausar', auth, pausarProcesso);
 router.post('/:id/arquivar', auth, arquivarProcesso);
 router.post('/:id/indeferir', auth, indeferirProcesso);
 router.post('/:id/observacao', auth, adicionarObservacao);
+router.post('/:id/favoritar', auth, favoritarProcesso);
 
 export default router;
 

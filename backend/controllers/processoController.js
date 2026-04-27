@@ -212,8 +212,8 @@ export const listarCaixaEntrada = async (req, res) => {
   try {
     const { situacao } = req.query;
     const usuarioId = req.user.id;
-    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id WHERE p.usuarioResponsavel = ?';
-    const params = [usuarioId];
+    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome, CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as favorito FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id LEFT JOIN favoritos f ON f.processoId = p.id AND f.usuarioId = ? WHERE p.usuarioResponsavel = ?';
+    const params = [usuarioId, usuarioId];
     
     if (situacao) {
       sql += ' AND p.situacao = ?';
@@ -221,7 +221,7 @@ export const listarCaixaEntrada = async (req, res) => {
     } else {
       sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado', 'arquivado', 'indeferido')";
     }
-    sql += ' ORDER BY p.prioridade DESC, p.createdAt DESC';
+    sql += ' ORDER BY favorito DESC, p.prioridade DESC, p.createdAt DESC';
     
     const [processos] = await pool.query(sql, params);
     
@@ -231,6 +231,34 @@ export const listarCaixaEntrada = async (req, res) => {
     contagem.forEach(c => { contagemPorSituacao[c.situacao] = c.total; });
     
     res.json({ processos, contagem: contagemPorSituacao });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const favoritarProcesso = async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    const processoId = req.params.id;
+    
+    const [existing] = await pool.query(
+      'SELECT id FROM favoritos WHERE usuarioId = ? AND processoId = ?',
+      [usuarioId, processoId]
+    );
+    
+    if (existing.length > 0) {
+      await pool.query(
+        'DELETE FROM favoritos WHERE usuarioId = ? AND processoId = ?',
+        [usuarioId, processoId]
+      );
+      res.json({ favorito: false });
+    } else {
+      await pool.query(
+        'INSERT INTO favoritos (usuarioId, processoId) VALUES (?, ?)',
+        [usuarioId, processoId]
+      );
+      res.json({ favorito: true });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

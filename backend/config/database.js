@@ -306,6 +306,18 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS favoritos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        usuarioId INT NOT NULL,
+        processoId INT NOT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_favorito (usuarioId, processoId),
+        FOREIGN KEY (usuarioId) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (processoId) REFERENCES processos(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     try {
       await connection.query(`ALTER TABLE notificacoes ADD COLUMN prioridade VARCHAR(50) DEFAULT 'normal'`);
     } catch {
