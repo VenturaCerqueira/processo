@@ -127,6 +127,10 @@ function DetalheProcesso() {
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             Observação
           </button>
+          <button className="btn btn-info" onClick={() => navigate(`/processos/novo?processoPaiId=${processo.id}`)}>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            Criar Processo Filho
+          </button>
           {processo.situacao === 'encaminhado' && (
             <button className="btn btn-success" onClick={() => handleSituacaoAcao('receber')}>Receber</button>
           )}
@@ -205,7 +209,7 @@ function DetalheProcesso() {
         )}
       </div>
 
-      <div className="card">
+      <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header"><span className="card-title">Observações ({processo.observacoes?.length || 0})</span></div>
         {(!processo.observacoes || processo.observacoes.length === 0) ? (
           <div className="empty-state" style={{ padding: 32 }}>
@@ -219,6 +223,32 @@ function DetalheProcesso() {
               <p style={{ color: 'var(--gray-400)', fontSize: 12, marginTop: 6 }}>Por {obs.usuarioNome || 'N/A'} em {new Date(obs.data).toLocaleDateString('pt-BR')}</p>
             </div>
           ))}</div>
+        )}
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header"><span className="card-title">Processos Filhos ({processo.filhos?.length || 0})</span></div>
+        {(!processo.filhos || processo.filhos.length === 0) ? (
+          <div className="empty-state" style={{ padding: 32 }}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+            <h4>Nenhum processo filho</h4>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table>
+              <thead><tr><th>Número</th><th>Tipo</th><th>Assunto</th><th>Status</th><th>Situação</th><th>Data</th></tr></thead>
+              <tbody>{processo.filhos.map((f, i) => (
+                <tr key={i}>
+                  <td><Link to={`/processos/${f.id}`} className="table-link">{f.numero}</Link></td>
+                  <td>{f.tipo}</td>
+                  <td>{f.assunto}</td>
+                  <td><span className={`badge badge-${f.status}`}>{f.status}</span></td>
+                  <td><span className={`badge badge-${f.situacao}`}>{f.situacao}</span></td>
+                  <td>{new Date(f.createdAt).toLocaleDateString('pt-BR')}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
         )}
       </div>
 

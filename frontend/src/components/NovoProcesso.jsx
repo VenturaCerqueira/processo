@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
 
 function NovoProcesso() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const processoPaiId = searchParams.get('processoPaiId');
+
   const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '', especie_id: '' });
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,6 +15,7 @@ function NovoProcesso() {
   const [prioridades, setPrioridades] = useState([]);
   const [requerentes, setRequerentes] = useState([]);
   const [especies, setEspecies] = useState([]);
+  const [processoPai, setProcessoPai] = useState(null);
 
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
 
@@ -33,7 +37,24 @@ function NovoProcesso() {
       } catch (error) { console.error('Erro ao carregar opcoes:', error); }
     }
     carregarOpcoes();
-  }, []);
+
+    async function carregarProcessoPai() {
+      if (!processoPaiId) return;
+      try {
+        const { data } = await api.get(`/processos/${processoPaiId}`);
+        setProcessoPai(data);
+        setForm(prev => ({
+          ...prev,
+          requerente: data.requerente || '',
+          cpfCnpj: data.cpfCnpj || '',
+          endereco: data.endereco || '',
+          telefone: data.telefone || '',
+          email: data.email || ''
+        }));
+      } catch (error) { console.error('Erro ao carregar processo pai:', error); }
+    }
+    carregarProcessoPai();
+  }, [processoPaiId]);
 
   const calcularPrazo = (dias, diasUteis) => {
     if (!dias) return '';
@@ -74,7 +95,9 @@ function NovoProcesso() {
     setLoading(true);
     setErro('');
     try {
-      const response = await api.post('/processos', form);
+      const response = processoPaiId
+        ? await api.post(`/processos/${processoPaiId}/filho`, form)
+        : await api.post('/processos', form);
       navigate(`/processos/${response.data.id}`);
     } catch (error) { setErro(error.response?.data?.message || 'Erro ao criar processo'); }
     finally { setLoading(false); }
@@ -87,7 +110,15 @@ function NovoProcesso() {
         <span>/</span>
         <span>Novo Processo</span>
       </div>
-      <h2 className="section-title">Novo Processo</h2>
+      <h2 className="section-title">{processoPaiId ? `Novo Processo Filho (Pai: ${processoPai?.numero || processoPaiId})` : 'Novo Processo'}</h2>
+      {processoPai && (
+        <div className="alert alert-info" style={{ marginBottom: 16 }}>
+          <strong>Processo Pai:</strong>{' '}
+          <Link to={`/processos/${processoPai.id}`}>{processoPai.numero}</Link> — {processoPai.assunto}
+          <br />
+          <span style={{ fontSize: 12 }}>Os dados do requerente serão copiados automaticamente.</span>
+        </div>
+      )}
       {erro && <div className="alert alert-danger">{erro}</div>}
       <div className="card">
         <form onSubmit={handleSubmit}>

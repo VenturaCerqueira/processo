@@ -60,8 +60,12 @@ export const obterProcesso = async (req, res) => {
        LEFT JOIN users u ON o.usuario = u.id WHERE o.processoId = ? ORDER BY o.data DESC`,
       [req.params.id]
     );
+    const [filhos] = await pool.query(
+      `SELECT id, numero, tipo, assunto, status, situacao, createdAt FROM processos WHERE processoPaiId = ? ORDER BY createdAt DESC`,
+      [req.params.id]
+    );
     
-    res.json({ ...processo, movimentacoes, documentos, observacoes });
+    res.json({ ...processo, movimentacoes, documentos, observacoes, filhos });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -273,6 +277,42 @@ export const adicionarObservacao = async (req, res) => {
     );
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const criarProcessoFilho = async (req, res) => {
+  try {
+    const processoPaiId = req.params.id;
+    const [paiRows] = await pool.query('SELECT * FROM processos WHERE id = ?', [processoPaiId]);
+    if (paiRows.length === 0) {
+      return res.status(404).json({ message: 'Processo pai não encontrado.' });
+    }
+    const pai = paiRows[0];
+
+    const { tipo, assunto, descricao, setorAtual, prioridade, prazo, especie_id, usuarioResponsavel } = req.body;
+    const numero = gerarNumeroProcesso();
+
+    const [result] = await pool.query(
+      `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor, processoPaiId)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [numero, tipo, assunto, pai.requerente, pai.cpfCnpj || null, pai.endereco || null, pai.telefone || null, pai.email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id, processoPaiId]
+    );
+
+    if (usuarioResponsavel) {
+      await criarNotificacao(
+        usuarioResponsavel,
+        result.insertId,
+        'Novo processo filho na Caixa de Entrada',
+        `O processo filho ${numero} foi criado a partir do processo ${pai.numero} e atribuído a você no setor ${setorAtual}.`,
+        'info',
+        prioridade || 'normal'
+      );
+    }
+
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);
+    res.status(201).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

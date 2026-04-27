@@ -269,6 +269,19 @@ export async function initDatabase() {
       // Constraint ja existe ou erro nao critico
     }
 
+    // Adicionar processoPaiId na tabela processos se nao existir
+    try {
+      await connection.query(`ALTER TABLE processos ADD COLUMN processoPaiId INT NULL`);
+    } catch {
+      // Coluna ja existe ou erro nao critico
+    }
+
+    try {
+      await connection.query(`ALTER TABLE processos ADD CONSTRAINT fk_processo_pai FOREIGN KEY (processoPaiId) REFERENCES processos(id)`);
+    } catch {
+      // Constraint ja existe ou erro nao critico
+    }
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS requerentes (
         id INT AUTO_INCREMENT PRIMARY KEY,
