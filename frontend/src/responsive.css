@@ -997,6 +997,22 @@
     padding: 10px;
     padding-top: 50px;
   }
+
+  .actions-dropdown-menu {
+    right: 0;
+    left: auto;
+    min-width: 130px;
+  }
+
+  .actions-dropdown-toggle {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .actions-dropdown-item {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
 }
 
 /* Suporte a telas super-ultrawide (3440px+) */

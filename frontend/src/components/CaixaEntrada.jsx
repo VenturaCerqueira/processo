@@ -1,6 +1,102 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
+
+/* =========================================================
+   Dropdown de Ações — reutilizável por linha da tabela
+   Usa position:fixed para nunca ser cortado pela tabela.
+   ========================================================= */
+function ActionsDropdown({ actions }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef(null);
+  const menuStyle = useRef({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const btn = btnRef.current;
+      const rect = btn.getBoundingClientRect();
+      const menuHeight = Math.min(actions.length * 38 + 8, 320); // estimativa
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      let top;
+      if (spaceBelow >= menuHeight || spaceBelow >= spaceAbove) {
+        // abre para baixo
+        top = rect.bottom + 6;
+      } else {
+        // abre para cima
+        top = rect.top - menuHeight - 6;
+      }
+
+      menuStyle.current = {
+        position: 'fixed',
+        top,
+        left: rect.left + rect.width / 2,
+        transform: 'translateX(-50%)',
+        minWidth: 170,
+        zIndex: 99999,
+      };
+    }
+  }, [open, actions.length]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (btnRef.current && !btnRef.current.contains(e.target)) {
+        const menu = document.querySelector('.actions-dropdown-fixed-menu');
+        if (menu && menu.contains(e.target)) return; // clique dentro do menu
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [open]);
+
+  if (!actions || actions.length === 0) return null;
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        className="actions-dropdown-toggle"
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        style={{ position: 'relative', zIndex: open ? 99998 : undefined }}
+      >
+        <span>Ações</span>
+        <svg
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open &&
+        createPortal(
+          <div className="actions-dropdown-fixed-menu" style={menuStyle.current}>
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                className={`actions-dropdown-item ${a.variant ? `item-${a.variant}` : ''}`}
+                onClick={() => { setOpen(false); a.onClick(); }}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
 
 const situacoes = [
   { key: 'encaminhado', label: 'Encaminhado', color: 'blue',
@@ -132,48 +228,37 @@ function CaixaEntrada() {
   };
 
   const acoesPorSituacao = (p) => {
-    const baseBtn = 'btn btn-xs';
     switch (p.situacao) {
       case 'encaminhado':
-        return (
-          <div className="inbox-actions">
-            <button className={`${baseBtn} btn-success`} onClick={() => executarAcao('receber', p.id)}>Receber</button>
-          </div>
-        );
+        return [
+          { label: 'Receber', variant: 'success', onClick: () => executarAcao('receber', p.id) },
+        ];
       case 'recebido':
-        return (
-          <div className="inbox-actions">
-            <button className={`${baseBtn} btn-primary`} onClick={() => abrirEncaminhar(p)}>Encaminhar</button>
-            <button className={`${baseBtn} btn-success`} onClick={() => executarAcao('aprovar', p.id)}>Aprovar</button>
-            <button className={`${baseBtn} btn-danger`} onClick={() => executarAcao('indeferir', p.id)}>Indeferir</button>
-            <button className={`${baseBtn} btn-warning`} onClick={() => executarAcao('pausar', p.id)}>Pausar</button>
-            <button className={`${baseBtn} btn-secondary`} onClick={() => executarAcao('arquivar', p.id)}>Arquivar</button>
-            <button className={`${baseBtn} btn-secondary`} onClick={() => abrirObservacao(p)}>Observação</button>
-          </div>
-        );
+        return [
+          { label: 'Encaminhar', variant: 'primary', onClick: () => abrirEncaminhar(p) },
+          { label: 'Aprovar', variant: 'success', onClick: () => executarAcao('aprovar', p.id) },
+          { label: 'Indeferir', variant: 'danger', onClick: () => executarAcao('indeferir', p.id) },
+          { label: 'Pausar', variant: 'warning', onClick: () => executarAcao('pausar', p.id) },
+          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
+          { label: 'Observação', variant: 'secondary', onClick: () => abrirObservacao(p) },
+        ];
       case 'aprovado':
-        return (
-          <div className="inbox-actions">
-            <button className={`${baseBtn} btn-secondary`} onClick={() => executarAcao('arquivar', p.id)}>Arquivar</button>
-            <button className={`${baseBtn} btn-primary`} onClick={() => executarAcao('receber', p.id)}>Reabrir</button>
-          </div>
-        );
+        return [
+          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
+          { label: 'Reabrir', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
+        ];
       case 'pausado':
-        return (
-          <div className="inbox-actions">
-            <button className={`${baseBtn} btn-primary`} onClick={() => executarAcao('receber', p.id)}>Retomar</button>
-            <button className={`${baseBtn} btn-secondary`} onClick={() => executarAcao('arquivar', p.id)}>Arquivar</button>
-          </div>
-        );
+        return [
+          { label: 'Retomar', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
+          { label: 'Arquivar', variant: 'secondary', onClick: () => executarAcao('arquivar', p.id) },
+        ];
       case 'arquivado':
       case 'indeferido':
-        return (
-          <div className="inbox-actions">
-            <button className={`${baseBtn} btn-primary`} onClick={() => executarAcao('receber', p.id)}>Reabrir</button>
-          </div>
-        );
+        return [
+          { label: 'Reabrir', variant: 'primary', onClick: () => executarAcao('receber', p.id) },
+        ];
       default:
-        return null;
+        return [];
     }
   };
 
@@ -312,7 +397,7 @@ function CaixaEntrada() {
                     <td><span className={`badge badge-${p.situacao}`}>{p.situacao}</span></td>
                     <td>{p.setorAtual}</td>
                     <td>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</td>
-                    <td>{acoesPorSituacao(p)}</td>
+                    <td><ActionsDropdown actions={acoesPorSituacao(p)} /></td>
                   </tr>
                 ))
               )}
