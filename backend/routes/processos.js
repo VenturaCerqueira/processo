@@ -15,7 +15,8 @@ import {
   adicionarObservacao,
   relatorioAndamento,
   favoritarProcesso,
-  criarProcessoFilho
+  criarProcessoFilho,
+  excluirProcesso
 } from '../controllers/processoController.js';
 import { auth } from '../middleware/auth.js';
 
@@ -36,6 +37,7 @@ router.post('/:id/arquivar', auth, arquivarProcesso);
 router.post('/:id/indeferir', auth, indeferirProcesso);
 router.post('/:id/observacao', auth, adicionarObservacao);
 router.post('/:id/favoritar', auth, favoritarProcesso);
+router.post('/:id/excluir', auth, excluirProcesso);
 router.post('/:id/filho', auth, criarProcessoFilho);
 
 export default router;

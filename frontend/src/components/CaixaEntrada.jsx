@@ -146,6 +146,12 @@ function CaixaEntrada() {
   const [processoObs, setProcessoObs] = useState(null);
   const [textoObs, setTextoObs] = useState('');
 
+  // Modal excluir
+  const [mostrarExcluir, setMostrarExcluir] = useState(false);
+  const [processoExcluir, setProcessoExcluir] = useState(null);
+  const [numeroConfirmacao, setNumeroConfirmacao] = useState('');
+  const [excluindo, setExcluindo] = useState(false);
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) { try { setUser(JSON.parse(storedUser)); } catch { setUser(null); } }
@@ -242,6 +248,31 @@ function CaixaEntrada() {
     } catch { alert('Erro ao adicionar observação'); }
   };
 
+  const abrirExcluir = (processo) => {
+    setProcessoExcluir(processo);
+    setNumeroConfirmacao('');
+    setMostrarExcluir(true);
+  };
+
+  const handleExcluir = async (e) => {
+    e.preventDefault();
+    if (!processoExcluir) return;
+    if (numeroConfirmacao.trim() !== processoExcluir.numero) {
+      alert('O número do processo não confere. Digite exatamente o número exibido.');
+      return;
+    }
+    setExcluindo(true);
+    try {
+      await api.post(`/processos/${processoExcluir.id}/excluir`);
+      setMostrarExcluir(false); setProcessoExcluir(null); setNumeroConfirmacao('');
+      carregarProcessos();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Erro ao excluir processo');
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
   const acoesPorSituacao = (p) => {
     const iconReceber = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>;
     const iconEncaminhar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 12h14"/></svg>;
@@ -251,6 +282,7 @@ function CaixaEntrada() {
     const iconArquivar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>;
     const iconObs = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>;
     const iconReabrir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
+    const iconExcluir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
     const iconRetomar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
     const iconVoltar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>;
 
@@ -259,6 +291,7 @@ function CaixaEntrada() {
         return [
           { label: 'Receber', variant: 'success', icon: iconReceber, onClick: () => executarAcao('receber', p.id) },
           { label: 'Voltar', variant: 'warning', icon: iconVoltar, onClick: () => executarAcao('voltar', p.id) },
+          { label: 'Excluir', variant: 'danger', icon: iconExcluir, onClick: () => abrirExcluir(p) },
         ];
       case 'recebido':
       case 'retornado':
@@ -269,6 +302,7 @@ function CaixaEntrada() {
           { label: 'Pausar', variant: 'warning', icon: iconPausar, onClick: () => executarAcao('pausar', p.id) },
           { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
           { label: 'Observação', variant: 'secondary', icon: iconObs, onClick: () => abrirObservacao(p) },
+          { label: 'Excluir', variant: 'danger', icon: iconExcluir, onClick: () => abrirExcluir(p) },
         ];
       case 'aprovado':
         return [
@@ -526,6 +560,100 @@ function CaixaEntrada() {
               <button className="btn btn-secondary" onClick={() => setMostrarObs(false)}>Cancelar</button>
               <button className="btn btn-primary" form="form-obs">Adicionar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Excluir */}
+      {mostrarExcluir && processoExcluir && (
+        <div className="modal-overlay" onClick={() => { if (!excluindo) setMostrarExcluir(false); }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%', background: '#fee2e2',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626'
+                }}>
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0 }}>Excluir Processo</h3>
+                  <p style={{ fontSize: 13, color: 'var(--gray-500)', margin: '4px 0 0' }}>{processoExcluir.numero}</p>
+                </div>
+              </div>
+            </div>
+            <div className="modal-body" style={{ paddingTop: 8 }}>
+              {excluindo ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <style>{`
+                    @keyframes circlePulse {
+                      0%   { transform: scale(0.85); opacity: 0.5; }
+                      50%  { transform: scale(1.15); opacity: 1; }
+                      100% { transform: scale(0.85); opacity: 0.5; }
+                    }
+                    @keyframes trashShake {
+                      0%, 100% { transform: rotate(-6deg); }
+                      50%      { transform: rotate(6deg); }
+                    }
+                    @keyframes lidOpen {
+                      0%, 100% { transform: translateY(0) rotate(0); }
+                      50%      { transform: translateY(-3px) rotate(-8deg); }
+                    }
+                  `}</style>
+                  <div style={{
+                    width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fca5a5 0%, #f87171 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    animation: 'circlePulse 1.4s ease-in-out infinite',
+                    margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(220, 38, 38, 0.25)'
+                  }}>
+                    <svg width="32" height="32" fill="none" stroke="#fff" viewBox="0 0 24 24" style={{ animation: 'trashShake 1.4s ease-in-out infinite' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </div>
+                  <p style={{ fontSize: 15, color: '#374151', fontWeight: 500, margin: 0 }}>Apagando o processo...</p>
+                  <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>Aguarde enquanto removemos o processo da sua Caixa de Entrada.</p>
+                </div>
+              ) : (
+                <form id="form-excluir" onSubmit={handleExcluir}>
+                  <div style={{
+                    background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8,
+                    padding: '12px 14px', marginBottom: 18, color: '#991b1b', fontSize: 13, lineHeight: 1.5
+                  }}>
+                    <strong>Atenção:</strong> esta ação não pode ser desfeita. O processo será removido da Caixa de Entrada e ficará salvo com status <strong>excluído</strong>.
+                  </div>
+                  <div className="form-group">
+                    <label>Digite o número do processo para confirmar <strong>{processoExcluir.numero}</strong></label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={numeroConfirmacao}
+                      onChange={e => setNumeroConfirmacao(e.target.value)}
+                      required
+                      autoFocus
+                      placeholder="Digite o número exatamente como mostrado acima"
+                    />
+                  </div>
+                </form>
+              )}
+            </div>
+            {!excluindo && (
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setMostrarExcluir(false)}>Cancelar</button>
+                <button
+                  className="btn btn-danger"
+                  form="form-excluir"
+                  disabled={numeroConfirmacao.trim() !== processoExcluir.numero}
+                  style={{
+                    opacity: numeroConfirmacao.trim() === processoExcluir.numero ? 1 : 0.5,
+                    cursor: numeroConfirmacao.trim() === processoExcluir.numero ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  Sim, excluir processo
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

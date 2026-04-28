@@ -8,9 +8,10 @@ export const listarProcessos = async (req, res) => {
     const { status, tipo, setor, busca, situacao, usuarioResponsavel } = req.query;
     let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id WHERE 1=1';
     const params = [];
-    
+
     if (status) { sql += ' AND p.status = ?'; params.push(status); }
     if (situacao) { sql += ' AND p.situacao = ?'; params.push(situacao); }
+    else { sql += " AND p.situacao != 'excluido'"; }
     if (tipo) { sql += ' AND p.tipo = ?'; params.push(tipo); }
     if (setor) { sql += ' AND p.setorAtual = ?'; params.push(setor); }
     if (usuarioResponsavel) { sql += ' AND p.usuarioResponsavel = ?'; params.push(usuarioResponsavel); }
@@ -309,9 +310,9 @@ export const listarCaixaEntrada = async (req, res) => {
   try {
     const { situacao } = req.query;
     const usuarioId = req.user.id;
-    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome, CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as favorito FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id LEFT JOIN favoritos f ON f.processoId = p.id AND f.usuarioId = ? WHERE p.usuarioResponsavel = ?';
-    const params = [usuarioId, usuarioId];
-    
+    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome, CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as favorito FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id LEFT JOIN favoritos f ON f.processoId = p.id AND f.usuarioId = ? WHERE p.usuarioResponsavel = ? AND p.situacao != ?';
+    const params = [usuarioId, usuarioId, 'excluido'];
+
     if (situacao) {
       sql += ' AND p.situacao = ?';
       params.push(situacao);
@@ -356,6 +357,25 @@ export const favoritarProcesso = async (req, res) => {
       );
       res.json({ favorito: true });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const excluirProcesso = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Processo não encontrado.' });
+    }
+    const processo = rows[0];
+    if (processo.situacao !== 'encaminhado' && processo.situacao !== 'recebido' && processo.situacao !== 'retornado') {
+      return res.status(400).json({ message: 'Este processo não pode ser excluído.' });
+    }
+    await pool.query('UPDATE processos SET situacao = ? WHERE id = ?', ['excluido', req.params.id]);
+    await registrarHistorico(req.params.id, 'exclusao', 'Processo excluído da Caixa de Entrada.', req.user.id);
+    const [atualizado] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    res.json(atualizado[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
