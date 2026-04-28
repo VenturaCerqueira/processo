@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { registrarHistorico } from '../utils/historico.js';
 
 export const uploadDocumento = async (req, res) => {
   try {
@@ -29,6 +30,8 @@ export const uploadDocumento = async (req, res) => {
       [req.params.id, req.file.originalname, req.file.mimetype, `/uploads/${req.file.filename}`, req.file.size, versao, req.user.id]
     );
 
+    await registrarHistorico(req.params.id, 'documento', `Documento "${req.file.originalname}" anexado (v${versao}).`, req.user.id, { nome: req.file.originalname, versao, tamanho: req.file.size });
+
     const [doc] = await pool.query('SELECT * FROM documentos WHERE id = ?', [result.insertId]);
 
     res.status(201).json({ 
@@ -53,4 +56,3 @@ export const listarDocumentos = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

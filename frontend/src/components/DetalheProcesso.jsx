@@ -2,6 +2,82 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 
+const tipoConfig = {
+  criacao:        { label: 'Criação',        cor: '#10b981', icone: 'M12 4v16m8-8H4' },
+  edicao:         { label: 'Edição',         cor: '#f59e0b', icone: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+  encaminhamento: { label: 'Encaminhamento', cor: '#3b82f6', icone: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+  recebimento:    { label: 'Recebimento',    cor: '#22c55e', icone: 'M5 13l4 4L19 7' },
+  retorno:        { label: 'Retorno',        cor: '#f97316', icone: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6' },
+  aprovacao:      { label: 'Aprovação',      cor: '#10b981', icone: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  pausa:          { label: 'Pausa',          cor: '#eab308', icone: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+  arquivamento:   { label: 'Arquivamento',   cor: '#6b7280', icone: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
+  indeferimento:  { label: 'Indeferimento',  cor: '#ef4444', icone: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  observacao:     { label: 'Observação',     cor: '#8b5cf6', icone: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
+  documento:      { label: 'Documento',      cor: '#06b6d4', icone: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+  filho:          { label: 'Processo Filho', cor: '#ec4899', icone: 'M12 4v16m8-8H4' },
+};
+
+function IconeTipo({ tipo }) {
+  const cfg = tipoConfig[tipo] || { cor: '#9ca3af', icone: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' };
+  return (
+    <div style={{
+      width: 36, height: 36, borderRadius: '50%', background: cfg.cor + '15',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+    }}>
+      <svg width="18" height="18" fill="none" stroke={cfg.cor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <path d={cfg.icone} />
+      </svg>
+    </div>
+  );
+}
+
+function Timeline({ historico }) {
+  if (!historico || historico.length === 0) {
+    return (
+      <div className="empty-state" style={{ padding: 32 }}>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ width: 48, height: 48, color: 'var(--gray-300)' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h4>Nenhum evento no histórico</h4>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative', paddingLeft: 18 }}>
+      <div style={{
+        position: 'absolute', left: 17, top: 8, bottom: 8, width: 2, background: 'var(--gray-100)'
+      }} />
+      {historico.map((h, i) => {
+        const cfg = tipoConfig[h.tipo] || { label: h.tipo, cor: '#9ca3af' };
+        return (
+          <div key={i} style={{ display: 'flex', gap: 16, marginBottom: 20, position: 'relative' }}>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <IconeTipo tipo={h.tipo} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, fontSize: 13, color: cfg.cor, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {cfg.label}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>
+                  {new Date(h.data).toLocaleDateString('pt-BR')} às {new Date(h.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <p style={{ fontSize: 14, color: 'var(--gray-700)', lineHeight: 1.5, margin: 0, wordBreak: 'break-word' }}>
+                {h.descricao}
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 4 }}>
+                Por {h.usuarioNome || 'Sistema'}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DetalheProcesso() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -164,6 +240,13 @@ function DetalheProcesso() {
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header">
+          <span className="card-title">Histórico Completo ({processo.historico?.length || 0})</span>
+        </div>
+        <Timeline historico={processo.historico} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-header"><span className="card-title">Anexar Documento</span></div>
         <form onSubmit={handleUpload}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -315,4 +398,3 @@ function DetalheProcesso() {
 }
 
 export default DetalheProcesso;
-

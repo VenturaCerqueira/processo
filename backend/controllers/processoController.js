@@ -1,6 +1,7 @@
 import pool from '../config/database.js';
 import { gerarNumeroProcesso } from '../utils/helpers.js';
 import { criarNotificacao } from './notificacaoController.js';
+import { registrarHistorico } from '../utils/historico.js';
 
 export const listarProcessos = async (req, res) => {
   try {
@@ -64,8 +65,13 @@ export const obterProcesso = async (req, res) => {
       `SELECT id, numero, tipo, assunto, status, situacao, createdAt FROM processos WHERE processoPaiId = ? ORDER BY createdAt DESC`,
       [req.params.id]
     );
+    const [historico] = await pool.query(
+      `SELECT h.*, u.nome as usuarioNome FROM historico h 
+       LEFT JOIN users u ON h.usuario = u.id WHERE h.processoId = ? ORDER BY h.data DESC`,
+      [req.params.id]
+    );
     
-    res.json({ ...processo, movimentacoes, documentos, observacoes, filhos });
+    res.json({ ...processo, movimentacoes, documentos, observacoes, filhos, historico });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -92,6 +98,8 @@ export const criarProcesso = async (req, res) => {
       );
     }
     
+    await registrarHistorico(result.insertId, 'criacao', `Processo ${numero} criado no setor ${setorAtual}.`, req.user.id, { tipo, assunto, requerente, setorAtual });
+    
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -101,12 +109,22 @@ export const criarProcesso = async (req, res) => {
 
 export const atualizarProcesso = async (req, res) => {
   try {
+    const [anterior] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
+    if (anterior.length === 0) {
+      return res.status(404).json({ message: 'Processo não encontrado.' });
+    }
+    const processoAntes = anterior[0];
+
     const campos = [];
     const valores = [];
+    const alteracoes = [];
     Object.keys(req.body).forEach(key => {
       if (key === 'status') return;
       campos.push(`${key} = ?`);
       valores.push(req.body[key]);
+      if (processoAntes[key] !== req.body[key]) {
+        alteracoes.push(`${key}: ${processoAntes[key] || '—'} → ${req.body[key] || '—'}`);
+      }
     });
     if (campos.length === 0) {
       return res.status(400).json({ message: 'Nenhum campo válido para atualizar.' });
@@ -114,6 +132,9 @@ export const atualizarProcesso = async (req, res) => {
     valores.push(req.params.id);
     
     await pool.query(`UPDATE processos SET ${campos.join(', ')} WHERE id = ?`, valores);
+    if (alteracoes.length > 0) {
+      await registrarHistorico(req.params.id, 'edicao', `Campos alterados: ${alteracoes.join('; ')}`, req.user.id, { alteracoes });
+    }
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -155,6 +176,8 @@ export const encaminharProcesso = async (req, res) => {
       );
     }
     
+    await registrarHistorico(req.params.id, 'encaminhamento', `Processo encaminhado de ${processo.setorAtual} para ${para}.`, req.user.id, { de: processo.setorAtual, para, parecer, paraUsuario });
+    
     const [atualizado] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(atualizado[0]);
   } catch (error) {
@@ -165,6 +188,7 @@ export const encaminharProcesso = async (req, res) => {
 export const receberProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['recebido', 'tramitando', req.params.id]);
+    await registrarHistorico(req.params.id, 'recebimento', 'Processo recebido.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -228,6 +252,8 @@ export const voltarProcesso = async (req, res) => {
       );
     }
 
+    await registrarHistorico(req.params.id, 'retorno', `Processo devolvido de ${processo.setorAtual} para ${ultimaMov.de}.`, req.user.id, { de: processo.setorAtual, para: ultimaMov.de, observacao });
+
     const [atualizado] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(atualizado[0]);
   } catch (error) {
@@ -238,6 +264,7 @@ export const voltarProcesso = async (req, res) => {
 export const aprovarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ? WHERE id = ?', ['aprovado', req.params.id]);
+    await registrarHistorico(req.params.id, 'aprovacao', 'Processo aprovado.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -248,6 +275,7 @@ export const aprovarProcesso = async (req, res) => {
 export const pausarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['pausado', 'aguardando', req.params.id]);
+    await registrarHistorico(req.params.id, 'pausa', 'Processo pausado.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -258,6 +286,7 @@ export const pausarProcesso = async (req, res) => {
 export const arquivarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['arquivado', 'arquivado', req.params.id]);
+    await registrarHistorico(req.params.id, 'arquivamento', 'Processo arquivado.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -268,6 +297,7 @@ export const arquivarProcesso = async (req, res) => {
 export const indeferirProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['indeferido', 'indeferido', req.params.id]);
+    await registrarHistorico(req.params.id, 'indeferimento', 'Processo indeferido.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -338,6 +368,7 @@ export const adicionarObservacao = async (req, res) => {
       'INSERT INTO observacoes (processoId, texto, usuario) VALUES (?, ?, ?)',
       [req.params.id, texto, req.user.id]
     );
+    await registrarHistorico(req.params.id, 'observacao', `Observação adicionada: ${texto}`, req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -373,6 +404,8 @@ export const criarProcessoFilho = async (req, res) => {
         prioridade || 'normal'
       );
     }
+
+    await registrarHistorico(processoPaiId, 'filho', `Processo filho ${numero} criado.`, req.user.id, { filhoId: result.insertId, numero, tipo, assunto, setorAtual });
 
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
