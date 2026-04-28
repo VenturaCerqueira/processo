@@ -161,7 +161,7 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
                     </Link>
                     <Link to="/caixa-entrada" className="sidebar-submenu-item">
                       <span className="sidebar-submenu-dot red" />
-                      <span>Pausado</span>
+                      <span>Suspenso</span>
                       <span className="sidebar-submenu-badge red">{notificacoes.pausado}</span>
                     </Link>
                   </div>

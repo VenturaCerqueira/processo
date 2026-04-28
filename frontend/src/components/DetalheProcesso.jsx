@@ -8,8 +8,8 @@ const tipoConfig = {
   encaminhamento: { label: 'Encaminhamento', cor: '#3b82f6', icone: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
   recebimento:    { label: 'Recebimento',    cor: '#22c55e', icone: 'M5 13l4 4L19 7' },
   retorno:        { label: 'Retorno',        cor: '#f97316', icone: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6' },
-  aprovacao:      { label: 'Aprovação',      cor: '#10b981', icone: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-  pausa:          { label: 'Pausa',          cor: '#eab308', icone: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+  aprovacao:      { label: 'Deferimento',  cor: '#10b981', icone: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+  pausa:          { label: 'Suspensão',    cor: '#eab308', icone: 'M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z' },
   arquivamento:   { label: 'Arquivamento',   cor: '#6b7280', icone: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' },
   indeferimento:  { label: 'Indeferimento',  cor: '#ef4444', icone: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z' },
   observacao:     { label: 'Observação',     cor: '#8b5cf6', icone: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
@@ -215,9 +215,9 @@ function DetalheProcesso() {
           )}
           {(processo.situacao === 'recebido' || processo.situacao === 'retornado') && (
             <>
-              <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Aprovar</button>
+              <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Deferir</button>
               <button className="btn btn-danger" onClick={() => handleSituacaoAcao('indeferir')}>Indeferir</button>
-              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>Pausar</button>
+              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>Suspender</button>
               <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
             </>
           )}

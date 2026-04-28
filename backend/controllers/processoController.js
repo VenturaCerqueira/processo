@@ -265,7 +265,7 @@ export const voltarProcesso = async (req, res) => {
 export const aprovarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ? WHERE id = ?', ['aprovado', req.params.id]);
-    await registrarHistorico(req.params.id, 'aprovacao', 'Processo aprovado.', req.user.id);
+    await registrarHistorico(req.params.id, 'aprovacao', 'Processo deferido.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
@@ -276,7 +276,7 @@ export const aprovarProcesso = async (req, res) => {
 export const pausarProcesso = async (req, res) => {
   try {
     await pool.query('UPDATE processos SET situacao = ?, status = ? WHERE id = ?', ['pausado', 'aguardando', req.params.id]);
-    await registrarHistorico(req.params.id, 'pausa', 'Processo pausado.', req.user.id);
+    await registrarHistorico(req.params.id, 'pausa', 'Processo suspenso.', req.user.id);
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {

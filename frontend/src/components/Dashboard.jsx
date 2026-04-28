@@ -200,8 +200,8 @@ function Dashboard() {
         const caixaConfig = [
           { key: 'encaminhado', label: 'Encaminhados', color: 'blue' },
           { key: 'recebido', label: 'Recebidos', color: 'yellow' },
-          { key: 'aprovado', label: 'Aprovados', color: 'green' },
-          { key: 'pausado', label: 'Pausados', color: 'purple' },
+          { key: 'aprovado', label: 'Deferidos', color: 'green' },
+          { key: 'pausado', label: 'Suspensos', color: 'purple' },
           { key: 'arquivado', label: 'Arquivados', color: 'red' },
           { key: 'indeferido', label: 'Indeferidos', color: 'red' },
         ];

@@ -106,10 +106,10 @@ const situacoes = [
   { key: 'recebido', label: 'Recebido', color: 'yellow',
     icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>,
     desc: 'Em tramitação' },
-  { key: 'aprovado', label: 'Aprovado', color: 'green',
+  { key: 'aprovado', label: 'Deferido', color: 'green',
     icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-    desc: 'Aprovado e ativo' },
-  { key: 'pausado', label: 'Pausado', color: 'purple',
+    desc: 'Deferido e ativo' },
+  { key: 'pausado', label: 'Suspenso', color: 'purple',
     icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
     desc: 'Aguardando retomada' },
   { key: 'arquivado', label: 'Arquivado', color: 'gray',
@@ -297,9 +297,9 @@ function CaixaEntrada() {
       case 'retornado':
         return [
           { label: 'Encaminhar', variant: 'primary', icon: iconEncaminhar, onClick: () => abrirEncaminhar(p) },
-          { label: 'Aprovar', variant: 'success', icon: iconAprovar, onClick: () => executarAcao('aprovar', p.id) },
+          { label: 'Deferir', variant: 'success', icon: iconAprovar, onClick: () => executarAcao('aprovar', p.id) },
           { label: 'Indeferir', variant: 'danger', icon: iconIndeferir, onClick: () => executarAcao('indeferir', p.id) },
-          { label: 'Pausar', variant: 'warning', icon: iconPausar, onClick: () => executarAcao('pausar', p.id) },
+          { label: 'Suspender', variant: 'warning', icon: iconPausar, onClick: () => executarAcao('pausar', p.id) },
           { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
           { label: 'Observação', variant: 'secondary', icon: iconObs, onClick: () => abrirObservacao(p) },
           { label: 'Excluir', variant: 'danger', icon: iconExcluir, onClick: () => abrirExcluir(p) },
@@ -489,7 +489,7 @@ function CaixaEntrada() {
                     <td>{p.assunto}</td>
                     <td>{p.requerente}</td>
                     <td className={`priority-${p.prioridade}`}>{p.prioridade}</td>
-                    <td><span className={`badge badge-${p.situacao}`}>{p.situacao}</span></td>
+                    <td><span className={`badge badge-${p.situacao}`}>{situacoes.find(s => s.key === p.situacao)?.label || p.situacao}</span></td>
                     <td>{p.setorAtual}</td>
                     <td>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td><ActionsDropdown actions={acoesPorSituacao(p)} /></td>
