@@ -46,6 +46,7 @@ const userItemsBase = [
 
 function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMobileToggle, isMobile }) {
   const location = useLocation();
+  const isRequerente = user?.tipo === 'requerente';
   const isCadastroRoute = location.pathname.startsWith('/cadastros');
   const [openGroups, setOpenGroups] = useState({ cadastros: isCadastroRoute, usuario: false });
   const [notificacoes, setNotificacoes] = useState({ encaminhado: 0, recebido: 0, pausado: 0 });
@@ -54,7 +55,9 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
   useEffect(() => {
     async function carregarNotificacoes() {
       try {
-        const response = await api.get('/processos');
+        const endpoint = isRequerente ? '/requerente/notificacoes' : '/processos';
+        const response = await api.get(endpoint);
+        // Adapt logic for requerente (stubbed)
         const processos = response.data || [];
         const meus = processos.filter(p => p.usuarioResponsavel === user.id || p.usuarioResponsavel == user.id);
         setNotificacoes({
@@ -67,7 +70,8 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
       }
     }
     if (user?.id) carregarNotificacoes();
-  }, [user]);
+  }, [user, isRequerente]);
+
 
   const toggleGroup = (group) => {
     setOpenGroups(prev => {
@@ -123,55 +127,60 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
       </div>
 
       <nav className="sidebar-nav">
-        {mainItems.map(item => {
-          const isCaixa = item.path === '/caixa-entrada';
-          return (
-            <div
-              key={item.path}
-              className={`sidebar-nav-item${isCaixa ? ' has-submenu' : ''}`}
-            >
-              <Link
-                to={item.path}
-                className={location.pathname === item.path ? 'active' : ''}
-                title={collapsed ? item.label : ''}
-              >
-                {item.icon}
-                <span className="nav-label">{item.label}</span>
-                {isCaixa && !collapsed && (
-                  <span className="nav-chevron">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                )}
+        {isRequerente ? (
+          <>
+            <div className="sidebar-nav-item">
+              <Link to="/requerente/inbox" className={location.pathname === '/requerente/inbox' ? 'active' : ''}>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <span className="nav-label">Meus Processos</span>
               </Link>
-
-              {isCaixa && !collapsed && (
-                <div className="sidebar-submenu">
-                  <div className="sidebar-submenu-inner">
-                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
-                      <span className="sidebar-submenu-dot yellow" />
-                      <span>Encaminhado</span>
-                      <span className="sidebar-submenu-badge yellow">{notificacoes.encaminhado}</span>
-                    </Link>
-                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
-                      <span className="sidebar-submenu-dot green" />
-                      <span>Recebido</span>
-                      <span className="sidebar-submenu-badge green">{notificacoes.recebido}</span>
-                    </Link>
-                    <Link to="/caixa-entrada" className="sidebar-submenu-item">
-                      <span className="sidebar-submenu-dot red" />
-                      <span>Suspenso</span>
-                      <span className="sidebar-submenu-badge red">{notificacoes.pausado}</span>
-                    </Link>
-                  </div>
-                </div>
-              )}
             </div>
-          );
-        })}
+          </>
+        ) : (
+          mainItems.map(item => {
+            const isCaixa = item.path === '/caixa-entrada';
+            return (
+              <div key={item.path} className={`sidebar-nav-item${isCaixa ? ' has-submenu' : ''}`}>
+                <Link to={item.path} className={location.pathname === item.path ? 'active' : ''} title={collapsed ? item.label : ''}>
+                  {item.icon}
+                  <span className="nav-label">{item.label}</span>
+                  {isCaixa && !collapsed && (
+                    <span className="nav-chevron">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  )}
+                </Link>
+                {isCaixa && !collapsed && (
+                  <div className="sidebar-submenu">
+                    <div className="sidebar-submenu-inner">
+                      <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                        <span className="sidebar-submenu-dot yellow" />
+                        <span>Encaminhado</span>
+                        <span className="sidebar-submenu-badge yellow">{notificacoes.encaminhado}</span>
+                      </Link>
+                      <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                        <span className="sidebar-submenu-dot green" />
+                        <span>Recebido</span>
+                        <span className="sidebar-submenu-badge green">{notificacoes.recebido}</span>
+                      </Link>
+                      <Link to="/caixa-entrada" className="sidebar-submenu-item">
+                        <span className="sidebar-submenu-dot red" />
+                        <span>Suspenso</span>
+                        <span className="sidebar-submenu-badge red">{notificacoes.pausado}</span>
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
 
-        {!collapsed && (
+{!isRequerente && !collapsed && (
           <div className={`sidebar-group${openGroups.cadastros ? ' open' : ''}`}>
             <button
               className="sidebar-group-toggle"
@@ -207,6 +216,7 @@ function Sidebar({ user, onLogout, collapsed, onToggleCollapse, mobileOpen, onMo
             )}
           </div>
         )}
+
 
         {collapsed && cadastroItems.map(item => (
           <Link

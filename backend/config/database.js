@@ -297,11 +297,21 @@ export async function initDatabase() {
         cep VARCHAR(20),
         telefone VARCHAR(50),
         email VARCHAR(255),
+        senha VARCHAR(255),
+        nivelAcesso VARCHAR(20) DEFAULT 'requerente',
         ativo TINYINT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Add senha and nivelAcesso if missing
+    try {
+      await connection.query(`ALTER TABLE requerentes ADD COLUMN IF NOT EXISTS senha VARCHAR(255)`);
+    } catch {}
+    try {
+      await connection.query(`ALTER TABLE requerentes ADD COLUMN IF NOT EXISTS nivelAcesso VARCHAR(20) DEFAULT 'requerente'`);
+    } catch {}
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS notificacoes (

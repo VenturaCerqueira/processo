@@ -19,6 +19,9 @@ import CadastroRequerentes from './components/CadastroRequerentes';
 import CadastroEntidades from './components/CadastroEntidades';
 import CadastroNiveisAcesso from './components/CadastroNiveisAcesso';
 import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
+import RequerenteLogin from './components/RequerenteLogin';
+import RequerenteCadastro from './components/RequerenteCadastro';
+import RequerenteCaixaEntrada from './components/RequerenteCaixaEntrada';
 import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
@@ -70,6 +73,7 @@ function AppContent() {
     setUser(null);
   };
 
+  const isRequerenteRoute = location.pathname.startsWith('/requerente');
   const isPublicRoute = ['/login', '/primeiro-acesso', '/esqueci-senha', '/redefinir-senha'].includes(location.pathname);
   const appLayoutClass = isPublicRoute || !user
     ? ''
@@ -80,7 +84,7 @@ function AppContent() {
 
   return (
     <div className={appLayoutClass}>
-      {!isPublicRoute && user && (
+{!isPublicRoute && user && (
         <Sidebar
           user={user}
           onLogout={handleLogout}
@@ -109,24 +113,34 @@ function AppContent() {
         )}
         <Routes>
           <Route path="/" element={user ? <Dashboard /> : <LandingPage />} />
+          {/* Staff routes */}
           <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
           <Route path="/primeiro-acesso" element={!user ? <PrimeiroAcesso onLogin={handleLogin} /> : <Navigate to="/" />} />
           <Route path="/esqueci-senha" element={!user ? <EsqueciSenha /> : <Navigate to="/" />} />
           <Route path="/redefinir-senha" element={!user ? <RedefinirSenha /> : <Navigate to="/" />} />
-          <Route path="/caixa-entrada" element={user ? <CaixaEntrada /> : <Navigate to="/login" />} />
-          <Route path="/processos" element={user ? <Navigate to="/caixa-entrada" /> : <Navigate to="/login" />} />
-          <Route path="/processos/novo" element={user ? <NovoProcesso /> : <Navigate to="/login" />} />
+          
+          {/* Requerente public routes */}
+          <Route path="/requerente/login" element={!user ? <RequerenteLogin onLogin={handleLogin} /> : <Navigate to="/requerente/inbox" />} />
+          <Route path="/requerente/cadastro" element={!user ? <RequerenteCadastro /> : <Navigate to="/requerente/inbox" />} />
+          
+          {/* Requerente protected */}
+          <Route path="/requerente/inbox" element={user ? <RequerenteCaixaEntrada /> : <Navigate to="/requerente/login" />} />
+          
+          {/* Staff protected */}
+          <Route path="/caixa-entrada" element={user && user.tipo !== 'requerente' ? <CaixaEntrada /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
+          <Route path="/processos" element={user && user.tipo !== 'requerente' ? <Navigate to="/caixa-entrada" /> : <Navigate to="/requerente/inbox" />} />
+          <Route path="/processos/novo" element={user && user.tipo !== 'requerente' ? <NovoProcesso /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />
-          <Route path="/relatorios" element={user ? <Relatorios /> : <Navigate to="/login" />} />
+          <Route path="/relatorios" element={user && user.tipo !== 'requerente' ? <Relatorios /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/perfil" element={user ? <MeuPerfil onUpdateUser={handleUpdateUser} /> : <Navigate to="/login" />} />
-          <Route path="/usuarios" element={user?.nivelAcesso === 'admin' ? <CadastroUsuarios /> : <Navigate to="/" />} />
-          <Route path="/cadastros/tipos-processo" element={user ? <CadastroTiposProcesso /> : <Navigate to="/login" />} />
-          <Route path="/cadastros/setores" element={user ? <CadastroSetores /> : <Navigate to="/login" />} />
-          <Route path="/cadastros/prioridades" element={user ? <CadastroPrioridades /> : <Navigate to="/login" />} />
-          <Route path="/cadastros/requerentes" element={user ? <CadastroRequerentes /> : <Navigate to="/login" />} />
-          <Route path="/cadastros/entidades" element={user ? <CadastroEntidades /> : <Navigate to="/login" />} />
-          <Route path="/cadastros/niveis-acesso" element={user?.nivelAcesso === 'admin' ? <CadastroNiveisAcesso /> : <Navigate to="/" />} />
-          <Route path="/cadastros/especies-processo" element={user ? <CadastroEspeciesProcesso /> : <Navigate to="/login" />} />
+          <Route path="/usuarios" element={user?.nivelAcesso === 'admin' && user.tipo !== 'requerente' ? <CadastroUsuarios /> : <Navigate to={user ? '/requerente/inbox' : '/'} />} />
+          <Route path="/cadastros/tipos-processo" element={user && user.tipo !== 'requerente' ? <CadastroTiposProcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/setores" element={user && user.tipo !== 'requerente' ? <CadastroSetores /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/prioridades" element={user && user.tipo !== 'requerente' ? <CadastroPrioridades /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/requerentes" element={user && user.tipo !== 'requerente' ? <CadastroRequerentes /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/entidades" element={user && user.tipo !== 'requerente' ? <CadastroEntidades /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/niveis-acesso" element={user?.nivelAcesso === 'admin' && user.tipo !== 'requerente' ? <CadastroNiveisAcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/especies-processo" element={user && user.tipo !== 'requerente' ? <CadastroEspeciesProcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
