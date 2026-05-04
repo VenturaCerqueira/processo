@@ -22,6 +22,8 @@ import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
 import RequerenteLogin from './components/RequerenteLogin';
 import RequerenteCadastro from './components/RequerenteCadastro';
 import RequerenteCaixaEntrada from './components/RequerenteCaixaEntrada';
+import RequerenteDashboard from './components/RequerenteDashboard';
+import RequerenteEsqueciSenha from './components/RequerenteEsqueciSenha';
 import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
@@ -119,12 +121,14 @@ function AppContent() {
           <Route path="/esqueci-senha" element={!user ? <EsqueciSenha /> : <Navigate to="/" />} />
           <Route path="/redefinir-senha" element={!user ? <RedefinirSenha /> : <Navigate to="/" />} />
           
-          {/* Requerente public routes */}
-          <Route path="/requerente/login" element={!user ? <RequerenteLogin onLogin={handleLogin} /> : <Navigate to="/requerente/inbox" />} />
-          <Route path="/requerente/cadastro" element={!user ? <RequerenteCadastro /> : <Navigate to="/requerente/inbox" />} />
+{/* Requerente public routes */}
+<Route path="/requerente/login" element={!user ? <RequerenteLogin onLogin={handleLogin} /> : <Navigate to="/requerente/dashboard" />} />
+<Route path="/requerente/cadastro" element={!user ? <RequerenteCadastro /> : <Navigate to="/requerente/dashboard" />} />
+          <Route path="/requerente/esqueci-senha" element={!user ? <RequerenteEsqueciSenha /> : <Navigate to="/requerente/dashboard" />} />
           
           {/* Requerente protected */}
-          <Route path="/requerente/inbox" element={user ? <RequerenteCaixaEntrada /> : <Navigate to="/requerente/login" />} />
+          <Route path="/requerente/inbox" element={user && user.tipo === 'requerente' ? <RequerenteCaixaEntrada /> : <Navigate to="/requerente/login" />} />
+          <Route path="/requerente/dashboard" element={user && user.tipo === 'requerente' ? <RequerenteDashboard /> : <Navigate to="/requerente/login" />} />
           
           {/* Staff protected */}
           <Route path="/caixa-entrada" element={user && user.tipo !== 'requerente' ? <CaixaEntrada /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
