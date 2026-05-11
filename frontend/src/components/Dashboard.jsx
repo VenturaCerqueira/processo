@@ -53,25 +53,39 @@ function Dashboard() {
 
         if (!mounted) return;
 
+        const contaPorSituacao = (lista) => ({
+          encaminhado: lista.filter(p => p.situacao === 'encaminhado').length,
+          recebido: lista.filter(p => p.situacao === 'recebido' || p.situacao === 'retornado').length,
+          aprovado: lista.filter(p => p.situacao === 'aprovado').length,
+          pausado: lista.filter(p => p.situacao === 'pausado').length,
+          arquivado: lista.filter(p => p.situacao === 'arquivado').length,
+          indeferido: lista.filter(p => p.situacao === 'indeferido').length,
+        });
+
         setUser(userData);
+        // Remapeado: usar `situacao` (contrato do CaixaEntrada) em vez de `status`.
+        const totalGeral = processos.length;
+        const geral = contaPorSituacao(processos);
+
         setEstatisticas({
-          total: processos.length,
-          tramitando: processos.filter(p => p.status === 'tramitando').length,
-          aguardando: processos.filter(p => p.status === 'aguardando').length,
-          concluido: processos.filter(p => p.status === 'concluido').length,
-          indeferido: processos.filter(p => p.status === 'indeferido').length,
-          urgentes: processos.filter(p => p.prioridade === 'urgente').length
+          total: totalGeral,
+          tramitando: geral.recebido + geral.encaminhado,
+          aguardando: geral.pausado,
+          concluido: geral.aprovado,
+          indeferido: geral.indeferido,
+          urgentes: processos.filter(p => p.prioridade === 'urgente').length,
         });
-        setCaixaResumo({
-          encaminhado: meusProcessos.filter(p => p.situacao === 'encaminhado').length,
-          recebido: meusProcessos.filter(p => p.situacao === 'recebido' || p.situacao === 'retornado').length,
-          aprovado: meusProcessos.filter(p => p.situacao === 'aprovado').length,
-          pausado: meusProcessos.filter(p => p.situacao === 'pausado').length,
-          arquivado: meusProcessos.filter(p => p.situacao === 'arquivado').length,
-          indeferido: meusProcessos.filter(p => p.situacao === 'indeferido').length
+
+        setCaixaResumo(contaPorSituacao(meusProcessos));
+
+        const ordenarPorDataDesc = (lista) => [...lista].sort((a, b) => {
+          const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return db - da;
         });
-        setProcessosRecentes(meusProcessos.slice(0, 5));
-        setProcessosUrgentes(meusProcessos.filter(p => p.prioridade === 'urgente').slice(0, 5));
+
+        setProcessosRecentes(ordenarPorDataDesc(meusProcessos).slice(0, 5));
+        setProcessosUrgentes(ordenarPorDataDesc(meusProcessos.filter(p => p.prioridade === 'urgente')).slice(0, 5));
       } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
       } finally {
@@ -212,7 +226,13 @@ function Dashboard() {
                 <span className="card-title">Minha Caixa de Entrada</span>
                 <p className="card-subtitle">Processos atribuídos a você</p>
               </div>
-              <Link to="/caixa-entrada" className="btn btn-secondary btn-sm">Ver todos</Link>
+              <Link to="/caixa-entrada" className="btn btn-secondary btn-sm see-all-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Ver todos
+              </Link>
             </div>
             <div className="stats-grid" style={{ marginBottom: 0 }}>
               {caixaConfig.map(cfg => (
@@ -274,7 +294,13 @@ function Dashboard() {
               <span className="card-title">Processos Recentes</span>
               <p className="card-subtitle">Últimos processos cadastrados no sistema</p>
             </div>
-            <Link to="/caixa-entrada" className="btn btn-secondary btn-sm">Ver todos</Link>
+            <Link to="/caixa-entrada" className="btn btn-secondary btn-sm see-all-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              Ver todos
+            </Link>
           </div>
           <div className="table-container">
             <table className="dashboard-table">

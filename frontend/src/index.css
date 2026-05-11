@@ -1419,6 +1419,73 @@ tr:hover td {
 .fade-in-list tr:nth-child(9) { animation-delay: 0.18s; }
 .fade-in-list tr:nth-child(10) { animation-delay: 0.20s; }
 
+/* "Ver todos" (dashboard) */
+.limpar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.limpar-btn svg {
+  transition: transform 0.25s ease;
+}
+
+.limpar-btn:hover {
+  transform: translateY(-1px);
+}
+
+.limpar-btn:hover svg {
+  transform: rotate(-10deg) scale(1.05);
+}
+
+/* "Ver todos" (dashboard) */
+.see-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.see-all-link svg {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0.95;
+}
+
+.see-all-link::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  width: 30px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(15,76,129,0), rgba(15,76,129,0.7), rgba(15,76,129,0));
+  transform: translateY(-50%) translateX(-20px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.see-all-link:hover {
+  transform: translateY(-1px);
+}
+
+.see-all-link:hover svg {
+  transform: translateX(2px);
+}
+
+.see-all-link:hover::after {
+  opacity: 1;
+  animation: seeAllSwipe 0.45s ease forwards;
+}
+
+@keyframes seeAllSwipe {
+  from { transform: translateY(-50%) translateX(-20px); }
+  to { transform: translateY(-50%) translateX(70px); }
+}
+
 /* Animations */
 @keyframes fadeInUp {
   from {
