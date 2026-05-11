@@ -236,57 +236,6 @@ function NovoProcesso() {
       <div className="card">
 
         <form onSubmit={handleSubmit}>
-          {/* Especie Section */}
-          {especies.length > 0 && (
-            <div className="form-section">
-              <div className="form-section-header">
-                <div className="form-section-icon">
-                  <IconEspecie />
-                </div>
-                <div>
-                  <div className="form-section-title">Especie e Prazo</div>
-                  <div className="form-section-description">Selecione a especie para auto-preencher dados comuns</div>
-                </div>
-              </div>
-            <div className="form-row-modern">
-              <div className="form-group">
-                  <label htmlFor="especie">Especie de Processo</label>
-                  <div className="input-group">
-                    <span className="input-icon"><IconEspecie /></span>
-                    <select id="especie" className="form-control select-enhanced" value={form.especie_id} onChange={handleEspecieChange}>
-                      <option value="">Selecione uma especie (opcional)</option>
-                      {especies.map(ep => (
-                        <option key={ep.id} value={ep.id}>
-                          {ep.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="prazo">Prazo *</label>
-                  <div className="input-group">
-                    <span className="input-icon"><IconPrazo /></span>
-                    <input id="prazo" type="date" className="form-control" value={form.prazo} onChange={e => setForm(prev => ({ ...prev, prazo: e.target.value }))} required />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Especie Info */}
-          {especieSelecionada?.mensagem_customizada && (
-            <div className="alert alert-especie">
-              <strong>Informações da Especie:</strong>
-              <div style={{ marginTop: 8 }}>{especieSelecionada.mensagem_customizada}</div>
-              {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
-                <div className="badge badge-info" style={{ marginTop: 8, fontSize: 13 }}>
-                  Prazo: {especieSelecionada.prazo_minimo}-{especieSelecionada.prazo_maximo} {especieSelecionada.dias_uteis ? 'dias úteis' : 'dias corridos'}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Process Details */}
           <div className="form-section">
             <div className="form-section-header">
@@ -306,18 +255,6 @@ function NovoProcesso() {
                     <option value="">Selecione o tipo</option>
                     {tipos.map(t => (
                       <option key={t.id} value={t.nome}>{t.nome}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-group">
-                <label htmlFor="setorAtual">Setor Atual *</label>
-                <div className="input-group">
-                  <span className="input-icon"><IconSetor /></span>
-                  <select id="setorAtual" className="form-control select-enhanced" value={form.setorAtual} onChange={e => setForm(prev => ({ ...prev, setorAtual: e.target.value }))} required>
-                    <option value="">Selecione o setor</option>
-                    {setores.map(s => (
-                      <option key={s.id} value={s.nome}>{s.nome}</option>
                     ))}
                   </select>
                 </div>
@@ -346,6 +283,71 @@ function NovoProcesso() {
             </div>
           </div>
 
+          {/* Especie Section */}
+          <div className="form-section">
+            <div className="form-section-header">
+              <div className="form-section-icon">
+                <IconEspecie />
+              </div>
+              <div>
+                <div className="form-section-title">Especie e Prazo</div>
+                <div className="form-section-description">Selecione a especie para auto-preencher dados comuns</div>
+              </div>
+            </div>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="especie">Especie de Processo</label>
+                <div className="input-group">
+                  <span className="input-icon"><IconEspecie /></span>
+                  <select
+                    id="especie"
+                    className="form-control select-enhanced"
+                    value={form.especie_id}
+                    onChange={handleEspecieChange}
+                    disabled={especies.length === 0}
+                  >
+                    <option value="">
+                      {especies.length === 0 ? 'Carregando espécies...' : 'Selecione uma especie (opcional)'}
+                    </option>
+                    {especies.map(ep => (
+                      <option key={ep.id} value={ep.id}>
+                        {ep.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="prazo">Prazo *</label>
+                <div className="input-group">
+                  <span className="input-icon"><IconPrazo /></span>
+                  <input
+                    id="prazo"
+                    type="date"
+                    className="form-control"
+                    value={form.prazo}
+                    onChange={e => setForm(prev => ({ ...prev, prazo: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Especie Info */}
+          {especieSelecionada?.mensagem_customizada && (
+            <div className="alert alert-especie">
+              <strong>Informações da Especie:</strong>
+              <div style={{ marginTop: 8 }}>{especieSelecionada.mensagem_customizada}</div>
+              {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
+                <div className="badge badge-info" style={{ marginTop: 8, fontSize: 13 }}>
+                  Prazo: {especieSelecionada.prazo_minimo}-{especieSelecionada.prazo_maximo} {especieSelecionada.dias_uteis ? 'dias úteis' : 'dias corridos'}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Requester Details */}
           <div className="form-section">
             <div className="form-section-header">
@@ -357,7 +359,8 @@ function NovoProcesso() {
                 <div className="form-section-description">Informações do cidadão ou empresa solicitante</div>
               </div>
             </div>
-              <div className="form-row-modern">
+
+            <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="cpfCnpj">CPF / CNPJ</label>
                 <div className="input-group">
@@ -371,8 +374,7 @@ function NovoProcesso() {
                       const value = formatCpfCnpj(e.target.value);
                       setForm(prev => ({ ...prev, cpfCnpj: value }));
                     }}
-                  onBlur={async () => {
-                      // Ao digitar CPF/CNPJ, consultar cadastro de requerente e preencher os dados
+                    onBlur={async () => {
                       const cpfCnpjAtual = form.cpfCnpj;
                       if (!cpfCnpjAtual) return;
                       try {
@@ -385,7 +387,6 @@ function NovoProcesso() {
                           : null;
 
                         const req = match || (Array.isArray(data) ? data[0] : null);
-
                         if (!req) return;
 
                         setForm(prev => ({
@@ -404,37 +405,67 @@ function NovoProcesso() {
                   />
                 </div>
               </div>
+
               <div className="form-group">
                 <label htmlFor="requerente">Nome do Requerente *</label>
                 <div className="input-group">
                   <span className="input-icon"><IconRequerente /></span>
-                  <input id="requerente" type="text" className="form-control" value={form.requerente} onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))} required />
+                  <input
+                    id="requerente"
+                    type="text"
+                    className="form-control"
+                    value={form.requerente}
+                    onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))}
+                    required
+                  />
                 </div>
               </div>
-
             </div>
+
             <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="telefone">Telefone</label>
                 <div className="input-group">
                   <span className="input-icon"><IconTelefone /></span>
-                  <input id="telefone" type="text" className="form-control" value={form.telefone} onChange={e => setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))} placeholder="(00) 00000-0000" />
+                  <input
+                    id="telefone"
+                    type="text"
+                    className="form-control"
+                    value={form.telefone}
+                    onChange={e => setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
               </div>
+
               <div className="form-group">
                 <label htmlFor="email">Email</label>
                 <div className="input-group">
                   <span className="input-icon"><IconEmail /></span>
-                  <input id="email" type="email" className="form-control" value={form.email} onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} />
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-control"
+                    value={form.email}
+                    onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                  />
                 </div>
               </div>
             </div>
+
             <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="endereco">Endereço Completo</label>
                 <div className="input-group">
                   <span className="input-icon"><IconEndereco /></span>
-                  <input id="endereco" type="text" className="form-control" value={form.endereco} onChange={e => setForm(prev => ({ ...prev, endereco: e.target.value }))} placeholder="Rua, número, bairro, cidade - CEP" />
+                  <input
+                    id="endereco"
+                    type="text"
+                    className="form-control"
+                    value={form.endereco}
+                    onChange={e => setForm(prev => ({ ...prev, endereco: e.target.value }))}
+                    placeholder="Rua, número, bairro, cidade - CEP"
+                  />
                 </div>
               </div>
             </div>
