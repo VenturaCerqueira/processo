@@ -2411,7 +2411,9 @@ tr:hover td {
   justify-content: center;
   color: var(--white);
   flex-shrink: 0;
+  overflow: hidden; /* evita ícone/ SVG “sair” visualmente */
 }
+
 
 .form-hero-icon svg {
   width: 28px;
@@ -2432,6 +2434,27 @@ tr:hover td {
   font-size: 16px;
   font-weight: 500;
 }
+
+/* Evitar que contador de caracteres flutue para fora em telas menores */
+.char-counter {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-400);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Garantir que o contador tenha referência correta mesmo em textarea */
+.form-group.position-relative,
+.form-group {
+  position: relative;
+}
+
+
 
 /* Form Sections */
 .form-section {
@@ -2487,12 +2510,20 @@ tr:hover td {
   gap: 24px;
 }
 
-@media (max-width: 768px) {
+/* Garantir que em telas menores o formulário quebre em coluna única */
+@media (max-width: 1024px) {
   .form-row-modern {
     grid-template-columns: 1fr;
     gap: 20px;
   }
 }
+
+@media (max-width: 480px) {
+  .form-row-modern {
+    gap: 16px;
+  }
+}
+
 
 /* Iconed Input Group */
 .input-group {
@@ -2515,6 +2546,15 @@ tr:hover td {
 
 .input-group .form-control {
   padding-left: 48px;
+}
+
+.input-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.input-group textarea.form-control {
+  padding-top: 14px;
 }
 
 /* Floating Labels */

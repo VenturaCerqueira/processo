@@ -129,6 +129,34 @@ function NovoProcesso() {
     carregarProcessoPai();
   }, [processoPaiId]);
 
+  // Preencher dados do requerente logado a partir do cadastro de requerente
+  useEffect(() => {
+    let cancelled = false;
+
+    async function carregarRequerenteLogado() {
+      try {
+        const { data } = await api.get('/requerente/perfil');
+        if (cancelled) return;
+
+        setForm(prev => ({
+          ...prev,
+          requerente: data.nome || '',
+          cpfCnpj: data.cpfCnpj || '',
+          endereco: data.endereco || prev.endereco || '',
+          telefone: data.telefone || prev.telefone || '',
+          email: data.email || ''
+        }));
+      } catch (error) {
+        // Se não for usuário do tipo "requerente" logado, ignora
+        console.warn('Não foi possível carregar perfil do requerente logado:', error?.response?.data || error.message);
+      }
+    }
+
+    carregarRequerenteLogado();
+    return () => { cancelled = true; };
+  }, []);
+
+
   const calcularPrazo = (dias, diasUteis) => {
     if (!dias) return '';
     const data = new Date();
@@ -220,21 +248,27 @@ function NovoProcesso() {
                   <div className="form-section-description">Selecione a especie para auto-preencher dados comuns</div>
                 </div>
               </div>
-              <div className="form-row-modern">
-                <div className="form-group">
+            <div className="form-row-modern">
+              <div className="form-group">
                   <label htmlFor="especie">Especie de Processo</label>
-                  <select id="especie" className="form-control select-enhanced" value={form.especie_id} onChange={handleEspecieChange}>
-                    <option value="">Selecione uma especie (opcional)</option>
-                    {especies.map(ep => (
-                      <option key={ep.id} value={ep.id}>
-                        {ep.nome}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="input-group">
+                    <span className="input-icon"><IconEspecie /></span>
+                    <select id="especie" className="form-control select-enhanced" value={form.especie_id} onChange={handleEspecieChange}>
+                      <option value="">Selecione uma especie (opcional)</option>
+                      {especies.map(ep => (
+                        <option key={ep.id} value={ep.id}>
+                          {ep.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label htmlFor="prazo">Prazo *</label>
-                  <input id="prazo" type="date" className="form-control" value={form.prazo} onChange={e => setForm(prev => ({ ...prev, prazo: e.target.value }))} required />
+                  <div className="input-group">
+                    <span className="input-icon"><IconPrazo /></span>
+                    <input id="prazo" type="date" className="form-control" value={form.prazo} onChange={e => setForm(prev => ({ ...prev, prazo: e.target.value }))} required />
+                  </div>
                 </div>
               </div>
             </div>
@@ -266,36 +300,48 @@ function NovoProcesso() {
             <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="tipo">Tipo de Processo *</label>
-                <select id="tipo" className="form-control select-enhanced" value={form.tipo} onChange={e => setForm(prev => ({ ...prev, tipo: e.target.value }))} required>
-                  <option value="">Selecione o tipo</option>
-                  {tipos.map(t => (
-                    <option key={t.id} value={t.nome}>{t.nome}</option>
-                  ))}
-                </select>
+                <div className="input-group">
+                  <span className="input-icon"><IconTipo /></span>
+                  <select id="tipo" className="form-control select-enhanced" value={form.tipo} onChange={e => setForm(prev => ({ ...prev, tipo: e.target.value }))} required>
+                    <option value="">Selecione o tipo</option>
+                    {tipos.map(t => (
+                      <option key={t.id} value={t.nome}>{t.nome}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
                 <label htmlFor="setorAtual">Setor Atual *</label>
-                <select id="setorAtual" className="form-control select-enhanced" value={form.setorAtual} onChange={e => setForm(prev => ({ ...prev, setorAtual: e.target.value }))} required>
-                  <option value="">Selecione o setor</option>
-                  {setores.map(s => (
-                    <option key={s.id} value={s.nome}>{s.nome}</option>
-                  ))}
-                </select>
+                <div className="input-group">
+                  <span className="input-icon"><IconSetor /></span>
+                  <select id="setorAtual" className="form-control select-enhanced" value={form.setorAtual} onChange={e => setForm(prev => ({ ...prev, setorAtual: e.target.value }))} required>
+                    <option value="">Selecione o setor</option>
+                    {setores.map(s => (
+                      <option key={s.id} value={s.nome}>{s.nome}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
             <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="assunto">Assunto do Processo *</label>
-                <input id="assunto" type="text" className="form-control" value={form.assunto} onChange={e => setForm(prev => ({ ...prev, assunto: e.target.value }))} required placeholder="Ex: Solicitação de documentos, recurso administrativo..." maxLength="200" />
+                <div className="input-group">
+                  <span className="input-icon"><IconAssunto /></span>
+                  <input id="assunto" type="text" className="form-control" value={form.assunto} onChange={e => setForm(prev => ({ ...prev, assunto: e.target.value }))} required placeholder="Ex: Solicitação de documentos, recurso administrativo..." maxLength="200" />
+                </div>
                 <div className="char-counter">{form.assunto.length}/200</div>
               </div>
               <div className="form-group">
                 <label htmlFor="prioridade">Prioridade</label>
-                <select id="prioridade" className="form-control select-enhanced" value={form.prioridade} onChange={e => setForm(prev => ({ ...prev, prioridade: e.target.value }))}>
-                  {prioridades.map(p => (
-                    <option key={p.id} value={p.nome}>{p.nome}</option>
-                  ))}
-                </select>
+                <div className="input-group">
+                  <span className="input-icon"><IconPrioridade /></span>
+                  <select id="prioridade" className="form-control select-enhanced" value={form.prioridade} onChange={e => setForm(prev => ({ ...prev, prioridade: e.target.value }))}>
+                    {prioridades.map(p => (
+                      <option key={p.id} value={p.nome}>{p.nome}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -311,31 +357,74 @@ function NovoProcesso() {
                 <div className="form-section-description">Informações do cidadão ou empresa solicitante</div>
               </div>
             </div>
-            <div className="form-row-modern">
-              <div className="form-group">
-                <label htmlFor="requerente">Nome do Requerente *</label>
-                <input id="requerente" type="text" className="form-control" value={form.requerente} onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))} required />
-              </div>
+              <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="cpfCnpj">CPF / CNPJ</label>
                 <div className="input-group">
-                  <IconDocumento />
-                  <input id="cpfCnpj" type="text" className="form-control" value={form.cpfCnpj} onChange={e => setForm(prev => ({ ...prev, cpfCnpj: formatCpfCnpj(e.target.value) }))} placeholder="000.000.000-00" />
+                  <span className="input-icon"><IconDocumento /></span>
+                  <input
+                    id="cpfCnpj"
+                    type="text"
+                    className="form-control"
+                    value={form.cpfCnpj}
+                    onChange={(e) => {
+                      const value = formatCpfCnpj(e.target.value);
+                      setForm(prev => ({ ...prev, cpfCnpj: value }));
+                    }}
+                  onBlur={async () => {
+                      // Ao digitar CPF/CNPJ, consultar cadastro de requerente e preencher os dados
+                      const cpfCnpjAtual = form.cpfCnpj;
+                      if (!cpfCnpjAtual) return;
+                      try {
+                        const { data } = await api.get(`/requerentes?busca=${encodeURIComponent(cpfCnpjAtual)}`);
+                        const normalizar = (v) => String(v || '').replace(/\D/g, '');
+                        const normalizadoAtual = normalizar(cpfCnpjAtual);
+
+                        const match = Array.isArray(data)
+                          ? data.find(r => normalizar(r.cpfCnpj) === normalizadoAtual)
+                          : null;
+
+                        const req = match || (Array.isArray(data) ? data[0] : null);
+
+                        if (!req) return;
+
+                        setForm(prev => ({
+                          ...prev,
+                          requerente: req.nome || prev.requerente,
+                          cpfCnpj: req.cpfCnpj || prev.cpfCnpj,
+                          endereco: req.endereco || prev.endereco,
+                          telefone: req.telefone || prev.telefone,
+                          email: req.email || prev.email,
+                        }));
+                      } catch (error) {
+                        console.warn('Erro ao buscar requerente por CPF/CNPJ:', error?.response?.data || error.message);
+                      }
+                    }}
+                    placeholder="000.000.000-00"
+                  />
                 </div>
               </div>
+              <div className="form-group">
+                <label htmlFor="requerente">Nome do Requerente *</label>
+                <div className="input-group">
+                  <span className="input-icon"><IconRequerente /></span>
+                  <input id="requerente" type="text" className="form-control" value={form.requerente} onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))} required />
+                </div>
+              </div>
+
             </div>
             <div className="form-row-modern">
               <div className="form-group">
                 <label htmlFor="telefone">Telefone</label>
                 <div className="input-group">
-                  <IconTelefone />
+                  <span className="input-icon"><IconTelefone /></span>
                   <input id="telefone" type="text" className="form-control" value={form.telefone} onChange={e => setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))} placeholder="(00) 00000-0000" />
                 </div>
               </div>
               <div className="form-group">
                 <label htmlFor="email">Email</label>
                 <div className="input-group">
-                  <IconEmail />
+                  <span className="input-icon"><IconEmail /></span>
                   <input id="email" type="email" className="form-control" value={form.email} onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} />
                 </div>
               </div>
@@ -344,7 +433,7 @@ function NovoProcesso() {
               <div className="form-group">
                 <label htmlFor="endereco">Endereço Completo</label>
                 <div className="input-group">
-                  <IconEndereco />
+                  <span className="input-icon"><IconEndereco /></span>
                   <input id="endereco" type="text" className="form-control" value={form.endereco} onChange={e => setForm(prev => ({ ...prev, endereco: e.target.value }))} placeholder="Rua, número, bairro, cidade - CEP" />
                 </div>
               </div>
@@ -363,7 +452,10 @@ function NovoProcesso() {
             </div>
             <div className="form-group">
               <label htmlFor="descricao">Descrição</label>
-              <textarea id="descricao" className="form-control" rows="6" value={form.descricao} onChange={e => setForm(prev => ({ ...prev, descricao: e.target.value }))} placeholder="Descreva em detalhes o objeto do processo, anexos necessários e qualquer informação relevante..." maxLength="2000" />
+              <div className="input-group">
+                <span className="input-icon"><IconDescricao /></span>
+                <textarea id="descricao" className="form-control" rows="6" value={form.descricao} onChange={e => setForm(prev => ({ ...prev, descricao: e.target.value }))} placeholder="Descreva em detalhes o objeto do processo, anexos necessários e qualquer informação relevante..." maxLength="2000" />
+              </div>
               <div className="char-counter">{form.descricao.length}/2000</div>
             </div>
           </div>
