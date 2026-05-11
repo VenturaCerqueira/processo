@@ -504,6 +504,7 @@ select.form-control {
 /* Tables */
 .table-container {
   overflow-x: auto;
+  overflow-y: visible;
   border-radius: var(--radius-sm);
 }
 
@@ -1292,9 +1293,46 @@ tr:hover td {
 }
 
 .actions-dropdown-toggle:hover {
+  /* sem destaque no hover (para não desalinhar visualmente com o estado aberto) */
+  border-color: var(--gray-200);
+  color: var(--gray-700);
+  background: var(--white);
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+/* Garante que o hover “acompanhe” o botão mesmo quando o dropdown estiver aberto */
+/* Evita conflitos entre :hover e aria-expanded (reduz “efeito aparecendo em outra posição”) */
+/* O estado aberto (dropdown visível) é controlado apenas por aria-expanded no bloco abaixo. */
+
+/* Quando o dropdown está aberto, manter o mesmo “visual de hover” sem mexer layout */
+.actions-dropdown-toggle[aria-expanded="true"] {
   border-color: var(--primary);
   color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.08);
+  box-shadow:
+    0 0 0 3px rgba(15, 76, 129, 0.16),
+    0 10px 22px rgba(2, 6, 23, 0.10);
+  transform: translateY(0);
+}
+
+.actions-dropdown-toggle:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(15, 76, 129, 0.22),
+    0 8px 18px rgba(2, 6, 23, 0.08);
+}
+
+.actions-dropdown-toggle svg {
+  display: block;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Hover mais moderno no botão (além do que já existe) */
+@media (hover: hover) {
+  .actions-dropdown-toggle:hover svg {
+    transform: translateY(-0.5px);
+  }
 }
 
 .actions-dropdown-menu {
@@ -1306,9 +1344,16 @@ tr:hover td {
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
-  z-index: 9999;
+  z-index: 100000;
   overflow: hidden;
-  animation: dropdownIn 0.18s ease both;
+  animation: none;
+  transform: translateZ(0);
+}
+
+/* Abre para cima (opcional; também pode ser controlado por inline style) */
+.actions-dropdown-menu.open-up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 @keyframes dropdownIn {
@@ -1348,7 +1393,31 @@ tr:hover td {
   height: 14px;
 }
 
-.actions-dropdown-item:hover {
+@media (hover: hover) {
+  .actions-dropdown-item:hover {
+    background: var(--gray-50);
+    transform: translateX(2px);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+  }
+
+  /* Unifica hover também no dropdown FIXED (portal) */
+  .actions-dropdown-fixed-menu .actions-dropdown-item:hover {
+    background: var(--gray-50);
+    transform: translateX(2px);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+  }
+}
+
+.actions-dropdown-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(15, 76, 129, 0.35);
+  background: var(--gray-50);
+}
+
+/* Unifica também foco/keyboard no menu fixo */
+.actions-dropdown-fixed-menu .actions-dropdown-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgba(15, 76, 129, 0.35);
   background: var(--gray-50);
 }
 
@@ -1382,7 +1451,15 @@ tr:hover td {
   display: flex;
   flex-direction: column;
   gap: 2px;
+
+  /* melhora consistência visual e hover (portal em body) */
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+
   animation: dropdownIn 0.15s ease;
+  pointer-events: auto;
 }
 
 @keyframes dropdownIn {
@@ -2455,6 +2532,93 @@ tr:hover td {
 }
 
 
+
+/* Icon Picker (CadastroTiposProcesso) */
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.icon-picker-item {
+  appearance: none;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  min-height: 52px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+
+  /* evita "texto passando do tamanho do botão" */
+  max-width: 100%;
+  min-width: 0;
+}
+
+.icon-picker-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.icon-picker-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.10);
+  transform: translateY(-1px);
+}
+
+.icon-picker-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
+}
+
+.icon-picker-item.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.16);
+  background: rgba(15, 76, 129, 0.06);
+}
+
+.icon-picker-svg {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--gray-500);
+}
+
+.icon-picker-item.active .icon-picker-svg {
+  color: var(--primary);
+}
+
+.icon-picker-svg svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 768px) {
+  .icon-picker {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .icon-picker-item {
+    padding: 9px 10px;
+    min-height: 48px;
+  }
+}
 
 /* Form Sections */
 .form-section {

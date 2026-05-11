@@ -31,6 +31,18 @@ function IconeTipo({ tipo }) {
   );
 }
 
+function IconeSvgTipo({ tipo_icone_svg }) {
+  if (!tipo_icone_svg) return null;
+
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: 10, verticalAlign: 'middle' }}>
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ color: 'var(--gray-600)' }}>
+        <path d={tipo_icone_svg} />
+      </svg>
+    </span>
+  );
+}
+
 function Timeline({ historico }) {
   if (!historico || historico.length === 0) {
     return (
@@ -158,7 +170,10 @@ function DetalheProcesso() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h2 className="section-title" style={{ marginBottom: 4 }}>Processo {processo.numero}</h2>
-          <p style={{ color: 'var(--gray-500)', fontSize: 14 }}>{processo.tipo}</p>
+          <p style={{ color: 'var(--gray-500)', fontSize: 14, display: 'flex', alignItems: 'center' }}>
+            <IconeSvgTipo tipo_icone_svg={processo.tipo_icone_svg} />
+            <span>{processo.tipo}</span>
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn btn-secondary" onClick={() => navigate('/processos')}>Voltar</button>

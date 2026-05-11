@@ -6,7 +6,7 @@ import { registrarHistorico } from '../utils/historico.js';
 export const listarProcessos = async (req, res) => {
   try {
     const { status, tipo, setor, busca, situacao, usuarioResponsavel } = req.query;
-    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id WHERE 1=1';
+    let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome, tp.icone_svg as tipo_icone_svg FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id LEFT JOIN tipos_processo tp ON p.tipo = tp.nome WHERE 1=1'
     const params = [];
 
     if (status) { sql += ' AND p.status = ?'; params.push(status); }
@@ -38,6 +38,7 @@ export const obterProcesso = async (req, res) => {
       FROM processos p
       LEFT JOIN especies_processo e ON p.especie_id = e.id
       LEFT JOIN users u ON p.usuarioResponsavel = u.id
+      LEFT JOIN tipos_processo tp ON p.tipo = tp.nome
       WHERE p.id = ?
     `, [req.params.id]);
     if (rows.length === 0) {

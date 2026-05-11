@@ -194,11 +194,20 @@ export async function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         codigo VARCHAR(50),
+        icone_svg TEXT,
         ativo TINYINT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Garantir coluna icone_svg em versões antigas
+    try {
+      await connection.query(`ALTER TABLE tipos_processo ADD COLUMN IF NOT EXISTS icone_svg TEXT`);
+    } catch {
+      // Coluna pode já existir ou erro não crítico
+    }
+
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS setores (

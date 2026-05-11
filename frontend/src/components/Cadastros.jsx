@@ -11,7 +11,8 @@ function Cadastros() {
 
   // Tipos de Processo
   const [tipos, setTipos] = useState([]);
-  const [tipoForm, setTipoForm] = useState({ id: null, nome: '', codigo: '' });
+  const [tipoForm, setTipoForm] = useState({ id: null, nome: '', codigo: '', icone_svg: '' });
+
   const [tipoEditando, setTipoEditando] = useState(false);
 
   // Setores
@@ -72,7 +73,8 @@ function Cadastros() {
     try {
       if (tipoEditando) await api.put(`/tipos-processo/${tipoForm.id}`, tipoForm);
       else await api.post('/tipos-processo', tipoForm);
-      setTipoForm({ id: null, nome: '', codigo: '' });
+      setTipoForm({ id: null, nome: '', codigo: '', icone_svg: '' });
+
       setTipoEditando(false);
       const res = await api.get('/tipos-processo');
       setTipos(res.data);
@@ -228,10 +230,43 @@ function Cadastros() {
                   <label>Codigo</label>
                   <input type="text" className="form-control" value={tipoForm.codigo} onChange={e => setTipoForm({...tipoForm, codigo: e.target.value})} />
                 </div>
+                <div className="form-group">
+                  <label>Ícone (SVG path d)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={tipoForm.icone_svg}
+                    onChange={e => setTipoForm({...tipoForm, icone_svg: e.target.value})}
+                    placeholder="Ex: M9 12h6m-6 4h6..."
+                  />
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: 'var(--primary)15',
+                      border: '1px solid var(--primary)30',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <span style={{ color: tipoForm.icone_svg ? 'var(--primary)' : 'var(--gray-400)', fontSize: 12 }}>
+                        {tipoForm.icone_svg ? 'Prévia indisponível' : '—'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>
+                      Insira o SVG path (atributo d) no campo acima.
+                    </div>
+                  </div>
+                </div>
+
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="submit" className="btn btn-primary">{tipoEditando ? 'Atualizar' : 'Salvar'}</button>
-                {tipoEditando && <button type="button" className="btn btn-secondary" onClick={() => { setTipoEditando(false); setTipoForm({ id: null, nome: '', codigo: '' }); }}>Cancelar</button>}
+                {tipoEditando && <button type="button" className="btn btn-secondary" onClick={() => { setTipoEditando(false); setTipoForm({ id: null, nome: '', codigo: '', icone_svg: '' }); }}>Cancelar</button>}
+
+
               </div>
             </form>
           </div>

@@ -21,11 +21,12 @@ export const obterTipo = async (req, res) => {
 
 export const criarTipo = async (req, res) => {
   try {
-    const { nome, codigo } = req.body;
+    const { nome, codigo, icone_svg } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO tipos_processo (nome, codigo) VALUES (?, ?)',
-      [nome, codigo || null]
+      'INSERT INTO tipos_processo (nome, codigo, icone_svg) VALUES (?, ?, ?)',
+      [nome, codigo || null, icone_svg || null]
     );
+
     const [rows] = await pool.query('SELECT * FROM tipos_processo WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -35,11 +36,12 @@ export const criarTipo = async (req, res) => {
 
 export const atualizarTipo = async (req, res) => {
   try {
-    const { nome, codigo, ativo } = req.body;
+    const { nome, codigo, icone_svg, ativo } = req.body;
     await pool.query(
-      'UPDATE tipos_processo SET nome = ?, codigo = ?, ativo = ? WHERE id = ?',
-      [nome, codigo || null, ativo !== undefined ? ativo : 1, req.params.id]
+      'UPDATE tipos_processo SET nome = ?, codigo = ?, icone_svg = ?, ativo = ? WHERE id = ?',
+      [nome, codigo || null, icone_svg || null, ativo !== undefined ? ativo : 1, req.params.id]
     );
+
     const [rows] = await pool.query('SELECT * FROM tipos_processo WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {

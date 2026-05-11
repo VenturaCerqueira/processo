@@ -98,7 +98,18 @@ function Processos() {
               ) : processos.map(p => (
                 <tr key={p.id}>
                   <td><Link to={`/processos/${p.id}`} className="table-link">{p.numero}</Link></td>
-                  <td>{p.tipo}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {p.tipo_icone_svg ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d={p.tipo_icone_svg} />
+                          </svg>
+                        </span>
+                      ) : null}
+                      <span>{p.tipo}</span>
+                    </div>
+                  </td>
                   <td>{p.assunto}</td>
                   <td>{p.requerente}</td>
                   <td><span className={`badge badge-${p.status}`}>{p.status}</span></td>
