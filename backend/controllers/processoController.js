@@ -311,8 +311,18 @@ export const listarCaixaEntrada = async (req, res) => {
   try {
     const { situacao } = req.query;
     const usuarioId = req.user.id;
+
+    // setor do usuário logado (ex.: req.user.setor)
+    const setorUsuario = req.user?.setor;
+
     let sql = 'SELECT p.*, u.nome as usuarioResponsavelNome, CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as favorito FROM processos p LEFT JOIN users u ON p.usuarioResponsavel = u.id LEFT JOIN favoritos f ON f.processoId = p.id AND f.usuarioId = ? WHERE p.usuarioResponsavel = ? AND p.situacao != ?';
     const params = [usuarioId, usuarioId, 'excluido'];
+
+    // filtra pelo setor atual automaticamente (quando houver setor no usuário)
+    if (setorUsuario) {
+      sql += ' AND p.setorAtual = ?';
+      params.push(setorUsuario);
+    }
 
     if (situacao) {
       sql += ' AND p.situacao = ?';
@@ -320,15 +330,23 @@ export const listarCaixaEntrada = async (req, res) => {
     } else {
       sql += " AND p.situacao IN ('encaminhado', 'recebido', 'aprovado', 'pausado', 'arquivado', 'indeferido', 'retornado')";
     }
+
     sql += ' ORDER BY favorito DESC, p.prioridade DESC, p.createdAt DESC';
-    
+
     const [processos] = await pool.query(sql, params);
-    
-    const contagemSql = 'SELECT situacao, COUNT(*) as total FROM processos WHERE usuarioResponsavel = ? GROUP BY situacao';
-    const [contagem] = await pool.query(contagemSql, [usuarioId]);
+
+    let contagemSql = 'SELECT situacao, COUNT(*) as total FROM processos WHERE usuarioResponsavel = ? GROUP BY situacao';
+    const contagemParams = [usuarioId];
+
+    if (setorUsuario) {
+      contagemSql = 'SELECT situacao, COUNT(*) as total FROM processos WHERE usuarioResponsavel = ? AND setorAtual = ? GROUP BY situacao';
+      contagemParams.push(setorUsuario);
+    }
+
+    const [contagem] = await pool.query(contagemSql, contagemParams);
     const contagemPorSituacao = {};
     contagem.forEach(c => { contagemPorSituacao[c.situacao] = c.total; });
-    
+
     res.json({ processos, contagem: contagemPorSituacao });
   } catch (error) {
     res.status(500).json({ message: error.message });

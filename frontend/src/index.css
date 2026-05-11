@@ -2842,11 +2842,6 @@ tr:hover td {
   z-index: 10;
 }
 
-@media (min-width: 769px) {
-  .submit-bar {
-    display: none;
-  }
-}
 
 /* Alert Custom for Especie */
 .alert-especie {
@@ -2862,4 +2857,9 @@ tr:hover td {
   .form-hero-icon svg { width: 24px; height: 24px; }
   .form-section-title { font-size: 18px; }
   .form-row-modern { gap: 16px; }
+}
+
+/* Garantia: botão do Novo Processo visível também no desktop */
+.submit-bar {
+  display: flex;
 }

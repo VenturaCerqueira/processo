@@ -469,10 +469,26 @@ function NovoProcesso() {
                   Salvando...
                 </>
               ) : (
-                'Criar Processo'
+                <>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Criar Processo
+                </>
               )}
             </button>
-            <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => navigate('/caixa-entrada')}>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={() => navigate('/caixa-entrada')}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l12 12" />
+              </svg>
               Cancelar
             </button>
           </div>
