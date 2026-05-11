@@ -183,96 +183,206 @@ function NovoProcesso() {
         <span>/</span>
         <span>Novo Processo</span>
       </div>
-      <h2 className="section-title">{processoPaiId ? `Novo Processo Filho (Pai: ${processoPai?.numero || processoPaiId})` : 'Novo Processo'}</h2>
+
+      <div className="form-hero">
+        <div className="form-hero-icon">
+          <IconDocumento />
+        </div>
+        <div className="form-hero-content">
+          <h1>{processoPaiId ? `Novo Processo Filho` : 'Novo Processo'}</h1>
+          <p>Preencha os dados abaixo para criar um novo processo judicial.</p>
+        </div>
+      </div>
+
       {processoPai && (
-        <div className="alert alert-info" style={{ marginBottom: 16 }}>
+        <div className="alert alert-info" style={{ marginBottom: 24 }}>
           <strong>Processo Pai:</strong>{' '}
           <Link to={`/processos/${processoPai.id}`}>{processoPai.numero}</Link> — {processoPai.assunto}
           <br />
-          <span style={{ fontSize: 12 }}>Os dados do requerente serão copiados automaticamente.</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>Os dados do requerente serão copiados automaticamente.</span>
         </div>
       )}
+
       {erro && <div className="alert alert-danger">{erro}</div>}
+
       <div className="card">
+
         <form onSubmit={handleSubmit}>
+          {/* Especie Section */}
           {especies.length > 0 && (
-            <div className="form-row">
-              <div className="form-group">
-                <label>Especie de Processo</label>
-                <select className="form-control" value={form.especie_id} onChange={handleEspecieChange}>
-                  <option value="">Selecione a especie (opcional)</option>
-                  {especies.map(ep => <option key={ep.id} value={ep.id}>{ep.nome}</option>)}
-                </select>
+            <div className="form-section">
+              <div className="form-section-header">
+                <div className="form-section-icon">
+                  <IconEspecie />
+                </div>
+                <div>
+                  <div className="form-section-title">Especie e Prazo</div>
+                  <div className="form-section-description">Selecione a especie para auto-preencher dados comuns</div>
+                </div>
               </div>
-              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+              <div className="form-row-modern">
+                <div className="form-group">
+                  <label htmlFor="especie">Especie de Processo</label>
+                  <select id="especie" className="form-control select-enhanced" value={form.especie_id} onChange={handleEspecieChange}>
+                    <option value="">Selecione uma especie (opcional)</option>
+                    {especies.map(ep => (
+                      <option key={ep.id} value={ep.id}>
+                        {ep.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="prazo">Prazo *</label>
+                  <input id="prazo" type="date" className="form-control" value={form.prazo} onChange={e => setForm(prev => ({ ...prev, prazo: e.target.value }))} required />
+                </div>
+              </div>
             </div>
           )}
+
+          {/* Especie Info */}
           {especieSelecionada?.mensagem_customizada && (
-            <div className="alert alert-info" style={{ marginBottom: 16 }}>
-              <strong>Mensagem da Especie:</strong><br />
-              {especieSelecionada.mensagem_customizada}
+            <div className="alert alert-especie">
+              <strong>Informações da Especie:</strong>
+              <div style={{ marginTop: 8 }}>{especieSelecionada.mensagem_customizada}</div>
               {especieSelecionada.prazo_minimo && especieSelecionada.prazo_maximo && (
-                <div style={{ marginTop: 6, fontSize: 12 }}>
-                  Prazo: {especieSelecionada.prazo_minimo} a {especieSelecionada.prazo_maximo} dias{especieSelecionada.dias_uteis ? ' uteis' : ' corridos'}
+                <div className="badge badge-info" style={{ marginTop: 8, fontSize: 13 }}>
+                  Prazo: {especieSelecionada.prazo_minimo}-{especieSelecionada.prazo_maximo} {especieSelecionada.dias_uteis ? 'dias úteis' : 'dias corridos'}
                 </div>
               )}
             </div>
           )}
-          {especies.length === 0 && (
-            <div className="form-row">
-              <div className="form-group"><label>Prazo</label><input type="date" className="form-control" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} /></div>
+
+          {/* Process Details */}
+          <div className="form-section">
+            <div className="form-section-header">
+              <div className="form-section-icon">
+                <IconTipo />
+              </div>
+              <div>
+                <div className="form-section-title">Detalhes do Processo</div>
+              </div>
             </div>
-          )}
-          <div className="form-row">
-            <div className="form-group">
-              <label>Tipo de Processo *</label>
-              <select className="form-control" value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})} required>
-                <option value="">Selecione o tipo</option>
-              {tipos.map(t => <option key={t.id} value={t.nome}>{t.nome}</option>)}
-              </select>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="tipo">Tipo de Processo *</label>
+                <select id="tipo" className="form-control select-enhanced" value={form.tipo} onChange={e => setForm(prev => ({ ...prev, tipo: e.target.value }))} required>
+                  <option value="">Selecione o tipo</option>
+                  {tipos.map(t => (
+                    <option key={t.id} value={t.nome}>{t.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="setorAtual">Setor Atual *</label>
+                <select id="setorAtual" className="form-control select-enhanced" value={form.setorAtual} onChange={e => setForm(prev => ({ ...prev, setorAtual: e.target.value }))} required>
+                  <option value="">Selecione o setor</option>
+                  {setores.map(s => (
+                    <option key={s.id} value={s.nome}>{s.nome}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label>Setor de Entrada *</label>
-<select className="form-control" value={form.setorAtual} onChange={e => setForm({...form, setorAtual: e.target.value})} required>
-                <option value="">Selecione o setor</option>
-              {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
-              </select>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="assunto">Assunto do Processo *</label>
+                <input id="assunto" type="text" className="form-control" value={form.assunto} onChange={e => setForm(prev => ({ ...prev, assunto: e.target.value }))} required placeholder="Ex: Solicitação de documentos, recurso administrativo..." maxLength="200" />
+                <div className="char-counter">{form.assunto.length}/200</div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="prioridade">Prioridade</label>
+                <select id="prioridade" className="form-control select-enhanced" value={form.prioridade} onChange={e => setForm(prev => ({ ...prev, prioridade: e.target.value }))}>
+                  {prioridades.map(p => (
+                    <option key={p.id} value={p.nome}>{p.nome}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Assunto *</label>
-              <input type="text" className="form-control" value={form.assunto} onChange={e => setForm({...form, assunto: e.target.value})} required placeholder="Descreva o assunto do processo" />
+          {/* Requester Details */}
+          <div className="form-section">
+            <div className="form-section-header">
+              <div className="form-section-icon">
+                <IconRequerente />
+              </div>
+              <div>
+                <div className="form-section-title">Dados do Requerente</div>
+                <div className="form-section-description">Informações do cidadão ou empresa solicitante</div>
+              </div>
+            </div>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="requerente">Nome do Requerente *</label>
+                <input id="requerente" type="text" className="form-control" value={form.requerente} onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))} required />
+              </div>
+              <div className="form-group">
+                <label htmlFor="cpfCnpj">CPF / CNPJ</label>
+                <div className="input-group">
+                  <IconDocumento />
+                  <input id="cpfCnpj" type="text" className="form-control" value={form.cpfCnpj} onChange={e => setForm(prev => ({ ...prev, cpfCnpj: formatCpfCnpj(e.target.value) }))} placeholder="000.000.000-00" />
+                </div>
+              </div>
+            </div>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="telefone">Telefone</label>
+                <div className="input-group">
+                  <IconTelefone />
+                  <input id="telefone" type="text" className="form-control" value={form.telefone} onChange={e => setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))} placeholder="(00) 00000-0000" />
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <div className="input-group">
+                  <IconEmail />
+                  <input id="email" type="email" className="form-control" value={form.email} onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+            <div className="form-row-modern">
+              <div className="form-group">
+                <label htmlFor="endereco">Endereço Completo</label>
+                <div className="input-group">
+                  <IconEndereco />
+                  <input id="endereco" type="text" className="form-control" value={form.endereco} onChange={e => setForm(prev => ({ ...prev, endereco: e.target.value }))} placeholder="Rua, número, bairro, cidade - CEP" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="form-section">
+            <div className="form-section-header">
+              <div className="form-section-icon">
+                <IconDescricao />
+              </div>
+              <div>
+                <div className="form-section-title">Descrição Detalhada</div>
+              </div>
             </div>
             <div className="form-group">
-              <label>Prioridade</label>
-              <select className="form-control" value={form.prioridade} onChange={e => setForm({...form, prioridade: e.target.value})}>
-                {prioridades.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
-              </select>
+              <label htmlFor="descricao">Descrição</label>
+              <textarea id="descricao" className="form-control" rows="6" value={form.descricao} onChange={e => setForm(prev => ({ ...prev, descricao: e.target.value }))} placeholder="Descreva em detalhes o objeto do processo, anexos necessários e qualquer informação relevante..." maxLength="2000" />
+              <div className="char-counter">{form.descricao.length}/2000</div>
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group"><label>Requerente *</label><input type="text" className="form-control" value={form.requerente} onChange={e => setForm({...form, requerente: e.target.value})} required /></div>
-            <div className="form-group"><label>CPF/CNPJ</label><input type="text" className="form-control" value={form.cpfCnpj} onChange={e => setForm({...form, cpfCnpj: e.target.value})} placeholder="000.000.000-00" /></div>
-          </div>
-          <div className="form-row">
-            <div className="form-group"><label>Telefone</label><input type="text" className="form-control" value={form.telefone} onChange={e => setForm({...form, telefone: e.target.value})} /></div>
-            <div className="form-group"><label>Email</label><input type="email" className="form-control" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
-          </div>
-          <div className="form-group">
-            <label>Endereço</label>
-            <input type="text" className="form-control" value={form.endereco} onChange={e => setForm({...form, endereco: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Descrição</label>
-            <textarea className="form-control" rows="4" value={form.descricao} onChange={e => setForm({...form, descricao: e.target.value})} placeholder="Descreva detalhes adicionais do processo..." />
-          </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <><span className="spinner" style={{ width: 16, height: 16 }} />Salvando...</> : 'Criar Processo'}
+
+          {/* Submit Buttons */}
+          <div className="submit-bar">
+            <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner" style={{ width: 18, height: 18, marginRight: 8 }} />
+                  Salvando...
+                </>
+              ) : (
+                'Criar Processo'
+              )}
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/caixa-entrada')}>Cancelar</button>
+            <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => navigate('/caixa-entrada')}>
+              Cancelar
+            </button>
           </div>
         </form>
       </div>
