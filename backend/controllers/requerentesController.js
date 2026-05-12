@@ -28,13 +28,37 @@ export const obterRequerente = async (req, res) => {
   }
 };
 
+const detectarTipoPessoa = (cpfCnpj) => {
+  const v = String(cpfCnpj ?? '').replace(/\D/g, '');
+  if (v.length === 14) return 'Juridico';
+  if (v.length === 11) return 'Fisica';
+  return null;
+};
+
 export const criarRequerente = async (req, res) => {
   try {
-    const { nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email } = req.body;
+    const {
+      nome,
+      cpfCnpj,
+      tipoPessoa,
+      endereco,
+      numero,
+      complemento,
+      bairro,
+      cidade,
+      estado,
+      cep,
+      telefone,
+      email
+    } = req.body;
+
+    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
+
     const [result] = await pool.query(
       `INSERT INTO requerentes (nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nome, cpfCnpj || null, tipoPessoa || 'fisica', endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null, cep || null, telefone || null, email || null]
+      [nome, cpfCnpj || null, tipoPessoaFinal, endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null, cep || null, telefone || null, email || null]
     );
     const [rows] = await pool.query('SELECT * FROM requerentes WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
@@ -43,19 +67,55 @@ export const criarRequerente = async (req, res) => {
   }
 };
 
+
 export const atualizarRequerente = async (req, res) => {
   try {
-    const { nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, ativo } = req.body;
+    const {
+      nome,
+      cpfCnpj,
+      tipoPessoa,
+      endereco,
+      numero,
+      complemento,
+      bairro,
+      cidade,
+      estado,
+      cep,
+      telefone,
+      email,
+      ativo
+    } = req.body;
+
+    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
+
     await pool.query(
       `UPDATE requerentes SET nome = ?, cpfCnpj = ?, tipoPessoa = ?, endereco = ?, numero = ?, complemento = ?, bairro = ?, cidade = ?, estado = ?, cep = ?, telefone = ?, email = ?, ativo = ? WHERE id = ?`,
-      [nome, cpfCnpj || null, tipoPessoa || 'fisica', endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null, cep || null, telefone || null, email || null, ativo !== undefined ? ativo : 1, req.params.id]
+      [
+        nome,
+        cpfCnpj || null,
+        tipoPessoaFinal,
+        endereco || null,
+        numero || null,
+        complemento || null,
+        bairro || null,
+        cidade || null,
+        estado || null,
+        cep || null,
+        telefone || null,
+        email || null,
+        ativo !== undefined ? ativo : 1,
+        req.params.id
+      ]
     );
+
     const [rows] = await pool.query('SELECT * FROM requerentes WHERE id = ?', [req.params.id]);
     res.json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const excluirRequerente = async (req, res) => {
   try {

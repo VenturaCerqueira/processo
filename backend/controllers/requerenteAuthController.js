@@ -36,24 +36,82 @@ export const login = async (req, res) => {
   }
 };
 
+const detectarTipoPessoa = (cpfCnpj) => {
+  const v = String(cpfCnpj ?? '').replace(/\D/g, '');
+  if (v.length === 14) return 'Juridico';
+  if (v.length === 11) return 'Fisica';
+  return null;
+};
+
 export const registrar = async (req, res) => {
   try {
-    const { nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senha } = req.body;
+    const {
+      nome,
+      cpfCnpj,
+      tipoPessoa,
+      endereco,
+      numero,
+      complemento,
+      bairro,
+      cidade,
+      estado,
+      cep,
+      telefone,
+      email,
+      senha,
+      representantes
+    } = req.body;
+
+    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
+
     const [existe] = await pool.query('SELECT id FROM requerentes WHERE email = ? OR cpfCnpj = ?', [email, cpfCnpj]);
     if (existe.length > 0) {
       return res.status(400).json({ message: 'Email ou CPF/CNPJ já cadastrado.' });
     }
+
     if (senha.length < 6) {
       return res.status(400).json({ message: 'Senha deve ter pelo menos 6 caracteres.' });
     }
+
     const senhaHash = await hashSenha(senha);
     const [result] = await pool.query(
       `INSERT INTO requerentes (nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senha, nivelAcesso)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'requerente')`,
-      [nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senhaHash]
+      [nome, cpfCnpj, tipoPessoaFinal, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senhaHash]
     );
-    const [rows] = await pool.query('SELECT id, nome, email, nivelAcesso FROM requerentes WHERE id = ?', [result.insertId]);
+
+    const requerenteId = result.insertId;
+
+    // Salvar representantes (1 requerente pode ter vários)
+    const list = Array.isArray(representantes) ? representantes : [];
+    if (list.length > 0) {
+      const inserts = list.map((r) => [
+        requerenteId,
+        r.nome,
+        r.cpfCnpj || null,
+        r.telefone || null,
+        r.email || null,
+        r.funcao || null
+      ]);
+
+
+      const invalid = inserts.find((i) => !i[1] || String(i[1]).trim().length === 0);
+
+      if (invalid) {
+        return res.status(400).json({ message: 'Representante inválido: campo nome é obrigatório.' });
+      }
+
+      await pool.query(
+        `INSERT INTO requerente_representantes (requerenteId, nome, cpfCnpj, telefone, email, ativo)
+         VALUES ?`,
+        [inserts.map((i) => [i[0], i[1], i[2], i[3], i[4], 1])]
+      );
+    }
+
+    const [rows] = await pool.query('SELECT id, nome, email, nivelAcesso FROM requerentes WHERE id = ?', [requerenteId]);
     const newUser = rows[0];
+
     res.status(201).json({
       message: 'Cadastro realizado com sucesso!',
       user: {
@@ -68,6 +126,8 @@ export const registrar = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 export const esqueciSenha = async (req, res) => {
   try {

@@ -314,6 +314,21 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS requerente_representantes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        requerenteId INT NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        cpfCnpj VARCHAR(20),
+        telefone VARCHAR(50),
+        email VARCHAR(255),
+        ativo TINYINT DEFAULT 1,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (requerenteId) REFERENCES requerentes(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     // Add senha and nivelAcesso if missing
     try {
       await connection.query(`ALTER TABLE requerentes ADD COLUMN IF NOT EXISTS senha VARCHAR(255)`);

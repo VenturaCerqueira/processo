@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
 
@@ -76,12 +76,61 @@ const IconDescricao = () => (
   </svg>
 );
 
+// Helpers para máscara de CPF/CNPJ e telefone
+function formatCpfCnpj(value) {
+  // Regra solicitada: limitar apenas o máximo para CNPJ (14 dígitos).
+  // Ou seja: não truncar em 11 como CPF; a entrada pode passar de 11, mas nunca mais que 14.
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 14);
+  if (!digits) return '';
+
+  // CNPJ: 00.000.000/0000-00 (com máscara parcial)
+  const d = digits;
+  const p1 = d.slice(0, 2);
+  const p2 = d.slice(2, 5);
+  const p3 = d.slice(5, 8);
+  const p4 = d.slice(8, 12);
+  const p5 = d.slice(12, 14);
+
+  if (d.length <= 2) return p1;
+  if (d.length <= 5) return `${p1}.${p2}`;
+  if (d.length <= 8) return `${p1}.${p2}.${p3}`;
+  if (d.length <= 12) return `${p1}.${p2}.${p3}/${p4}`;
+  return `${p1}.${p2}.${p3}/${p4}-${p5}`;
+}
+
+
+function formatTelefone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+
+  const d = digits.slice(0, 11);
+  const ddd = d.slice(0, 2);
+
+  if (d.length <= 2) return `(${ddd}`;
+  if (d.length <= 6) {
+    const p = d.slice(2);
+    return `(${ddd}) ${p}`;
+  }
+
+  // 10 ou 11 dígitos
+  if (d.length === 10) {
+    const p1 = d.slice(2, 6);
+    const p2 = d.slice(6, 10);
+    return `(${ddd}) ${p1}-${p2}`;
+  }
+
+  const p1 = d.slice(2, 7);
+  const p2 = d.slice(7, 11);
+  return `(${ddd}) ${p1}-${p2}`;
+}
+
 function NovoProcesso() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const processoPaiId = searchParams.get('processoPaiId');
 
   const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '', especie_id: '' });
+  const userEditedRef = useRef(false);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
   const [tipos, setTipos] = useState([]);
@@ -91,6 +140,13 @@ function NovoProcesso() {
   const [especies, setEspecies] = useState([]);
   const [processoPai, setProcessoPai] = useState(null);
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
+
+  // Representantes legais (CNPJ/jurídico)
+  const [requerenteIdAtual, setRequerenteIdAtual] = useState(null);
+  const [representantes, setRepresentantes] = useState([]);
+  const [carregandoRepresentantes, setCarregandoRepresentantes] = useState(false);
+  const [mostrarModalRepresentantes, setMostrarModalRepresentantes] = useState(false);
+
 
   useEffect(() => {
     async function carregarOpcoes() {
@@ -138,13 +194,16 @@ function NovoProcesso() {
         const { data } = await api.get('/requerente/perfil');
         if (cancelled) return;
 
+        // Se o usuário já começou a digitar, não sobrescrevemos os campos dele.
+        if (userEditedRef.current) return;
+
         setForm(prev => ({
           ...prev,
-          requerente: data.nome || '',
-          cpfCnpj: data.cpfCnpj || '',
-          endereco: data.endereco || prev.endereco || '',
-          telefone: data.telefone || prev.telefone || '',
-          email: data.email || ''
+          requerente: prev.requerente ? prev.requerente : (data.nome || ''),
+          cpfCnpj: prev.cpfCnpj ? prev.cpfCnpj : (data.cpfCnpj || ''),
+          endereco: prev.endereco ? prev.endereco : (data.endereco || ''),
+          telefone: prev.telefone ? prev.telefone : (data.telefone || ''),
+          email: prev.email ? prev.email : (data.email || ''),
         }));
       } catch (error) {
         // Se não for usuário do tipo "requerente" logado, ignora
@@ -196,12 +255,29 @@ function NovoProcesso() {
     setLoading(true);
     setErro('');
     try {
+      // Persistir representantes legais (somente se houver CNPJ/jurídico e requerente identificado)
+      const normalizar = (v) => String(v || '').replace(/\D/g, '');
+      const isJuridico = normalizar(form.cpfCnpj).length === 14;
+
+      if (isJuridico && requerenteIdAtual) {
+        setCarregandoRepresentantes(true);
+        await api.post(`/requerentes/${requerenteIdAtual}/representantes`, {
+          representantes
+        });
+        setCarregandoRepresentantes(false);
+      }
+
       const response = processoPaiId
         ? await api.post(`/processos/${processoPaiId}/filho`, form)
         : await api.post('/processos', form);
+
       navigate(`/processos/${response.data.id}`);
-    } catch (error) { setErro(error.response?.data?.message || 'Erro ao criar processo'); }
-    finally { setLoading(false); }
+    } catch (error) {
+      setCarregandoRepresentantes(false);
+      setErro(error.response?.data?.message || 'Erro ao criar processo');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -371,6 +447,7 @@ function NovoProcesso() {
                     className="form-control"
                     value={form.cpfCnpj}
                     onChange={(e) => {
+                      userEditedRef.current = true;
                       const value = formatCpfCnpj(e.target.value);
                       setForm(prev => ({ ...prev, cpfCnpj: value }));
                     }}
@@ -389,6 +466,8 @@ function NovoProcesso() {
                         const req = match || (Array.isArray(data) ? data[0] : null);
                         if (!req) return;
 
+                        const isJuridico = normalizadoAtual.length === 14;
+
                         setForm(prev => ({
                           ...prev,
                           requerente: req.nome || prev.requerente,
@@ -397,7 +476,25 @@ function NovoProcesso() {
                           telefone: req.telefone || prev.telefone,
                           email: req.email || prev.email,
                         }));
+
+                        // Carregar representantes apenas se for CNPJ (jurídico)
+                        setRequerenteIdAtual(req.id || null);
+                        if (isJuridico && req.id) {
+                          setCarregandoRepresentantes(true);
+                          const { data: reps } = await api.get(`/requerentes/${req.id}/representantes`);
+                          setRepresentantes(Array.isArray(reps) ? reps.map(r => ({
+                            id: r.id,
+                            nome: r.nome || '',
+                            cpfCnpj: r.cpfCnpj || '',
+                            telefone: r.telefone || '',
+                            email: r.email || ''
+                          })) : []);
+                          setCarregandoRepresentantes(false);
+                        } else {
+                          setRepresentantes([]);
+                        }
                       } catch (error) {
+                        setCarregandoRepresentantes(false);
                         console.warn('Erro ao buscar requerente por CPF/CNPJ:', error?.response?.data || error.message);
                       }
                     }}
@@ -415,7 +512,10 @@ function NovoProcesso() {
                     type="text"
                     className="form-control"
                     value={form.requerente}
-                    onChange={e => setForm(prev => ({ ...prev, requerente: e.target.value }))}
+                    onChange={e => {
+                      userEditedRef.current = true;
+                      setForm(prev => ({ ...prev, requerente: e.target.value }));
+                    }}
                     required
                   />
                 </div>
@@ -432,7 +532,10 @@ function NovoProcesso() {
                     type="text"
                     className="form-control"
                     value={form.telefone}
-                    onChange={e => setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
+                    onChange={e => {
+                      userEditedRef.current = true;
+                      setForm(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }));
+                    }}
                     placeholder="(00) 00000-0000"
                   />
                 </div>
@@ -447,7 +550,10 @@ function NovoProcesso() {
                     type="email"
                     className="form-control"
                     value={form.email}
-                    onChange={e => setForm(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={e => {
+                      userEditedRef.current = true;
+                      setForm(prev => ({ ...prev, email: e.target.value }));
+                    }}
                   />
                 </div>
               </div>
@@ -463,12 +569,331 @@ function NovoProcesso() {
                     type="text"
                     className="form-control"
                     value={form.endereco}
-                    onChange={e => setForm(prev => ({ ...prev, endereco: e.target.value }))}
+                    onChange={e => {
+                      userEditedRef.current = true;
+                      setForm(prev => ({ ...prev, endereco: e.target.value }));
+                    }}
                     placeholder="Rua, número, bairro, cidade - CEP"
                   />
                 </div>
               </div>
             </div>
+
+            {/* Representantes legais (somente CNPJ/jurídico) */}
+            {(() => {
+              const normalizar = (v) => String(v || '').replace(/\D/g, '');
+              const isJuridico = normalizar(form.cpfCnpj).length === 14;
+              if (!isJuridico) return null;
+
+              const abrirModal = () => {
+                // Só abre se o requerente já foi carregado pelo CNPJ
+                if (requerenteIdAtual) setMostrarModalRepresentantes(true);
+              };
+
+              return (
+                <div style={{ marginTop: 18 }}>
+                  <div className="form-section-title" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(33, 150, 243, 0.12)',
+                        color: '#2196f3',
+                        fontWeight: 800
+                      }}
+                    >
+                      R
+                    </span>
+                    Representantes legais
+                  </div>
+                  <div className="form-section-description" style={{ marginBottom: 14 }}>
+                    Cadastre um ou mais representantes do requerente (CNPJ).
+                  </div>
+
+                  {!requerenteIdAtual && (
+                    <div className="alert alert-warning" style={{ marginBottom: 12 }}>
+                      Informe um CNPJ existente para carregar/salvar representantes.
+                    </div>
+                  )}
+
+                  {carregandoRepresentantes && (
+                    <div className="alert alert-info" style={{ marginBottom: 12 }}>Carregando representantes...</div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={abrirModal}
+                      disabled={!requerenteIdAtual || carregandoRepresentantes}
+                      style={{
+                        borderRadius: 12,
+                        padding: '10px 16px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        transition: 'transform .08s ease, box-shadow .08s ease',
+                        boxShadow: '0 6px 18px rgba(33,150,243,0.18)'
+                      }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                          e.currentTarget.style.boxShadow = '0 10px 26px rgba(33,150,243,0.26)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0px)';
+                          e.currentTarget.style.boxShadow = '0 6px 18px rgba(33,150,243,0.18)';
+                        }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 5v14" />
+                          <path d="M5 12h14" />
+                        </svg>
+                        Gerenciar representantes ({representantes.length})
+                      </button>
+
+                    {requerenteIdAtual && !carregandoRepresentantes && (
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        Dica: use o botão para adicionar/editar e remover representantes.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {mostrarModalRepresentantes && requerenteIdAtual && (
+              <div className="modal-overlay" onClick={() => setMostrarModalRepresentantes(false)}>
+                <div
+                  className="modal-content"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ maxWidth: 980, borderRadius: 14 }}
+                >
+                  <div className="modal-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 12,
+                            background: 'rgba(76, 175, 80, 0.12)',
+                            color: '#4caf50',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 900
+                          }}
+                        >
+                          ✓
+                        </div>
+                        <h3 style={{ margin: 0 }}>Gerenciar representantes legais</h3>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setMostrarModalRepresentantes(false)}
+                        style={{ borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 6 6 18" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                        Fechar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="modal-body" style={{ paddingTop: 16 }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setRepresentantes(prev => ([
+                          ...prev,
+                          { id: null, nome: '', cpfCnpj: '', telefone: '', email: '' }
+                        ]))}
+                        style={{ borderRadius: 12, padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: 10 }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 5v14" />
+                          <path d="M5 12h14" />
+                        </svg>
+                        Adicionar representante
+                      </button>
+
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        Campos essenciais: <b>Nome</b>.
+                      </div>
+                    </div>
+
+                    {representantes.length === 0 && (
+                      <div className="alert alert-info">
+                        Nenhum representante cadastrado ainda. Clique em <b>Adicionar</b>.
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {representantes.map((rep, idx) => (
+                        <div
+                          key={rep.id ?? `novo-${idx}`}
+                          className="card"
+                          style={{ padding: 16, borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)' }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 12 }}>
+                            <div style={{ fontWeight: 900, display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span style={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: 10,
+                                background: 'rgba(33,150,243,0.12)',
+                                color: '#2196f3',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                {idx + 1}
+                              </span>
+                              Representante
+                            </div>
+
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => setRepresentantes(prev => prev.filter((_, i) => i !== idx))}
+                              style={{ borderRadius: 12, display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                              aria-label={`Remover representante ${idx + 1}`}
+                            >
+                              <svg
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                              </svg>
+                              Remover
+                            </button>
+                          </div>
+
+                          <div className="form-row-modern" style={{ gap: 16 }}>
+                            <div className="form-group" style={{ flex: 1, minWidth: 240 }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                Nome *
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={rep.nome}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setRepresentantes(prev => prev.map((r, i) => i === idx ? { ...r, nome: val } : r));
+                                }}
+                                required
+                              />
+                            </div>
+
+                            <div className="form-group" style={{ flex: 1, minWidth: 240 }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                  <path d="M7 9h10" />
+                                  <path d="M7 13h6" />
+                                </svg>
+                                CPF / CNPJ
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={rep.cpfCnpj}
+                                onChange={(e) => {
+                                  const val = formatCpfCnpj(e.target.value);
+                                  setRepresentantes(prev => prev.map((r, i) => i === idx ? { ...r, cpfCnpj: val } : r));
+                                }}
+                                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-row-modern" style={{ gap: 16, marginTop: 12 }}>
+                            <div className="form-group" style={{ flex: 1, minWidth: 240 }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3 5.18 2 2 0 0 1 5.11 3h3a2 2 0 0 1 2 1.72c.12.81.32 1.6.59 2.36a2 2 0 0 1-.45 2.11L9.09 10.91a16 16 0 0 0 4 4l1.72-1.16a2 2 0 0 1 2.11-.45c.76.27 1.55.47 2.36.59A2 2 0 0 1 22 16.92z" />
+                                </svg>
+                                Telefone
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={rep.telefone}
+                                onChange={(e) => {
+                                  const val = formatTelefone(e.target.value);
+                                  setRepresentantes(prev => prev.map((r, i) => i === idx ? { ...r, telefone: val } : r));
+                                }}
+                                placeholder="(00) 00000-0000"
+                              />
+                            </div>
+
+                            <div className="form-group" style={{ flex: 1, minWidth: 240 }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 4h16v16H4z" />
+                                  <path d="M22 6l-10 7L2 6" />
+                                </svg>
+                                Email
+                              </label>
+                              <input
+                                type="email"
+                                className="form-control"
+                                value={rep.email}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setRepresentantes(prev => prev.map((r, i) => i === idx ? { ...r, email: val } : r));
+                                }}
+                                placeholder="email@dominio.com"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="modal-footer" style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: 14 }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => setMostrarModalRepresentantes(false)}
+                        style={{ borderRadius: 12, padding: '10px 16px' }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        Concluir
+                      </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Description */}
