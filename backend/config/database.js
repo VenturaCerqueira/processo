@@ -269,6 +269,7 @@ export async function initDatabase() {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS especies_processo (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(50) NOT NULL,
         nome VARCHAR(255) NOT NULL,
         tipo_processo_id INT,
         setor_id INT,
@@ -279,10 +280,24 @@ export async function initDatabase() {
         ativo TINYINT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unq_especies_processo_codigo (codigo),
         FOREIGN KEY (tipo_processo_id) REFERENCES tipos_processo(id),
         FOREIGN KEY (setor_id) REFERENCES setores(id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Garantir coluna codigo e unicidade nas especies (bases antigas)
+    try {
+      await connection.query(`ALTER TABLE especies_processo ADD COLUMN codigo VARCHAR(50) NOT NULL`);
+    } catch {
+      // coluna pode existir ou erro nao critico
+    }
+
+    try {
+      await connection.query(`CREATE UNIQUE INDEX unq_especies_processo_codigo ON especies_processo (codigo)`);
+    } catch {
+      // index pode existir ou erro nao critico
+    }
 
     // Adicionar especie_id na tabela processos se nao existir
     try {

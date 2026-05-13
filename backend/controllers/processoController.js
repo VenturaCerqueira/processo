@@ -82,13 +82,40 @@ export const obterProcesso = async (req, res) => {
 export const criarProcesso = async (req, res) => {
   try {
     const { tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, prioridade, prazo, especie_id, usuarioResponsavel } = req.body;
+
+    // Garantir consistência: a espécie deve pertencer ao tipo escolhido
+    let tipoFinal = tipo;
+    if (especie_id) {
+      const especieIdNum = parseInt(especie_id);
+      if (!Number.isNaN(especieIdNum)) {
+        const [especieRows] = await pool.query(
+          `SELECT e.tipo_processo_id, tp.nome as tipo_processo_nome
+           FROM especies_processo e
+           LEFT JOIN tipos_processo tp ON e.tipo_processo_id = tp.id
+           WHERE e.id = ? AND e.ativo = 1`,
+          [especieIdNum]
+        );
+
+        if (especieRows.length === 0) {
+          return res.status(400).json({ message: 'Espécie inválida para o processo.' });
+        }
+
+        const tipoDaEspecieNome = especieRows[0].tipo_processo_nome;
+        if (tipoFinal && tipoDaEspecieNome && tipoFinal !== tipoDaEspecieNome) {
+          return res.status(400).json({ message: 'A espécie selecionada não pertence ao tipo do processo escolhido.' });
+        }
+
+        tipoFinal = tipoDaEspecieNome || tipoFinal;
+      }
+    }
+
     const numero = gerarNumeroProcesso();
     const [result] = await pool.query(
       `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [numero, tipo, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id]
+      [numero, tipoFinal, assunto, requerente, cpfCnpj || null, endereco || null, telefone || null, email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id]
     );
-    
+
     if (usuarioResponsavel) {
       await criarNotificacao(
         usuarioResponsavel,
@@ -99,9 +126,9 @@ export const criarProcesso = async (req, res) => {
         prioridade || 'normal'
       );
     }
-    
-    await registrarHistorico(result.insertId, 'criacao', `Processo ${numero} criado no setor ${setorAtual}.`, req.user.id, { tipo, assunto, requerente, setorAtual });
-    
+
+    await registrarHistorico(result.insertId, 'criacao', `Processo ${numero} criado no setor ${setorAtual}.`, req.user.id, { tipo: tipoFinal, assunto, requerente, setorAtual });
+
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -425,12 +452,39 @@ export const criarProcessoFilho = async (req, res) => {
     const pai = paiRows[0];
 
     const { tipo, assunto, descricao, setorAtual, prioridade, prazo, especie_id, usuarioResponsavel } = req.body;
+
+    // Garantir consistência: a espécie deve pertencer ao tipo escolhido
+    let tipoFinal = tipo;
+    if (especie_id) {
+      const especieIdNum = parseInt(especie_id);
+      if (!Number.isNaN(especieIdNum)) {
+        const [especieRows] = await pool.query(
+          `SELECT e.tipo_processo_id, tp.nome as tipo_processo_nome
+           FROM especies_processo e
+           LEFT JOIN tipos_processo tp ON e.tipo_processo_id = tp.id
+           WHERE e.id = ? AND e.ativo = 1`,
+          [especieIdNum]
+        );
+
+        if (especieRows.length === 0) {
+          return res.status(400).json({ message: 'Espécie inválida para o processo.' });
+        }
+
+        const tipoDaEspecieNome = especieRows[0].tipo_processo_nome;
+        if (tipoFinal && tipoDaEspecieNome && tipoFinal !== tipoDaEspecieNome) {
+          return res.status(400).json({ message: 'A espécie selecionada não pertence ao tipo do processo escolhido.' });
+        }
+
+        tipoFinal = tipoDaEspecieNome || tipoFinal;
+      }
+    }
+
     const numero = gerarNumeroProcesso();
 
     const [result] = await pool.query(
       `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor, processoPaiId)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [numero, tipo, assunto, pai.requerente, pai.cpfCnpj || null, pai.endereco || null, pai.telefone || null, pai.email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id, processoPaiId]
+      [numero, tipoFinal, assunto, pai.requerente, pai.cpfCnpj || null, pai.endereco || null, pai.telefone || null, pai.email || null, descricao || null, setorAtual, usuarioResponsavel || null, prioridade || 'normal', prazo || null, especie_id || null, 'novo', req.user.id, processoPaiId]
     );
 
     if (usuarioResponsavel) {

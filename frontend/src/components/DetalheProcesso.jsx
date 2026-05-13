@@ -181,6 +181,23 @@ function DetalheProcesso() {
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
+        {(processo.processoPai || processo.processoPaiId) && (
+          <div className="alert alert-info" style={{ marginBottom: 16 }}>
+            <strong>Processo Pai:</strong>{' '}
+            {processo.processoPai ? (
+              <>
+                <Link to={`/processos/${processo.processoPai.id}`}>{processo.processoPai.numero}</Link>
+                <span style={{ color: 'var(--gray-600)' }}> — {processo.processoPai.assunto}</span>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--gray-700)' }}>
+                  <div><strong>Quem:</strong> {processo.processoPai.requerente}</div>
+                  {processo.processoPai.cpfCnpj && <div><strong>CPF/CNPJ:</strong> {processo.processoPai.cpfCnpj}</div>}
+                </div>
+              </>
+            ) : (
+              <span style={{ color: 'var(--gray-600)' }}>Processo Pai</span>
+            )}
+          </div>
+        )}
         <div className="detail-grid">
           <div className="detail-item"><span className="label">Assunto</span><span className="value">{processo.assunto}</span></div>
           <div className="detail-item"><span className="label">Requerente</span><span className="value">{processo.requerente}</span></div>
@@ -230,10 +247,31 @@ function DetalheProcesso() {
           )}
           {(processo.situacao === 'recebido' || processo.situacao === 'retornado') && (
             <>
-              <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>Deferir</button>
-              <button className="btn btn-danger" onClick={() => handleSituacaoAcao('indeferir')}>Indeferir</button>
-              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>Suspender</button>
-              <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>Arquivar</button>
+              <button className="btn btn-success" onClick={() => handleSituacaoAcao('aprovar')}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Deferir
+              </button>
+              <button className="btn btn-danger" onClick={() => handleSituacaoAcao('indeferir')}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Indeferir
+              </button>
+              <button className="btn btn-warning" onClick={() => handleSituacaoAcao('pausar')}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10a3 3 0 013 3v4a3 3 0 01-3 3H7a3 3 0 01-3-3v-4a3 3 0 013-3z" opacity="0.25" />
+                </svg>
+                Suspender
+              </button>
+              <button className="btn btn-secondary" onClick={() => handleSituacaoAcao('arquivar')}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M8 3h8m-6 8h4m-9 2v9a2 2 0 002 2h10a2 2 0 002-2v-9" />
+                </svg>
+                Arquivar
+              </button>
             </>
           )}
           {processo.situacao === 'aprovado' && (
@@ -402,8 +440,18 @@ function DetalheProcesso() {
               </form>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setMostrarObservacao(false)}>Cancelar</button>
-              <button className="btn btn-primary" form="form-obs">Adicionar</button>
+              <button className="btn btn-secondary" onClick={() => setMostrarObservacao(false)}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" form="form-obs">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m7-7H5" />
+                </svg>
+                Adicionar
+              </button>
             </div>
           </div>
         </div>

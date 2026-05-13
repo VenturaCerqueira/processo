@@ -170,6 +170,7 @@ function CadastroEspeciesProcesso() {
   const [salvando, setSalvando] = useState(false);
   const [form, setForm] = useState({
     id: null,
+    codigo: '',
     nome: '',
     tipo_processo_id: '',
     setor_id: '',
@@ -218,6 +219,7 @@ function CadastroEspeciesProcesso() {
     setSomenteLeitura(false);
     setForm({
       id: null,
+      codigo: '',
       nome: '',
       tipo_processo_id: '',
       setor_id: '',
@@ -235,6 +237,7 @@ function CadastroEspeciesProcesso() {
     setSomenteLeitura(false);
     setForm({
       id: item.id,
+      codigo: item.codigo || '',
       nome: item.nome || '',
       tipo_processo_id: item.tipo_processo_id ?? '',
       setor_id: item.setor_id ?? '',
@@ -252,6 +255,7 @@ function CadastroEspeciesProcesso() {
     setSomenteLeitura(true);
     setForm({
       id: item.id,
+      codigo: item.codigo || '',
       nome: item.nome || '',
       tipo_processo_id: item.tipo_processo_id ?? '',
       setor_id: item.setor_id ?? '',
@@ -267,6 +271,11 @@ function CadastroEspeciesProcesso() {
     e.preventDefault();
     setErro('');
 
+    if (!form.codigo.trim()) {
+      setErro('Código é obrigatório.');
+      return;
+    }
+
     if (!form.nome.trim()) {
       setErro('Nome é obrigatório.');
       return;
@@ -276,6 +285,7 @@ function CadastroEspeciesProcesso() {
     try {
       const payload = {
         ...form,
+        codigo: form.codigo.trim(),
         prazo_minimo: form.prazo_minimo !== '' && form.prazo_minimo !== null ? parseInt(form.prazo_minimo) : null,
         prazo_maximo: form.prazo_maximo !== '' && form.prazo_maximo !== null ? parseInt(form.prazo_maximo) : null,
       };
@@ -371,6 +381,7 @@ function CadastroEspeciesProcesso() {
           <table className="fade-in-list">
             <thead>
               <tr>
+                <th>Código</th>
                 <th>Nome</th>
                 <th>Tipo de Processo</th>
                 <th>Setor</th>
@@ -390,6 +401,7 @@ function CadastroEspeciesProcesso() {
               ) : (
                 especies.map((item) => (
                   <tr key={item.id}>
+                    <td style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{item.codigo}</td>
                     <td style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{item.nome}</td>
                     <td>{item.tipo_processo_nome || getTipoNome(item.tipo_processo_id)}</td>
                     <td>{item.setor_nome || getSetorNome(item.setor_id)}</td>
@@ -442,6 +454,19 @@ function CadastroEspeciesProcesso() {
             <div className="modal-body">
               <form onSubmit={salvar}>
                 <div className="form-row-modern">
+                  <div className="form-group">
+                    <label>Código *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={form.codigo}
+                      onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+                      required
+                      placeholder="Ex: E01"
+                      disabled={somenteLeitura}
+                    />
+                  </div>
+
                   <div className="form-group">
                     <label>Nome *</label>
                     <input

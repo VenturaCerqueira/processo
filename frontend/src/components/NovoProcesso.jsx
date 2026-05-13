@@ -151,6 +151,8 @@ function NovoProcesso() {
   const [prioridades, setPrioridades] = useState([]);
   const [requerentes, setRequerentes] = useState([]);
   const [especies, setEspecies] = useState([]);
+  const [loadingEspecies, setLoadingEspecies] = useState(false);
+  const [erroEspecies, setErroEspecies] = useState('');
   const [processoPai, setProcessoPai] = useState(null);
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
 
@@ -164,18 +166,16 @@ function NovoProcesso() {
   useEffect(() => {
     async function carregarOpcoes() {
       try {
-        const [tRes, sRes, pRes, cRes, eRes] = await Promise.all([
+        const [tRes, sRes, pRes, cRes] = await Promise.all([
           api.get('/tipos-processo'),
           api.get('/setores'),
           api.get('/prioridades'),
-          api.get('/requerentes'),
-          api.get('/especies-processo')
+          api.get('/requerentes')
         ]);
         setTipos(tRes.data);
         setSetores(sRes.data);
         setPrioridades(pRes.data);
         setRequerentes(cRes.data);
-        setEspecies(eRes.data);
       } catch (error) { console.error('Erro ao carregar opcoes:', error); }
     }
     carregarOpcoes();
@@ -196,7 +196,43 @@ function NovoProcesso() {
       } catch (error) { console.error('Erro ao carregar processo pai:', error); }
     }
     carregarProcessoPai();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processoPaiId]);
+
+  useEffect(() => {
+    (async () => {
+      if (!form.tipo) {
+        setEspecies([]);
+        setErroEspecies('');
+        setEspecieSelecionada(null);
+        setForm(prev => ({ ...prev, especie_id: '', prazo: '' }));
+        return;
+      }
+
+      setLoadingEspecies(true);
+      setErroEspecies('');
+      try {
+        const { data } = await api.get('/especies-processo', { params: { tipo: form.tipo } });
+        const list = Array.isArray(data) ? data : [];
+        setEspecies(list);
+
+        // Se a espécie selecionada não existir mais para o tipo atual, limpa
+        setForm(prev => {
+          const selectedId = prev.especie_id ? parseInt(prev.especie_id) : null;
+          const selectedStillValid = selectedId && list.some(x => x.id === selectedId);
+          if (!selectedStillValid) return { ...prev, especie_id: '', prazo: '' };
+          return prev;
+        });
+      } catch (error) {
+        setEspecies([]);
+        setErroEspecies('Erro ao carregar espécies vinculadas ao tipo.');
+        setForm(prev => ({ ...prev, especie_id: '', prazo: '' }));
+      } finally {
+        setLoadingEspecies(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.tipo]);
 
 
 
@@ -226,7 +262,9 @@ function NovoProcesso() {
       setForm(prev => ({
         ...prev,
         especie_id: especieId,
-        tipo: esp.tipo_processo_nome || prev.tipo,
+        // mantém o tipo escolhido pelo usuário (form.tipo é ID no select)
+        // tipo: esp.tipo_processo_nome || prev.tipo,  (REMOVIDO para não quebrar o select)
+        tipo: prev.tipo,
         setorAtual: esp.setor_nome || prev.setorAtual,
         prazo: esp.prazo_maximo ? calcularPrazo(esp.prazo_maximo, !!esp.dias_uteis) : prev.prazo
       }));
@@ -312,10 +350,25 @@ function NovoProcesso() {
                 <label htmlFor="tipo">Tipo de Processo *</label>
                 <div className="input-group">
                   <span className="input-icon"><IconTipo /></span>
-                  <select id="tipo" className="form-control select-enhanced" value={form.tipo} onChange={e => setForm(prev => ({ ...prev, tipo: e.target.value }))} required>
+                  <select
+                    id="tipo"
+                    className="form-control select-enhanced"
+                    value={form.tipo}
+                    onChange={e => {
+                      const tipoSelecionado = e.target.value;
+                      setForm(prev => ({
+                        ...prev,
+                        tipo: tipoSelecionado,
+                        especie_id: '',
+                        prazo: ''
+                      }));
+                      setEspecieSelecionada(null);
+                    }}
+                    required
+                  >
                     <option value="">Selecione o tipo</option>
                     {tipos.map(t => (
-                      <option key={t.id} value={t.nome}>{t.nome}</option>
+                      <option key={t.id} value={t.id}>{t.nome}</option>
                     ))}
                   </select>
                 </div>
@@ -365,10 +418,14 @@ function NovoProcesso() {
                     className="form-control select-enhanced"
                     value={form.especie_id}
                     onChange={handleEspecieChange}
-                    disabled={especies.length === 0}
+                    disabled={loadingEspecies || especies.length === 0}
                   >
                     <option value="">
-                      {especies.length === 0 ? 'Carregando espécies...' : 'Selecione uma especie (opcional)'}
+                      {loadingEspecies
+                        ? 'Carregando espécies...'
+                        : especies.length === 0
+                          ? 'Selecione um tipo para ver espécies'
+                          : 'Selecione uma espécie (opcional)'}
                     </option>
                     {especies.map(ep => (
                       <option key={ep.id} value={ep.id}>
@@ -397,6 +454,7 @@ function NovoProcesso() {
           </div>
 
           {/* Especie Info */}
+          {erroEspecies && <div className="alert alert-danger" style={{ marginBottom: 16 }}>{erroEspecies}</div>}
           {especieSelecionada?.mensagem_customizada && (
             <div className="alert alert-especie">
               <strong>Informações da Especie:</strong>

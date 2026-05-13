@@ -48,6 +48,7 @@ export const obterEspecie = async (req, res) => {
 export const criarEspecie = async (req, res) => {
   try {
     const {
+      codigo,
       nome,
       tipo_processo_id,
       setor_id,
@@ -57,11 +58,16 @@ export const criarEspecie = async (req, res) => {
       mensagem_customizada
     } = req.body;
 
+    if (!codigo || !codigo.toString().trim()) {
+      return res.status(400).json({ message: 'Código da espécie é obrigatório.' });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO especies_processo
-       (nome, tipo_processo_id, setor_id, prazo_minimo, prazo_maximo, dias_uteis, mensagem_customizada)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (codigo, nome, tipo_processo_id, setor_id, prazo_minimo, prazo_maximo, dias_uteis, mensagem_customizada)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        codigo.toString().trim(),
         nome,
         tipo_processo_id || null,
         setor_id || null,
@@ -88,6 +94,7 @@ export const criarEspecie = async (req, res) => {
 export const atualizarEspecie = async (req, res) => {
   try {
     const {
+      codigo,
       nome,
       tipo_processo_id,
       setor_id,
@@ -98,8 +105,13 @@ export const atualizarEspecie = async (req, res) => {
       ativo
     } = req.body;
 
+    if (!codigo || !codigo.toString().trim()) {
+      return res.status(400).json({ message: 'Código da espécie é obrigatório.' });
+    }
+
     await pool.query(
       `UPDATE especies_processo SET
+       codigo = ?,
        nome = ?,
        tipo_processo_id = ?,
        setor_id = ?,
@@ -110,6 +122,7 @@ export const atualizarEspecie = async (req, res) => {
        ativo = ?
        WHERE id = ?`,
       [
+        codigo,
         nome,
         tipo_processo_id || null,
         setor_id || null,
