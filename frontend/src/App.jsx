@@ -12,6 +12,8 @@ import NovoProcesso from './components/NovoProcesso';
 import DetalheProcesso from './components/DetalheProcesso';
 import Relatorios from './components/Relatorios';
 import CadastroUsuarios from './components/CadastroUsuarios';
+import CadastroRequerenteUsuarios from './components/CadastroRequerenteUsuarios';
+
 import CadastroTiposProcesso from './components/CadastroTiposProcesso';
 import CadastroSetores from './components/CadastroSetores';
 import CadastroPrioridades from './components/CadastroPrioridades';
@@ -187,7 +189,13 @@ function AppContent() {
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />
           <Route path="/relatorios" element={user && user.tipo !== 'requerente' ? <Relatorios /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/perfil" element={user ? <MeuPerfil onUpdateUser={handleUpdateUser} /> : <Navigate to="/login" />} />
-          <Route path="/usuarios" element={user?.nivelAcesso === 'admin' && user.tipo !== 'requerente' ? <CadastroUsuarios /> : <Navigate to={user ? '/requerente/inbox' : '/'} />} />
+          <Route
+            path="/usuarios"
+            element={
+              user?.tipo === 'requerente' ? <CadastroRequerenteUsuarios /> : (user?.nivelAcesso === 'admin' && user.tipo !== 'requerente' ? <CadastroUsuarios /> : <Navigate to={user ? '/requerente/inbox' : '/'} />)
+            }
+          />
+
           <Route path="/cadastros/tipos-processo" element={user && user.tipo !== 'requerente' ? <CadastroTiposProcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/setores" element={user && user.tipo !== 'requerente' ? <CadastroSetores /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/prioridades" element={user && user.tipo !== 'requerente' ? <CadastroPrioridades /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
