@@ -214,11 +214,30 @@ export async function initDatabase() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         sigla VARCHAR(50),
+        administradorUserId INT NULL,
         ativo TINYINT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (administradorUserId) REFERENCES users(id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Garantir coluna administradorUserId em bases antigas
+    try {
+      await connection.query(`ALTER TABLE setores ADD COLUMN IF NOT EXISTS administradorUserId INT NULL`);
+    } catch {
+      // Coluna pode já existir
+    }
+
+    // Garantir FK se existir suporte (pode falhar se constraint já existir)
+    try {
+      await connection.query(
+        `ALTER TABLE setores ADD CONSTRAINT fk_setor_administrador FOREIGN KEY (administradorUserId) REFERENCES users(id)`
+      );
+    } catch {
+      // FK pode já existir ou não ser suportada na versão
+    }
+
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS prioridades (

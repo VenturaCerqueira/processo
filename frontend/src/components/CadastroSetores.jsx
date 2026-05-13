@@ -158,8 +158,10 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
 
 function CadastroSetores() {
   const [setores, setSetores] = useState([]);
+  const [administradores, setAdministradores] = useState([]);
 
   const [loading, setLoading] = useState(true);
+
   const [erro, setErro] = useState('');
 
   const [busca, setBusca] = useState('');
@@ -169,11 +171,23 @@ function CadastroSetores() {
   const [somenteLeitura, setSomenteLeitura] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
-  const [form, setForm] = useState({ id: null, nome: '', sigla: '' });
+  const [form, setForm] = useState({ id: null, nome: '', sigla: '', administradorUserId: '' });
 
   useEffect(() => {
+    carregarAdministradores();
     carregarSetores();
   }, []);
+
+
+  const carregarAdministradores = async () => {
+    try {
+      const res = await api.get('/auth/usuarios-ativos');
+      setAdministradores(res.data.filter((u) => u.nivelAcesso === 'admin'));
+    } catch {
+      // ignora: usuário admin pode não estar disponível na listagem
+    }
+  };
+
 
   const carregarSetores = async () => {
     setLoading(true);
@@ -192,17 +206,24 @@ function CadastroSetores() {
     setErro('');
     setEditando(false);
     setSomenteLeitura(false);
-    setForm({ id: null, nome: '', sigla: '' });
+    setForm({ id: null, nome: '', sigla: '', administradorUserId: '' });
     setMostrarModal(true);
   };
+
 
   const abrirModalEditar = (s) => {
     setErro('');
     setEditando(true);
     setSomenteLeitura(false);
-    setForm({ id: s.id, nome: s.nome || '', sigla: s.sigla || '' });
+    setForm({
+      id: s.id,
+      nome: s.nome || '',
+      sigla: s.sigla || '',
+      administradorUserId: s.administradorUserId ? String(s.administradorUserId) : '',
+    });
     setMostrarModal(true);
   };
+
 
   const fecharModal = () => {
     setMostrarModal(false);
@@ -217,12 +238,18 @@ function CadastroSetores() {
     if (!form.nome.trim()) return;
 
     setSalvando(true);
+
+    const payloadBase = {
+
+      nome: form.nome,
+      sigla: form.sigla || null,
+      administradorUserId: form.administradorUserId || null,
+      ...(editando ? { ativo: 1 } : {}),
+    };
+
     try {
-      const payload = {
-        nome: form.nome,
-        sigla: form.sigla || null,
-        ...(editando ? { ativo: 1 } : {}),
-      };
+      const payload = payloadBase;
+
 
       if (editando) {
         await api.put(`/setores/${form.id}`, payload);
@@ -386,6 +413,7 @@ function CadastroSetores() {
             <thead>
               <tr>
                 <th style={{ width: 420 }}>Nome</th>
+                <th style={{ width: 260 }}>Usuário responsável</th>
                 <th>Sigla</th>
                 <th style={{ width: 160 }}>Ações</th>
               </tr>
@@ -394,7 +422,7 @@ function CadastroSetores() {
             <tbody>
               {setores.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="empty-state small">
+                  <td colSpan="4" className="empty-state small">
                     Nenhum setor cadastrado
                   </td>
                 </tr>
@@ -402,7 +430,8 @@ function CadastroSetores() {
                 setores.map((s) => (
                   <tr key={s.id}>
                     <td>{s.nome}</td>
-                    <td>{s.sigla || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{s.administradorNome || '—'}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{String(s.sigla ?? '—').trim() || '—'}</td>
                     <td>
                       <div className="actions-dropdown" style={{ position: 'relative' }}>
                         <AcoesDropdownLinha
@@ -474,6 +503,24 @@ function CadastroSetores() {
                       disabled={somenteLeitura}
                     />
                   </div>
+
+                  <div className="form-group">
+                    <label>Usuário Administrador do Setor</label>
+                    <select
+                      className="form-control"
+                      value={form.administradorUserId}
+                      onChange={(e) => setForm({ ...form, administradorUserId: e.target.value })}
+                      disabled={somenteLeitura}
+                    >
+                      <option value="">Selecione (opcional)</option>
+                      {administradores.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                 </div>
 
                 {erro && (
