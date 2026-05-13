@@ -165,7 +165,13 @@ function CadastroTiposProcesso() {
 
   const [salvando, setSalvando] = useState(false);
   const [form, setForm] = useState({ id: null, nome: '', codigo: '', icone_svg: '' });
+
+  // ====== Especies vinculadas ao tipo (VIEW) ======
+  const [especiesDoTipo, setEspeciesDoTipo] = useState([]);
+  const [loadingEspeciesDoTipo, setLoadingEspeciesDoTipo] = useState(false);
+  const [erroEspeciesDoTipo, setErroEspeciesDoTipo] = useState('');
   // Dropdown via Portal/FIXED (nenhuma necessidade de dropdownAbertoId/estilo no estado)
+
 
   useEffect(() => {
     carregarTipos();
@@ -231,11 +237,25 @@ function CadastroTiposProcesso() {
     setMostrarModal(true);
   };
 
-  const viewTipo = (t) => {
+  const viewTipo = async (t) => {
     setErro('');
     setEditando(false);
     setSomenteLeitura(true);
     setForm({ id: t.id, nome: t.nome || '', codigo: t.codigo || '', icone_svg: t.icone_svg || '' });
+
+    // carrega as espécies vinculadas ao tipo
+    setLoadingEspeciesDoTipo(true);
+    setErroEspeciesDoTipo('');
+    setEspeciesDoTipo([]);
+    try {
+      const res = await api.get('/especies-processo', { params: { tipo: t.id } });
+      setEspeciesDoTipo(res.data || []);
+    } catch {
+      setErroEspeciesDoTipo('Erro ao carregar espécies vinculadas ao tipo.');
+    } finally {
+      setLoadingEspeciesDoTipo(false);
+    }
+
     setMostrarModal(true);
   };
 
@@ -244,6 +264,9 @@ function CadastroTiposProcesso() {
     setSalvando(false);
     setErro('');
     setSomenteLeitura(false);
+    setLoadingEspeciesDoTipo(false);
+    setEspeciesDoTipo([]);
+    setErroEspeciesDoTipo('');
   };
 
   const salvar = async (e) => {
@@ -510,6 +533,51 @@ function CadastroTiposProcesso() {
                 </div>
 
                 {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+
+                {somenteLeitura && (
+                  <div style={{ marginTop: 18 }}>
+                    <div style={{ fontWeight: 800, color: 'var(--gray-900)', marginBottom: 8 }}>
+                      Espécies vinculadas ao tipo
+                    </div>
+
+                    {loadingEspeciesDoTipo ? (
+                      <div className="empty-state small" style={{ padding: 16 }}>
+                        Carregando espécies...
+                      </div>
+                    ) : erroEspeciesDoTipo ? (
+                      <div className="alert alert-danger">{erroEspeciesDoTipo}</div>
+                    ) : especiesDoTipo.length === 0 ? (
+                      <div className="empty-state small" style={{ padding: 16 }}>
+                        Nenhuma espécie vinculada a este tipo.
+                      </div>
+                    ) : (
+                      <div className="table-container">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Nome</th>
+                              <th>Setor</th>
+                              <th>Prazo</th>
+                              <th>Dias Úteis</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {especiesDoTipo.map((e) => (
+                              <tr key={e.id}>
+                                <td style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{e.nome}</td>
+                                <td>{e.setor_nome || '—'}</td>
+                                <td>
+                                  {e.prazo_minimo ?? '—'} a {e.prazo_maximo ?? '—'}
+                                </td>
+                                <td>{e.dias_uteis ? 'Sim' : 'Não'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="modal-footer" style={{ marginTop: 14 }}>
                   <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
