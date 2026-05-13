@@ -13,11 +13,13 @@ import setoresRoutes from './routes/setores.js';
 import prioridadesRoutes from './routes/prioridades.js';
 import requerentesRoutes from './routes/requerentes.js';
 import requerenteRepresentantesRoutes from './routes/requerenteRepresentantes.js';
+import requerenteProtocolosRoutes from './routes/requerenteProtocolos.js';
 import entidadesRoutes from './routes/entidades.js';
 import niveisAcessoRoutes from './routes/niveisAcesso.js';
 import especiesProcessoRoutes from './routes/especiesProcesso.js';
 import notificacaoRoutes from './routes/notificacoes.js';
 import requerenteRoutes from './routes/requerente.js';
+
 
 dotenv.config();
 
@@ -38,6 +40,8 @@ app.use('/api/setores', setoresRoutes);
 app.use('/api/prioridades', prioridadesRoutes);
 app.use('/api/requerentes', requerentesRoutes);
 app.use('/api/requerentes', requerenteRepresentantesRoutes);
+app.use('/api/requerentes', requerenteProtocolosRoutes);
+
 app.use('/api/entidades', entidadesRoutes);
 app.use('/api/niveis-acesso', niveisAcessoRoutes);
 app.use('/api/especies-processo', especiesProcessoRoutes);

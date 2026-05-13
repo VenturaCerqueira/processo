@@ -78,12 +78,24 @@ const IconDescricao = () => (
 
 // Helpers para máscara de CPF/CNPJ e telefone
 function formatCpfCnpj(value) {
-  // Regra solicitada: limitar apenas o máximo para CNPJ (14 dígitos).
-  // Ou seja: não truncar em 11 como CPF; a entrada pode passar de 11, mas nunca mais que 14.
   const digits = String(value || '').replace(/\D/g, '').slice(0, 14);
   if (!digits) return '';
 
-  // CNPJ: 00.000.000/0000-00 (com máscara parcial)
+  // CPF: 000.000.000-00 (até 11 dígitos)
+  if (digits.length <= 11) {
+    const d = digits;
+    const p1 = d.slice(0, 3);
+    const p2 = d.slice(3, 6);
+    const p3 = d.slice(6, 9);
+    const p4 = d.slice(9, 11);
+
+    if (d.length <= 3) return p1;
+    if (d.length <= 6) return `${p1}.${p2}`;
+    if (d.length <= 9) return `${p1}.${p2}.${p3}`;
+    return `${p1}.${p2}.${p3}-${p4}`;
+  }
+
+  // CNPJ: 00.000.000/0000-00 (12 a 14 dígitos, máscara parcial)
   const d = digits;
   const p1 = d.slice(0, 2);
   const p2 = d.slice(2, 5);
@@ -97,6 +109,7 @@ function formatCpfCnpj(value) {
   if (d.length <= 12) return `${p1}.${p2}.${p3}/${p4}`;
   return `${p1}.${p2}.${p3}/${p4}-${p5}`;
 }
+
 
 
 function formatTelefone(value) {
@@ -185,35 +198,7 @@ function NovoProcesso() {
     carregarProcessoPai();
   }, [processoPaiId]);
 
-  // Preencher dados do requerente logado a partir do cadastro de requerente
-  useEffect(() => {
-    let cancelled = false;
 
-    async function carregarRequerenteLogado() {
-      try {
-        const { data } = await api.get('/requerente/perfil');
-        if (cancelled) return;
-
-        // Se o usuário já começou a digitar, não sobrescrevemos os campos dele.
-        if (userEditedRef.current) return;
-
-        setForm(prev => ({
-          ...prev,
-          requerente: prev.requerente ? prev.requerente : (data.nome || ''),
-          cpfCnpj: prev.cpfCnpj ? prev.cpfCnpj : (data.cpfCnpj || ''),
-          endereco: prev.endereco ? prev.endereco : (data.endereco || ''),
-          telefone: prev.telefone ? prev.telefone : (data.telefone || ''),
-          email: prev.email ? prev.email : (data.email || ''),
-        }));
-      } catch (error) {
-        // Se não for usuário do tipo "requerente" logado, ignora
-        console.warn('Não foi possível carregar perfil do requerente logado:', error?.response?.data || error.message);
-      }
-    }
-
-    carregarRequerenteLogado();
-    return () => { cancelled = true; };
-  }, []);
 
 
   const calcularPrazo = (dias, diasUteis) => {
@@ -498,13 +483,18 @@ function NovoProcesso() {
                         console.warn('Erro ao buscar requerente por CPF/CNPJ:', error?.response?.data || error.message);
                       }
                     }}
-                    placeholder="000.000.000-00"
+                    placeholder="000.000.000-00 ou 00.000.000/0000-00"
                   />
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="requerente">Nome do Requerente *</label>
+                <label htmlFor="requerente">{(() => {
+                      const digits = String(form.cpfCnpj || '').replace(/\D/g, '');
+                      const isJuridico = digits.length === 14;
+                      return isJuridico ? 'Nome Fantasia *' : 'Nome do Requerente *';
+                    })()}</label>
+
                 <div className="input-group">
                   <span className="input-icon"><IconRequerente /></span>
                   <input
@@ -585,11 +575,6 @@ function NovoProcesso() {
               const isJuridico = normalizar(form.cpfCnpj).length === 14;
               if (!isJuridico) return null;
 
-              const abrirModal = () => {
-                // Só abre se o requerente já foi carregado pelo CNPJ
-                if (requerenteIdAtual) setMostrarModalRepresentantes(true);
-              };
-
               return (
                 <div style={{ marginTop: 18 }}>
                   <div className="form-section-title" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -614,12 +599,6 @@ function NovoProcesso() {
                     Cadastre um ou mais representantes do requerente (CNPJ).
                   </div>
 
-                  {!requerenteIdAtual && (
-                    <div className="alert alert-warning" style={{ marginBottom: 12 }}>
-                      Informe um CNPJ existente para carregar/salvar representantes.
-                    </div>
-                  )}
-
                   {carregandoRepresentantes && (
                     <div className="alert alert-info" style={{ marginBottom: 12 }}>Carregando representantes...</div>
                   )}
@@ -628,7 +607,7 @@ function NovoProcesso() {
                     <button
                       type="button"
                       className="btn btn-primary"
-                      onClick={abrirModal}
+                      onClick={() => setMostrarModalRepresentantes(true)}
                       disabled={!requerenteIdAtual || carregandoRepresentantes}
                       style={{
                         borderRadius: 12,
@@ -639,21 +618,21 @@ function NovoProcesso() {
                         transition: 'transform .08s ease, box-shadow .08s ease',
                         boxShadow: '0 6px 18px rgba(33,150,243,0.18)'
                       }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 10px 26px rgba(33,150,243,0.26)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0px)';
-                          e.currentTarget.style.boxShadow = '0 6px 18px rgba(33,150,243,0.18)';
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 5v14" />
-                          <path d="M5 12h14" />
-                        </svg>
-                        Gerenciar representantes ({representantes.length})
-                      </button>
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 10px 26px rgba(33,150,243,0.26)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0px)';
+                        e.currentTarget.style.boxShadow = '0 6px 18px rgba(33,150,243,0.18)';
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                      </svg>
+                      Gerenciar representantes ({representantes.length})
+                    </button>
 
                     {requerenteIdAtual && !carregandoRepresentantes && (
                       <div style={{ fontSize: 12, opacity: 0.75 }}>
@@ -664,6 +643,7 @@ function NovoProcesso() {
                 </div>
               );
             })()}
+
 
             {mostrarModalRepresentantes && requerenteIdAtual && (
               <div className="modal-overlay" onClick={() => setMostrarModalRepresentantes(false)}>

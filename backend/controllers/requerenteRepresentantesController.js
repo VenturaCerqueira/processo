@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { normalizarCpfCnpj } from '../utils/cpfCnpj.js';
 
 export const listarRepresentantesPorRequerente = async (req, res) => {
   try {
@@ -40,7 +41,7 @@ export const salvarRepresentantesPorRequerente = async (req, res) => {
     const inserts = list.map((r) => [
       requerenteId,
       r.nome,
-      r.cpfCnpj || null,
+      r.cpfCnpj ? normalizarCpfCnpj(r.cpfCnpj) : null,
       r.telefone || null,
       r.email || null
     ]);

@@ -18,8 +18,9 @@ function RequerenteLogin({ onLogin }) {
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-if (onLogin) onLogin(user);
+      if (onLogin) onLogin(user);
       else navigate('/requerente/dashboard');
+
     } catch (error) {
       setErro(error.response?.data?.message || 'Erro ao fazer login.');
     } finally {
@@ -38,31 +39,88 @@ if (onLogin) onLogin(user);
         <h2>Área do Requerente</h2>
         <h3>Acompanhe seus processos</h3>
         
-        {erro && <div className="alert alert-danger">{erro}</div>}
+        {erro && (
+          <div className="alert alert-danger" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'inline-flex',
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(220, 38, 38, 0.12)',
+                color: '#dc2626',
+              }}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            <span>{(() => {
+              const msg = erro || '';
+              const lower = msg.toLowerCase();
+
+              if (lower.includes('credenciais inválidas')) {
+                return 'E-mail ou senha inválidos.';
+              }
+
+              if (lower.includes('email') && lower.includes('não encontrado')) {
+                return 'E-mail não encontrado.';
+              }
+
+              if (lower.includes('senha')) {
+                return 'Senha incorreta.';
+              }
+
+              return msg;
+            })()}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="seu.email@exemplo.com"
-            />
+            <div className="input-group">
+              <span className="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 6h16v12H4z" />
+                  <path d="m4 7 8 6 8-6" />
+                </svg>
+              </span>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="seu.email@exemplo.com"
+                autoComplete="username"
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Senha</label>
-            <input
-              type="password"
-              className="form-control"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="input-group">
+              <span className="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="11" width="16" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+              </span>
+              <input
+                type="password"
+                className="form-control"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
           </div>
+
           <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
             {loading ? (
               <>

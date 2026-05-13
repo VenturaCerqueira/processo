@@ -3,6 +3,8 @@ import pool from '../config/database.js';
 import { hashSenha, compararSenha } from '../utils/helpers.js';
 import { randomBytes } from 'crypto';
 import { enviarEmailRecuperacao } from '../utils/email.js'; // Reuse if possible
+import { detectarTipoPessoa, normalizarCpfCnpj, onlyDigits } from '../utils/cpfCnpj.js';
+
 
 const gerarToken = (id, tipo = 'requerente') => {
   return jwt.sign({ id, tipo }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
@@ -36,13 +38,6 @@ export const login = async (req, res) => {
   }
 };
 
-const detectarTipoPessoa = (cpfCnpj) => {
-  const v = String(cpfCnpj ?? '').replace(/\D/g, '');
-  if (v.length === 14) return 'Juridico';
-  if (v.length === 11) return 'Fisica';
-  return null;
-};
-
 export const registrar = async (req, res) => {
   try {
     const {
@@ -62,10 +57,12 @@ export const registrar = async (req, res) => {
       representantes
     } = req.body;
 
-    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const normalizadoCpfCnpj = cpfCnpj ? normalizarCpfCnpj(cpfCnpj) : null;
+    const tipoDetectado = detectarTipoPessoa(normalizadoCpfCnpj);
     const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
 
-    const [existe] = await pool.query('SELECT id FROM requerentes WHERE email = ? OR cpfCnpj = ?', [email, cpfCnpj]);
+    const [existe] = await pool.query('SELECT id FROM requerentes WHERE email = ? OR cpfCnpj = ?', [email, normalizadoCpfCnpj]);
+
     if (existe.length > 0) {
       return res.status(400).json({ message: 'Email ou CPF/CNPJ já cadastrado.' });
     }
@@ -78,7 +75,7 @@ export const registrar = async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO requerentes (nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senha, nivelAcesso)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'requerente')`,
-      [nome, cpfCnpj, tipoPessoaFinal, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senhaHash]
+      [nome, normalizadoCpfCnpj, tipoPessoaFinal, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email, senhaHash]
     );
 
     const requerenteId = result.insertId;

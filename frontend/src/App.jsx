@@ -17,6 +17,7 @@ import CadastroSetores from './components/CadastroSetores';
 import CadastroPrioridades from './components/CadastroPrioridades';
 import CadastroRequerentes from './components/CadastroRequerentes';
 import CadastroEntidades from './components/CadastroEntidades';
+import RequerenteDetalhe from './components/RequerenteDetalhe';
 import CadastroNiveisAcesso from './components/CadastroNiveisAcesso';
 import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
 import RequerenteLogin from './components/RequerenteLogin';
@@ -62,7 +63,11 @@ function AppContent() {
   const handleLogin = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+
+    // Marca que o usuário acabou de fazer login (para exibir a modal 1x)
+    localStorage.setItem('welcomeShownAt', '');
   };
+
 
   const handleUpdateUser = (userData) => {
     setUser(userData);
@@ -72,8 +77,10 @@ function AppContent() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('welcomeShownAt');
     setUser(null);
   };
+
 
   const isRequerenteRoute = location.pathname.startsWith('/requerente');
   const isPublicRoute = ['/login', '/primeiro-acesso', '/esqueci-senha', '/redefinir-senha'].includes(location.pathname);
@@ -83,6 +90,27 @@ function AppContent() {
   const mainContentClass = isPublicRoute || !user
     ? ''
     : `main-content${sidebarCollapsed ? ' main-content-collapsed' : ''}${isMobile ? ' main-content-mobile' : ''}`;
+
+  const [mostrarBemVindo, setMostrarBemVindo] = useState(false);
+
+  useEffect(() => {
+    // Exibe a modal na 1ª vez após login (persistido via localStorage)
+    try {
+      if (!user) return;
+
+      const welcomeFlag = localStorage.getItem('welcomeShownAt');
+      if (!welcomeFlag) return;
+
+      setMostrarBemVindo(true);
+
+      // Marca como exibido
+      localStorage.removeItem('welcomeShownAt');
+    } catch (e) {
+      // ignora falhas de storage
+    }
+  }, [user]);
+
+  const primeiroNome = user?.nome ? user.nome.split(' ')[0] : 'Usuário';
 
   return (
     <div className={appLayoutClass}>
@@ -101,6 +129,27 @@ function AppContent() {
         <div className="sidebar-mobile-overlay" onClick={() => setSidebarMobileOpen(false)} />
       )}
       {user && <ToastContainer />}
+
+      {mostrarBemVindo && user && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <div className="modal-header" style={{ paddingBottom: 10 }}>
+              <h3>Ben-vindo, {primeiroNome}!</h3>
+            </div>
+            <div className="modal-body" style={{ paddingTop: 10 }}>
+              <p style={{ color: 'var(--gray-600)', fontWeight: 500 }}>
+                Acesso realizado com sucesso. Desejamos um ótimo trabalho.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={() => setMostrarBemVindo(false)}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={mainContentClass}>
         {isMobile && user && !isPublicRoute && (
           <button
@@ -115,6 +164,7 @@ function AppContent() {
         )}
         <Routes>
           <Route path="/" element={user ? <Dashboard /> : <LandingPage />} />
+
           {/* Staff routes */}
           <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
           <Route path="/primeiro-acesso" element={!user ? <PrimeiroAcesso onLogin={handleLogin} /> : <Navigate to="/" />} />
@@ -142,6 +192,7 @@ function AppContent() {
           <Route path="/cadastros/setores" element={user && user.tipo !== 'requerente' ? <CadastroSetores /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/prioridades" element={user && user.tipo !== 'requerente' ? <CadastroPrioridades /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/requerentes" element={user && user.tipo !== 'requerente' ? <CadastroRequerentes /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
+          <Route path="/cadastros/requerentes/:id" element={user && user.tipo !== 'requerente' ? <RequerenteDetalhe /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/entidades" element={user && user.tipo !== 'requerente' ? <CadastroEntidades /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/niveis-acesso" element={user?.nivelAcesso === 'admin' && user.tipo !== 'requerente' ? <CadastroNiveisAcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />
           <Route path="/cadastros/especies-processo" element={user && user.tipo !== 'requerente' ? <CadastroEspeciesProcesso /> : <Navigate to={user ? (user.tipo === 'requerente' ? '/requerente/inbox' : '/') : '/login'} />} />

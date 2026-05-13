@@ -8,13 +8,15 @@ export const listarProcessosRequerente = async (req, res) => {
     if (requerente.length === 0) return res.status(404).json({ message: 'Requerente não encontrado.' });
     const nome = requerente[0].nome;
     const emailReq = requerente[0].email;
+    const cpfCnpjReq = requerente[0].cpfCnpj;
+
 let sql = `
       SELECT p.*, 
              CASE WHEN f.id IS NOT NULL THEN 1 ELSE 0 END as favorito
       FROM processos p 
       LEFT JOIN favoritos f ON f.processoId = p.id AND f.usuarioId = ?
-      WHERE p.requerente = ? AND p.email = ? OR p.email = ?
-        AND p.situacao != 'excluido'
+      WHERE p.situacao != 'excluido'
+        AND (p.cpfCnpj = ? OR (p.requerente = ? AND p.email = ?))
     `;
     const params = [requerenteId, nome, emailReq, emailReq];
     if (busca) {

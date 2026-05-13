@@ -1,15 +1,31 @@
 import pool from '../config/database.js';
+import { detectarTipoPessoa, normalizarCpfCnpj, onlyDigits } from '../utils/cpfCnpj.js';
 
 export const listarRequerentes = async (req, res) => {
   try {
     const { busca } = req.query;
     let sql = 'SELECT * FROM requerentes WHERE ativo = 1';
     const params = [];
+
     if (busca) {
-      sql += ' AND (nome LIKE ? OR cpfCnpj LIKE ?)';
-      const like = `%${busca}%`;
-      params.push(like, like);
+      const buscaStr = String(busca);
+      const digits = onlyDigits(buscaStr);
+      const tipo = detectarTipoPessoa(digits);
+
+      // Busca por nome continua como LIKE.
+      // Para CPF/CNPJ fazemos comparação normalizada por dígitos.
+      if (tipo === 'Fisica' || tipo === 'Juridico') {
+        const normalizado = normalizarCpfCnpj(digits);
+        sql += ' AND (nome LIKE ? OR cpfCnpj LIKE ? OR cpfCnpj = ?)';
+        const likeNomeOuCpf = `%${buscaStr}%`;
+        params.push(likeNomeOuCpf, `%${buscaStr}%`, normalizado);
+      } else {
+        sql += ' AND (nome LIKE ? OR cpfCnpj LIKE ?)';
+        const like = `%${buscaStr}%`;
+        params.push(like, like);
+      }
     }
+
     sql += ' ORDER BY nome';
     const [rows] = await pool.query(sql, params);
     res.json(rows);
@@ -17,6 +33,7 @@ export const listarRequerentes = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const obterRequerente = async (req, res) => {
   try {
@@ -26,13 +43,6 @@ export const obterRequerente = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
-
-const detectarTipoPessoa = (cpfCnpj) => {
-  const v = String(cpfCnpj ?? '').replace(/\D/g, '');
-  if (v.length === 14) return 'Juridico';
-  if (v.length === 11) return 'Fisica';
-  return null;
 };
 
 export const criarRequerente = async (req, res) => {
@@ -52,13 +62,14 @@ export const criarRequerente = async (req, res) => {
       email
     } = req.body;
 
-    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const normalizadoCpfCnpj = cpfCnpj ? normalizarCpfCnpj(cpfCnpj) : null;
+    const tipoDetectado = detectarTipoPessoa(normalizadoCpfCnpj);
     const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
 
     const [result] = await pool.query(
       `INSERT INTO requerentes (nome, cpfCnpj, tipoPessoa, endereco, numero, complemento, bairro, cidade, estado, cep, telefone, email)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nome, cpfCnpj || null, tipoPessoaFinal, endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null, cep || null, telefone || null, email || null]
+      [nome, normalizadoCpfCnpj || null, tipoPessoaFinal, endereco || null, numero || null, complemento || null, bairro || null, cidade || null, estado || null, cep || null, telefone || null, email || null]
     );
     const [rows] = await pool.query('SELECT * FROM requerentes WHERE id = ?', [result.insertId]);
     res.status(201).json(rows[0]);
@@ -86,14 +97,15 @@ export const atualizarRequerente = async (req, res) => {
       ativo
     } = req.body;
 
-    const tipoDetectado = detectarTipoPessoa(cpfCnpj);
+    const normalizadoCpfCnpj = cpfCnpj ? normalizarCpfCnpj(cpfCnpj) : null;
+    const tipoDetectado = detectarTipoPessoa(normalizadoCpfCnpj);
     const tipoPessoaFinal = tipoDetectado || tipoPessoa || 'fisica';
 
     await pool.query(
       `UPDATE requerentes SET nome = ?, cpfCnpj = ?, tipoPessoa = ?, endereco = ?, numero = ?, complemento = ?, bairro = ?, cidade = ?, estado = ?, cep = ?, telefone = ?, email = ?, ativo = ? WHERE id = ?`,
       [
         nome,
-        cpfCnpj || null,
+        normalizadoCpfCnpj || null,
         tipoPessoaFinal,
         endereco || null,
         numero || null,

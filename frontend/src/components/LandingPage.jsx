@@ -3,96 +3,99 @@ import { Link } from 'react-router-dom';
 
 function LandingPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--white)' }}>
+    <div className="landing-page">
       {/* Hero Section */}
-      <header style={{
-        background: 'linear-gradient(135deg, var(--gray-900) 0%, var(--primary-dark) 40%, var(--primary) 100%)',
-        color: 'white',
-        padding: '0 20px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 20px 100px', position: 'relative', zIndex: 2 }}>
-          <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 80 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: 'rgba(255,255,255,0.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
+      <header className="landing-hero">
+        <div className="landing-hero-inner">
+          <nav className="landing-nav">
+            <div className="landing-brand">
+              <div className="landing-brand-mark">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
-              <span style={{ fontSize: 18, fontWeight: 700 }}>Processo Eletrônico</span>
+              <span className="landing-brand-text">Processo Eletrônico</span>
             </div>
-            <Link to="/login" className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+
+            <Link to="/login" className="btn landing-primary-ghost">
               Acessar Sistema
             </Link>
           </nav>
 
           <div style={{ maxWidth: 700 }}>
-            <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 800, lineHeight: 1.15, marginBottom: 24, letterSpacing: '-1px' }}>
+            <h1 className="landing-hero-title">
               Gestão Moderna de<br />Processos Administrativos
             </h1>
-            <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, marginBottom: 40, maxWidth: 560 }}>
-              Sistema integrado de controle e tramitação de processos eletrônicos para órgãos públicos municipais. 
+            <p className="landing-hero-subtitle">
+              Sistema integrado de controle e tramitação de processos eletrônicos para órgãos públicos municipais.
               Rastreabilidade total, gestão documental e integração entre setores.
             </p>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <Link to="/login" className="btn btn-primary" style={{ padding: '14px 32px', fontSize: 16 }}>
+            <div className="landing-actions">
+              <Link to="/login" className="btn btn-primary">
+                <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
                 Entrar no Sistema
               </Link>
-              <a href="#funcionalidades" className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)', padding: '14px 32px', fontSize: 16 }}>
+              <Link to="/requerente/login" className="btn landing-primary-ghost">
+                <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Acesso do Requerente
+              </Link>
+              <a href="#funcionalidades" className="btn landing-primary-ghost">
                 Conhecer Funcionalidades
               </a>
             </div>
+
           </div>
         </div>
 
         {/* Decorative shapes */}
-        <div style={{
-          position: 'absolute', bottom: -60, right: -60, width: 400, height: 400,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.03)', zIndex: 1
-        }} />
-        <div style={{
-          position: 'absolute', top: 100, right: 100, width: 200, height: 200,
-          borderRadius: '50%', background: 'rgba(255,255,255,0.02)', zIndex: 1
-        }} />
+        <div className="landing-shape shape-1" />
+        <div className="landing-shape shape-2" />
       </header>
 
+
       {/* Stats Banner */}
-      <section style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32, textAlign: 'center' }}>
+      <section className="landing-section">
+        <div className="landing-kpi-inner">
           <div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--primary)' }}>16</div>
-            <div style={{ fontSize: 14, color: 'var(--gray-500)', marginTop: 4 }}>Setores Integrados</div>
+            <div className="kpi-value">16</div>
+            <div className="kpi-label">Setores Integrados</div>
           </div>
           <div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--primary)' }}>11</div>
-            <div style={{ fontSize: 14, color: 'var(--gray-500)', marginTop: 4 }}>Tipos de Processos</div>
+            <div className="kpi-value">11</div>
+            <div className="kpi-label">Tipos de Processos</div>
           </div>
           <div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--primary)' }}>100%</div>
-            <div style={{ fontSize: 14, color: 'var(--gray-500)', marginTop: 4 }}>Rastreabilidade</div>
+            <div className="kpi-value">100%</div>
+            <div className="kpi-label">Rastreabilidade</div>
           </div>
           <div>
-            <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--primary)' }}>24h</div>
-            <div style={{ fontSize: 14, color: 'var(--gray-500)', marginTop: 4 }}>Acesso Contínuo</div>
+            <div className="kpi-value">24h</div>
+            <div className="kpi-label">Acesso Contínuo</div>
           </div>
         </div>
       </section>
 
+
       {/* Features */}
-      <section id="funcionalidades" style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--gray-900)', marginBottom: 12 }}>Funcionalidades Principais</h2>
-          <p style={{ fontSize: 16, color: 'var(--gray-500)', maxWidth: 560, margin: '0 auto' }}>
+      <section id="funcionalidades" className="landing-features">
+        <div className="landing-center">
+          <h2>Funcionalidades Principais</h2>
+          <p>
             Tudo o que você precisa para gerenciar processos administrativos com eficiência e transparência.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+        <div className="landing-feature-grid">
+
           <FeatureCard
             icon={(
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -145,13 +148,14 @@ function LandingPage() {
       </section>
 
       {/* Process Types */}
-      <section style={{ background: 'var(--gray-50)', padding: '80px 20px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--gray-900)', marginBottom: 12 }}>Tipos de Processos Atendidos</h2>
-            <p style={{ fontSize: 16, color: 'var(--gray-500)' }}>O sistema individualiza e gerencia 11 categorias distintas de processos.</p>
+      <section className="landing-subsection">
+        <div className="landing-subsection-inner">
+          <div className="landing-center">
+            <h2>Tipos de Processos Atendidos</h2>
+            <p>O sistema individualiza e gerencia 11 categorias distintas de processos.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+          <div className="landing-subsection-grid">
+
             {[
               '01 — Cadastro Fiscal Municipal',
               '02 — Parcelamento do Solo',
@@ -165,28 +169,24 @@ function LandingPage() {
               '10 — Administrativo Fiscal',
               '11 — Diversos'
             ].map((item, i) => (
-              <div key={i} style={{
-                background: 'white', borderRadius: 10, padding: '16px 20px',
-                border: '1px solid var(--gray-200)', display: 'flex', alignItems: 'center', gap: 12,
-                fontSize: 14, fontWeight: 500, color: 'var(--gray-700)'
-              }}>
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0
-                }} />
+              <div key={i} className="landing-item-pill">
+                <span className="landing-item-dot" />
                 {item}
               </div>
             ))}
+
           </div>
         </div>
       </section>
 
       {/* Sectors */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 20px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'var(--gray-900)', marginBottom: 12 }}>Setores Integrados</h2>
-          <p style={{ fontSize: 16, color: 'var(--gray-500)' }}>Tramitação entre todas as divisões e coordenações da Secretaria.</p>
+      <section className="landing-features" style={{ paddingTop: 80, paddingBottom: 80 }}>
+        <div className="landing-center" style={{ marginBottom: 60 }}>
+          <h2>Setores Integrados</h2>
+          <p>Tramitação entre todas as divisões e coordenações da Secretaria.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+        <div className="landing-subsection-grid" style={{ gap: 12 }}>
+
           {[
             'Gabinete do Secretário',
             'Assessoria Jurídica',
@@ -204,61 +204,56 @@ function LandingPage() {
             'Fiscalização do Ordenamento Uso do Solo',
             'Divisão de Inspetoria de Obras e Postura Municipal'
           ].map((setor, i) => (
-            <div key={i} style={{
-              background: 'var(--gray-50)', borderRadius: 8, padding: '14px 18px',
-              fontSize: 14, color: 'var(--gray-600)', display: 'flex', alignItems: 'center', gap: 10
-            }}>
+            <div key={i} className="landing-item-pill" style={{ background: 'var(--gray-50)' }}>
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--primary)', flexShrink: 0 }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
               {setor}
             </div>
           ))}
+
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)', padding: '80px 20px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: 'white', marginBottom: 16 }}>Pronto para começar?</h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', marginBottom: 32, lineHeight: 1.7 }}>
+      <section className="landing-cta">
+        <div className="landing-cta-inner">
+          <h2>Pronto para começar?</h2>
+          <p>
             Acesse o sistema com suas credenciais e comece a gerenciar processos com eficiência e transparência.
           </p>
-          <Link to="/login" className="btn" style={{ background: 'white', color: 'var(--primary)', padding: '16px 40px', fontSize: 16, fontWeight: 700 }}>
+          <Link to="/login" className="btn btn-secondary" style={{ background: 'white', color: 'var(--primary)', fontWeight: 700 }}>
             Acessar o Sistema
           </Link>
         </div>
       </section>
 
+
       {/* Footer */}
-      <footer style={{ background: 'var(--gray-900)', color: 'var(--gray-400)', padding: '40px 20px', textAlign: 'center', fontSize: 14 }}>
-        <p> Processo Eletrônico — Sistema de Gestão Administrativa Municipal</p>
-        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--gray-600)' }}>Versão 1.0 • Todos os direitos reservados</p>
+      <footer className="landing-footer">
+        <p>Processo Eletrônico — Sistema de Gestão Administrativa Municipal</p>
+        <small>Versão 1.0 • Todos os direitos reservados</small>
       </footer>
+
     </div>
   );
 }
 
 function FeatureCard({ icon, color, title, description }) {
   return (
-    <div style={{
-      background: 'var(--white)', borderRadius: 16, padding: 28,
-      border: '1px solid var(--gray-200)', transition: 'all 0.2s ease',
-    }} onMouseEnter={e => { e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-    onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-      <div style={{
-        width: 52, height: 52, borderRadius: 12,
-        background: color + '15', color: color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        marginBottom: 20
-      }}>
+    <div className="landing-feature-card">
+      <div
+        className="landing-feature-icon"
+        style={{ background: color + '15', color: color }}
+      >
         {React.cloneElement(icon, { width: 26, height: 26 })}
       </div>
-      <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--gray-900)', marginBottom: 10 }}>{title}</h3>
-      <p style={{ fontSize: 14, color: 'var(--gray-500)', lineHeight: 1.65 }}>{description}</p>
+      <h3>{title}</h3>
+      <p>{description}</p>
     </div>
   );
 }
+
 
 export default LandingPage;
 
