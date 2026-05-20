@@ -227,7 +227,7 @@ function NovoProcesso() {
       setLoadingEspecies(true);
       setErroEspecies('');
       try {
-        const { data } = await api.get('/especies-processo', { params: { tipo: form.tipo_id } });
+        const { data } = await api.get('/especies-processo', { params: { tipo: form.tipo_id, ativos: 1 } });
         const list = Array.isArray(data) ? data : [];
         setEspecies(list);
 
@@ -574,13 +574,14 @@ function NovoProcesso() {
                     value={form.especie_id}
                     onChange={handleEspecieChange}
                     disabled={loadingEspecies || especies.length === 0}
+                    required
                   >
                     <option value="">
                       {loadingEspecies
                         ? 'Carregando espécies...'
                         : especies.length === 0
                           ? 'Selecione um tipo para ver espécies'
-                          : 'Selecione uma espécie (opcional)'}
+                          : 'Selecione uma espécie'}
                     </option>
                     {especies.map(ep => (
                       <option key={ep.id} value={ep.id}>

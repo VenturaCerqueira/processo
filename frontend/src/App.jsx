@@ -185,7 +185,7 @@ function AppContent() {
           {/* Staff protected */}
           <Route path="/caixa-entrada" element={user && user.tipo !== 'requerente' ? <CaixaEntrada /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/processos" element={user && user.tipo !== 'requerente' ? <Navigate to="/caixa-entrada" /> : <Navigate to="/requerente/inbox" />} />
-          <Route path="/processos/novo" element={user && user.tipo !== 'requerente' ? <NovoProcesso /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
+          <Route path="/processos/novo" element={user ? <NovoProcesso /> : <Navigate to="/login" />} />
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />
           <Route path="/relatorios" element={user && user.tipo !== 'requerente' ? <Relatorios /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/perfil" element={user ? <MeuPerfil onUpdateUser={handleUpdateUser} /> : <Navigate to="/login" />} />

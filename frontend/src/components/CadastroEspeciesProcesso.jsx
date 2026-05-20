@@ -187,6 +187,7 @@ function CadastroEspeciesProcesso() {
     prazo_maximo: '',
     dias_uteis: false,
     mensagem_customizada: '',
+    ativo: 1, // 1 = disponível para requerente; 0 = indisponível
   });
 
   // Campos/anexos cadastrados na espécie
@@ -243,6 +244,7 @@ function CadastroEspeciesProcesso() {
       prazo_maximo: '',
       dias_uteis: false,
       mensagem_customizada: '',
+      ativo: 1,
     });
     setMostrarModal(true);
   };
@@ -261,6 +263,7 @@ function CadastroEspeciesProcesso() {
       prazo_maximo: item.prazo_maximo ?? '',
       dias_uteis: !!item.dias_uteis,
       mensagem_customizada: item.mensagem_customizada || '',
+      ativo: item.ativo === 0 ? 0 : 1,
     });
     setMostrarModal(true);
     carregarAnexosCampos(item.id);
@@ -280,6 +283,7 @@ function CadastroEspeciesProcesso() {
       prazo_maximo: item.prazo_maximo ?? '',
       dias_uteis: !!item.dias_uteis,
       mensagem_customizada: item.mensagem_customizada || '',
+      ativo: item.ativo === 0 ? 0 : 1,
     });
     setMostrarModal(true);
     carregarAnexosCampos(item.id);
@@ -331,6 +335,7 @@ function CadastroEspeciesProcesso() {
     try {
       const payload = {
         ...form,
+        ativo: Number(form.ativo) === 1 ? 1 : 0,
         codigo: form.codigo.trim(),
         prazo_minimo:
           form.prazo_minimo !== '' && form.prazo_minimo !== null
@@ -351,16 +356,26 @@ function CadastroEspeciesProcesso() {
       }
 
       // Persistir anexos/campos da espécie (primeira versão)
-      if (especieId) {
-        await api.post(`/especies-processo/${especieId}/anexos`, {
-          anexos: anexosCampos.map((x) => ({
-            titulo: x.titulo ?? '',
-            tipo: x.tipo ?? 'arquivo',
-            obrigatorio: !!x.obrigatorio,
-            ordem: x.ordem ?? 0,
-            opcoes: x.opcoes ?? null,
-          })),
-        });
+      // IMPORTANTE: não bloquear o salvamento da espécie se anexos falharem.
+      try {
+        const especieIdNumero = Number(especieId);
+        if (Number.isFinite(especieIdNumero) && especieIdNumero > 0) {
+          await api.post(`/especies-processo/${especieIdNumero}/anexos`, {
+            anexos: anexosCampos.map((x) => ({
+              titulo: x.titulo ?? '',
+              tipo: x.tipo ?? 'arquivo',
+              obrigatorio: !!x.obrigatorio,
+              ordem: x.ordem ?? 0,
+              opcoes: x.opcoes ?? null,
+            })),
+          });
+        }
+      } catch (e) {
+        setErro('Espécie salva, mas houve erro ao salvar anexos desta espécie.');
+        // ainda assim fecha e recarrega (o usuário já conseguiu ajustar disponibilidade)
+        fecharModal();
+        carregarDados();
+        return;
       }
 
       fecharModal();
@@ -416,10 +431,10 @@ function CadastroEspeciesProcesso() {
     );
 
   const modalTitle = editando
-    ? 'Editar Especie'
+    ? 'Editar Espécie de Processo'
     : somenteLeitura
-      ? 'Visualizar Especie'
-      : 'Novo Especie de Processo';
+      ? 'Visualizar Espécie de Processo'
+      : 'Nova Espécie de Processo';
 
   return (
     <div className="page-content">
@@ -472,6 +487,7 @@ function CadastroEspeciesProcesso() {
                 <th>Prazo Min</th>
                 <th>Prazo Max</th>
                 <th>Dias Uteis</th>
+                <th>Disponível p/ Requerente</th>
                 <th style={{ width: 220 }}>Ações</th>
               </tr>
             </thead>
@@ -492,6 +508,7 @@ function CadastroEspeciesProcesso() {
                     <td>{item.prazo_minimo ?? '—'}</td>
                     <td>{item.prazo_maximo ?? '—'}</td>
                     <td>{item.dias_uteis ? 'Sim' : 'Nao'}</td>
+                    <td>{item.ativo === 0 ? 'Não' : 'Sim'}</td>
                     <td>
                       <div className="actions-dropdown" style={{ position: 'relative' }}>
                         <AcoesDropdownLinha
@@ -550,7 +567,7 @@ function CadastroEspeciesProcesso() {
                       value={form.codigo}
                       onChange={(e) => setForm({ ...form, codigo: e.target.value })}
                       required
-                      placeholder="Ex: E01"
+                      placeholder="Ex.: E01"
                       disabled={somenteLeitura}
                     />
                   </div>
@@ -563,7 +580,7 @@ function CadastroEspeciesProcesso() {
                       value={form.nome}
                       onChange={(e) => setForm({ ...form, nome: e.target.value })}
                       required
-                      placeholder="Ex: Requerimento, Recurso..."
+                      placeholder="Ex.: Requerimento, Recurso..."
                       disabled={somenteLeitura}
                     />
                   </div>
@@ -586,7 +603,7 @@ function CadastroEspeciesProcesso() {
                   </div>
 
                   <div className="form-group">
-                    <label>Setor Responsavel</label>
+                    <label>Setor Responsável</label>
                     <select
                       className="form-control"
                       value={form.setor_id}
@@ -603,7 +620,20 @@ function CadastroEspeciesProcesso() {
                   </div>
 
                   <div className="form-group">
-                    <label>Prazo Minimo (dias)</label>
+                    <label>Disponível para requerente</label>
+                    <select
+                      className="form-control"
+                      value={String(form.ativo)}
+                      onChange={(e) => setForm({ ...form, ativo: parseInt(e.target.value, 10) })}
+                      disabled={somenteLeitura}
+                    >
+                      <option value="1">Sim</option>
+                      <option value="0">Não</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Prazo Mínimo (dias)</label>
                     <input
                       type="number"
                       className="form-control"
@@ -615,7 +645,7 @@ function CadastroEspeciesProcesso() {
                   </div>
 
                   <div className="form-group">
-                    <label>Prazo Maximo (dias)</label>
+                    <label>Prazo Máximo (dias)</label>
                     <input
                       type="number"
                       className="form-control"
@@ -635,18 +665,18 @@ function CadastroEspeciesProcesso() {
                       disabled={somenteLeitura}
                     />
                     <label htmlFor="dias_uteis" style={{ margin: 0, fontWeight: 700, color: 'var(--gray-700)' }}>
-                      Contar dias uteis
+                      Contar dias úteis
                     </label>
                   </div>
 
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Mensagem Customizada</label>
+                    <label>Mensagem personalizada</label>
                     <textarea
                       className="form-control"
                       rows="3"
                       value={form.mensagem_customizada}
                       onChange={(e) => setForm({ ...form, mensagem_customizada: e.target.value })}
-                      placeholder="Mensagem que sera exibida nos processos desta especie..."
+                      placeholder="Mensagem que será exibida nos processos desta espécie..."
                       disabled={somenteLeitura}
                     />
                   </div>
@@ -662,8 +692,10 @@ function CadastroEspeciesProcesso() {
                 <div className="anexos-especie-section">
                   <div className="anexos-especie-header">
                     <div>
-                      <div className="anexos-especie-title">Campos de anexos da espécie</div>
-                      <div className="anexos-especie-desc">Configure campos necessários (texto/número/data) e upload (arquivo).</div>
+                      <div className="anexos-especie-title">Campos e anexos da espécie</div>
+                      <div className="anexos-especie-desc">
+                        Configure campos necessários (texto, número, data) e anexos (arquivo).
+                      </div>
                     </div>
 
                     {!somenteLeitura && (
@@ -684,9 +716,10 @@ function CadastroEspeciesProcesso() {
                             },
                           ]);
                         }}
-                        style={{ borderRadius: 12 }}
+                        style={{ borderRadius: 12, fontWeight: 800 }}
+                        aria-label="Adicionar campo"
                       >
-                        Adicionar campo
+                        + Adicionar campo
                       </button>
                     )}
                   </div>
@@ -713,13 +746,14 @@ function CadastroEspeciesProcesso() {
                         .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0))
                         .map((campo, idx) => {
                           const ordemValue = Number(campo.ordem) || idx + 1;
+
                           return (
                             <div key={`${campo.titulo || 'campo'}-${idx}`} className="campo-anexo-card">
                               <div className="campo-anexo-top">
                                 <div className="campo-anexo-meta">
                                   <span className="campo-anexo-ordem">#{ordemValue}</span>
                                   <span className={'campo-anexo-tipo-badge ' + String(campo.tipo || '').toLowerCase()}>
-                                    {campo.tipo || 'arquivo'}
+                                    {(campo.tipo || 'arquivo').charAt(0).toUpperCase() + String(campo.tipo || 'arquivo').slice(1)}
                                   </span>
                                   <span className="campo-anexo-obrigatorio">
                                     <span className="dot" aria-hidden="true" />
@@ -731,12 +765,13 @@ function CadastroEspeciesProcesso() {
                                   <button
                                     type="button"
                                     className="btn btn-danger"
-                                    style={{ borderRadius: 12, padding: '8px 14px' }}
+                                    style={{ borderRadius: 12, padding: '8px 14px', fontWeight: 800 }}
                                     onClick={() =>
                                       setAnexosCampos((prev) =>
                                         prev.filter((_, i) => i !== prev.findIndex((x) => x === campo))
                                       )
                                     }
+                                    aria-label="Remover campo"
                                   >
                                     Remover
                                   </button>
@@ -746,12 +781,13 @@ function CadastroEspeciesProcesso() {
                               <div className="campo-anexo-fields">
                                 <div className="form-row-modern" style={{ gap: 12 }}>
                                   <div className="form-group" style={{ flex: 1, minWidth: 220 }}>
-                                    <label>Nome documento</label>
+                                    <label>Nome do documento</label>
                                     <input
                                       type="text"
                                       className="form-control"
                                       value={campo.titulo}
                                       disabled={somenteLeitura}
+                                      placeholder="Ex.: Cópia do documento..."
                                       onChange={(e) => {
                                         const v = e.target.value;
                                         setAnexosCampos((prev) =>
@@ -800,10 +836,14 @@ function CadastroEspeciesProcesso() {
                                           )
                                         );
                                       }}
+                                      min="1"
                                     />
                                   </div>
 
-                                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 28 }}>
+                                  <div
+                                    className="form-group"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 28 }}
+                                  >
                                     <input
                                       type="checkbox"
                                       checked={!!campo.obrigatorio}
@@ -816,8 +856,11 @@ function CadastroEspeciesProcesso() {
                                           )
                                         );
                                       }}
+                                      aria-label="Campo obrigatório"
                                     />
-                                    <span style={{ fontWeight: 800 }}>Obrigatório</span>
+                                    <span style={{ fontWeight: 800 }}>
+                                      Obrigatório
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -829,12 +872,23 @@ function CadastroEspeciesProcesso() {
                 </div>
 
                 <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={fecharModal}
+                    disabled={salvando}
+                    style={{ borderRadius: 12, fontWeight: 800 }}
+                  >
                     {somenteLeitura ? 'Fechar' : 'Cancelar'}
                   </button>
 
                   {!somenteLeitura && (
-                    <button type="submit" className="btn btn-primary" disabled={salvando}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={salvando}
+                      style={{ borderRadius: 12, fontWeight: 800 }}
+                    >
                       {salvando ? 'Salvando...' : editando ? 'Atualizar' : 'Salvar'}
                     </button>
                   )}

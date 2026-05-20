@@ -2,15 +2,21 @@ import pool from '../config/database.js';
 
 export const listarEspecies = async (req, res) => {
   try {
-    const { tipo, setor } = req.query;
+    const { tipo, setor, ativos } = req.query;
     let sql = `
       SELECT e.*, tp.nome as tipo_processo_nome, s.nome as setor_nome
       FROM especies_processo e
       LEFT JOIN tipos_processo tp ON e.tipo_processo_id = tp.id
       LEFT JOIN setores s ON e.setor_id = s.id
-      WHERE e.ativo = 1
+      WHERE 1=1
     `;
     const params = [];
+
+    if (ativos === '1' || ativos === 1) {
+      sql += ' AND e.ativo = 1';
+    } else if (ativos === '0' || ativos === 0) {
+      sql += ' AND e.ativo = 0';
+    }
 
     if (tipo) {
       sql += ' AND e.tipo_processo_id = ?';

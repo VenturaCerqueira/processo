@@ -132,36 +132,85 @@ export const criarProcesso = async (req, res) => {
     // Regra: criar já com situacao=encaminhado e sem atribuição direta ao usuário.
     const usuarioResponsavelFinal = null;
 
-    // Garantir consistência: a espécie deve pertencer ao tipo escolhido
+    // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
     let tipoFinal = tipo;
+    let especieDisponivel = null;
+
     if (especie_id) {
       const especieIdNum = parseInt(especie_id);
       if (!Number.isNaN(especieIdNum)) {
         const [especieRows] = await pool.query(
-          `SELECT e.tipo_processo_id, tp.nome as tipo_processo_nome
+          `SELECT
+              e.id,
+              e.ativo,
+              e.tipo_processo_id,
+              tp.nome as tipo_processo_nome,
+              e.setor_id,
+              e.prazo_minimo,
+              e.prazo_maximo,
+              e.dias_uteis,
+              e.mensagem_customizada
            FROM especies_processo e
            LEFT JOIN tipos_processo tp ON e.tipo_processo_id = tp.id
-           WHERE e.id = ? AND e.ativo = 1`,
+           WHERE e.id = ?`,
           [especieIdNum],
         );
 
         if (especieRows.length === 0) {
-          return res
-            .status(400)
-            .json({ message: "Espécie inválida para o processo." });
+          return res.status(400).json({ message: "Espécie inválida." });
         }
 
-        const tipoDaEspecieNome = especieRows[0].tipo_processo_nome;
+        especieDisponivel = especieRows[0];
+
+        if (!especieDisponivel.ativo) {
+          return res.status(400).json({
+            message: "Espécie não disponível para o requerente abrir o processo.",
+          });
+        }
+
+        const tipoDaEspecieNome = especieDisponivel.tipo_processo_nome;
+
         if (tipoFinal && tipoDaEspecieNome && tipoFinal !== tipoDaEspecieNome) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "A espécie selecionada não pertence ao tipo do processo escolhido.",
-            });
+          return res.status(400).json({
+            message:
+              "A espécie selecionada não pertence ao tipo do processo escolhido.",
+          });
         }
 
         tipoFinal = tipoDaEspecieNome || tipoFinal;
+
+        // Validação de prazo (se o cliente informar prazo)
+        // - no banco: prazo_minimo/prazo_maximo são INT (dias)
+        // - no request: prazo chega em formato que o frontend envia; tentamos interpretar como número de dias
+        const prazoNum = prazo !== undefined && prazo !== null && String(prazo).trim() !== ""
+          ? Number(prazo)
+          : null;
+
+        const temPrazoMin = especieDisponivel.prazo_minimo !== undefined && especieDisponivel.prazo_minimo !== null;
+        const temPrazoMax = especieDisponivel.prazo_maximo !== undefined && especieDisponivel.prazo_maximo !== null;
+
+        if (prazoNum !== null && Number.isFinite(prazoNum) && (temPrazoMin || temPrazoMax)) {
+          if (temPrazoMin && prazoNum < especieDisponivel.prazo_minimo) {
+            return res.status(400).json({
+              message: `Prazo informado está abaixo do mínimo permitido para esta espécie (mínimo: ${especieDisponivel.prazo_minimo}).`,
+            });
+          }
+          if (temPrazoMax && prazoNum > especieDisponivel.prazo_maximo) {
+            return res.status(400).json({
+              message: `Prazo informado está acima do máximo permitido para esta espécie (máximo: ${especieDisponivel.prazo_maximo}).`,
+            });
+          }
+        }
+
+        // Validação de dias_uteis (apenas coerência quando definido)
+        if (especieDisponivel.dias_uteis !== undefined && especieDisponivel.dias_uteis !== null) {
+          const diasUteisNum = Number(especieDisponivel.dias_uteis);
+          if (!Number.isNaN(diasUteisNum) && diasUteisNum < 0) {
+            return res.status(400).json({
+              message: "Configuração inválida de dias úteis na espécie selecionada.",
+            });
+          }
+        }
       }
     }
 
@@ -958,36 +1007,96 @@ export const criarProcessoFilho = async (req, res) => {
     // Regra: criar já com situacao=encaminhado e sem atribuição direta ao usuário.
     const usuarioResponsavelFinal = null;
 
-    // Garantir consistência: a espécie deve pertencer ao tipo escolhido
+    // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
     let tipoFinal = tipo;
+    let especieDisponivel = null;
+
     if (especie_id) {
       const especieIdNum = parseInt(especie_id);
       if (!Number.isNaN(especieIdNum)) {
         const [especieRows] = await pool.query(
-          `SELECT e.tipo_processo_id, tp.nome as tipo_processo_nome
+          `SELECT
+              e.id,
+              e.ativo,
+              e.tipo_processo_id,
+              tp.nome as tipo_processo_nome,
+              e.setor_id,
+              e.prazo_minimo,
+              e.prazo_maximo,
+              e.dias_uteis,
+              e.mensagem_customizada
            FROM especies_processo e
            LEFT JOIN tipos_processo tp ON e.tipo_processo_id = tp.id
-           WHERE e.id = ? AND e.ativo = 1`,
+           WHERE e.id = ?`,
           [especieIdNum],
         );
 
         if (especieRows.length === 0) {
-          return res
-            .status(400)
-            .json({ message: "Espécie inválida para o processo." });
+          return res.status(400).json({ message: "Espécie inválida." });
         }
 
-        const tipoDaEspecieNome = especieRows[0].tipo_processo_nome;
+        especieDisponivel = especieRows[0];
+
+        if (!especieDisponivel.ativo) {
+          return res.status(400).json({
+            message: "Espécie não disponível para o requerente abrir o processo.",
+          });
+        }
+
+        const tipoDaEspecieNome = especieDisponivel.tipo_processo_nome;
+
         if (tipoFinal && tipoDaEspecieNome && tipoFinal !== tipoDaEspecieNome) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "A espécie selecionada não pertence ao tipo do processo escolhido.",
-            });
+          return res.status(400).json({
+            message:
+              "A espécie selecionada não pertence ao tipo do processo escolhido.",
+          });
         }
 
         tipoFinal = tipoDaEspecieNome || tipoFinal;
+
+        // Validação de prazo (se o cliente informar prazo)
+        const prazoNum =
+          prazo !== undefined && prazo !== null && String(prazo).trim() !== ""
+            ? Number(prazo)
+            : null;
+
+        const temPrazoMin =
+          especieDisponivel.prazo_minimo !== undefined &&
+          especieDisponivel.prazo_minimo !== null;
+        const temPrazoMax =
+          especieDisponivel.prazo_maximo !== undefined &&
+          especieDisponivel.prazo_maximo !== null;
+
+        if (
+          prazoNum !== null &&
+          Number.isFinite(prazoNum) &&
+          (temPrazoMin || temPrazoMax)
+        ) {
+          if (temPrazoMin && prazoNum < especieDisponivel.prazo_minimo) {
+            return res.status(400).json({
+              message: `Prazo informado está abaixo do mínimo permitido para esta espécie (mínimo: ${especieDisponivel.prazo_minimo}).`,
+            });
+          }
+          if (temPrazoMax && prazoNum > especieDisponivel.prazo_maximo) {
+            return res.status(400).json({
+              message: `Prazo informado está acima do máximo permitido para esta espécie (máximo: ${especieDisponivel.prazo_maximo}).`,
+            });
+          }
+        }
+
+        // Validação de dias_uteis (apenas coerência quando definido)
+        if (
+          especieDisponivel.dias_uteis !== undefined &&
+          especieDisponivel.dias_uteis !== null
+        ) {
+          const diasUteisNum = Number(especieDisponivel.dias_uteis);
+          if (!Number.isNaN(diasUteisNum) && diasUteisNum < 0) {
+            return res.status(400).json({
+              message:
+                "Configuração inválida de dias úteis na espécie selecionada.",
+            });
+          }
+        }
       }
     }
 
