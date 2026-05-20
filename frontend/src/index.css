@@ -3507,6 +3507,139 @@ tr:hover td {
   border-left-color: var(--info);
 }
 
+/* =========================================
+   Campos de anexos da espécie (CadastroEspeciesProcesso)
+   ========================================= */
+
+.anexos-especie-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.anexos-especie-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.anexos-especie-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--gray-900);
+}
+
+.anexos-especie-desc {
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 4px;
+  color: var(--gray-700);
+}
+
+.anexos-especie-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campo-anexo-card {
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(15, 76, 129, 0.07), rgba(15, 76, 129, 0) 48%),
+    linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  .campo-anexo-card:hover {
+    border-color: rgba(15, 76, 129, 0.22);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+    transform: translateY(-1px);
+  }
+}
+
+.campo-anexo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(15, 76, 129, 0) 0%, rgba(15, 76, 129, 0.06) 50%, rgba(15, 76, 129, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .campo-anexo-card:hover::after {
+    opacity: 1;
+  }
+}
+
+.campo-anexo-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.campo-anexo-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.campo-anexo-ordem {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--primary);
+  background: rgba(15, 76, 129, 0.08);
+  border: 1px solid rgba(15, 76, 129, 0.18);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.campo-anexo-tipo-badge {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--gray-700);
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.campo-anexo-tipo-badge.pdf { color: var(--danger); border-color: rgba(220, 38, 38, 0.22); background: rgba(220, 38, 38, 0.08); }
+.campo-anexo-tipo-badge.doc { color: var(--info); border-color: rgba(37, 99, 235, 0.22); background: rgba(37, 99, 235, 0.08); }
+.campo-anexo-tipo-badge.png { color: #0ea5e9; border-color: rgba(14, 165, 233, 0.22); background: rgba(14, 165, 233, 0.08); }
+.campo-anexo-tipo-badge.jpeg { color: #7c3aed; border-color: rgba(124, 58, 237, 0.22); background: rgba(124, 58, 237, 0.08); }
+
+.campo-anexo-obrigatorio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: rgba(249, 115, 22, 0.08);
+  color: #ea580c;
+}
+
+.campo-anexo-obrigatorio .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.14);
+}
+
 @media (max-width: 768px) {
   .form-hero h1 { font-size: 24px; }
   .form-hero-icon { width: 48px; height: 48px; }
@@ -3522,8 +3655,8 @@ tr:hover td {
   .detail-fields-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 
-
 /* Garantia: botão do Novo Processo visível também no desktop */
 .submit-bar {
   display: flex;
 }
+

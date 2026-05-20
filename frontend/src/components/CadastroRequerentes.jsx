@@ -343,8 +343,8 @@ function CadastroRequerentes() {
           </svg>
         </div>
         <div className="form-hero-content">
-          <h1>Cadastro de Requerentes</h1>
-          <p>Gerencie requerentes e mantenha os dados organizados.</p>
+          <h1>Cadastro de Interessados</h1>
+          <p>Gerencie interessados e mantenha os dados organizados.</p>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
           <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
@@ -353,7 +353,7 @@ function CadastroRequerentes() {
                 <path d="M12 5v14" />
                 <path d="M5 12h14" />
               </svg>
-              Novo Requerente
+              Novo Interessado
             </span>
           </button>
         </div>
@@ -363,7 +363,7 @@ function CadastroRequerentes() {
 
       <div className="card" style={{ overflow: 'visible' }}>
         <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Requerentes</div>
+          <div className="card-title">Lista de Interessados</div>
           <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>{contadorLabel}</div>
         </div>
 
@@ -416,7 +416,7 @@ function CadastroRequerentes() {
             <tbody>
               {requerentes.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="empty-state small">Nenhum requerente cadastrado</td>
+                  <td colSpan="5" className="empty-state small">Nenhum interessado cadastrado</td>
                 </tr>
               ) : (
                 requerentes.map((c) => (
@@ -482,8 +482,8 @@ function CadastroRequerentes() {
                   </svg>
                 </div>
                 <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Requerente' : 'Novo Requerente'}</h1>
-                  <p style={{ marginTop: 2 }}>Preencha os dados do requerente.</p>
+                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Interessado' : 'Novo Interessado'}</h1>
+                  <p style={{ marginTop: 2 }}>Preencha os dados do interessado.</p>
                 </div>
               </div>
             </div>

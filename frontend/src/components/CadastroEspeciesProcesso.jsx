@@ -56,13 +56,22 @@ function AcoesDropdown({ btnRef, actions }) {
         ref={btnRef}
         type="button"
         className="actions-dropdown-toggle"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
         style={{ position: 'relative', zIndex: open ? 99998 : undefined }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 5h.01" />
             <path d="M12 12h.01" />
             <path d="M12 19h.01" />
@@ -180,6 +189,11 @@ function CadastroEspeciesProcesso() {
     mensagem_customizada: '',
   });
 
+  // Campos/anexos cadastrados na espécie
+  const [loadingAnexosCampos, setLoadingAnexosCampos] = useState(false);
+  const [anexosCampos, setAnexosCampos] = useState([]);
+  const [erroAnexosCampos, setErroAnexosCampos] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
 
@@ -217,6 +231,8 @@ function CadastroEspeciesProcesso() {
     setErro('');
     setEditando(false);
     setSomenteLeitura(false);
+    setAnexosCampos([]);
+    setErroAnexosCampos('');
     setForm({
       id: null,
       codigo: '',
@@ -247,6 +263,7 @@ function CadastroEspeciesProcesso() {
       mensagem_customizada: item.mensagem_customizada || '',
     });
     setMostrarModal(true);
+    carregarAnexosCampos(item.id);
   };
 
   const viewEspecie = (item) => {
@@ -265,6 +282,35 @@ function CadastroEspeciesProcesso() {
       mensagem_customizada: item.mensagem_customizada || '',
     });
     setMostrarModal(true);
+    carregarAnexosCampos(item.id);
+  };
+
+  const carregarAnexosCampos = async (especieId) => {
+    setLoadingAnexosCampos(true);
+    setErroAnexosCampos('');
+    try {
+      if (!especieId) {
+        setAnexosCampos([]);
+        return;
+      }
+      const { data } = await api.get(`/especies-processo/${especieId}/anexos`);
+      setAnexosCampos(
+        Array.isArray(data)
+          ? data.map((x) => ({
+              titulo: x.titulo ?? '',
+              tipo: x.tipo ?? 'arquivo',
+              obrigatorio: !!x.obrigatorio,
+              ordem: x.ordem ?? 0,
+              opcoes: x.opcoes ?? null,
+            }))
+          : []
+      );
+    } catch {
+      setErroAnexosCampos('Erro ao carregar campos de anexos da espécie.');
+      setAnexosCampos([]);
+    } finally {
+      setLoadingAnexosCampos(false);
+    }
   };
 
   const salvar = async (e) => {
@@ -286,12 +332,36 @@ function CadastroEspeciesProcesso() {
       const payload = {
         ...form,
         codigo: form.codigo.trim(),
-        prazo_minimo: form.prazo_minimo !== '' && form.prazo_minimo !== null ? parseInt(form.prazo_minimo) : null,
-        prazo_maximo: form.prazo_maximo !== '' && form.prazo_maximo !== null ? parseInt(form.prazo_maximo) : null,
+        prazo_minimo:
+          form.prazo_minimo !== '' && form.prazo_minimo !== null
+            ? parseInt(form.prazo_minimo)
+            : null,
+        prazo_maximo:
+          form.prazo_maximo !== '' && form.prazo_maximo !== null
+            ? parseInt(form.prazo_maximo)
+            : null,
       };
 
-      if (editando) await api.put(`/especies-processo/${form.id}`, payload);
-      else await api.post('/especies-processo', payload);
+      let especieId = form.id;
+      if (editando) {
+        await api.put(`/especies-processo/${form.id}`, payload);
+      } else {
+        const resp = await api.post('/especies-processo', payload);
+        especieId = resp?.data?.id ?? especieId;
+      }
+
+      // Persistir anexos/campos da espécie (primeira versão)
+      if (especieId) {
+        await api.post(`/especies-processo/${especieId}/anexos`, {
+          anexos: anexosCampos.map((x) => ({
+            titulo: x.titulo ?? '',
+            tipo: x.tipo ?? 'arquivo',
+            obrigatorio: !!x.obrigatorio,
+            ordem: x.ordem ?? 0,
+            opcoes: x.opcoes ?? null,
+          })),
+        });
+      }
 
       fecharModal();
       carregarDados();
@@ -329,11 +399,11 @@ function CadastroEspeciesProcesso() {
   };
 
   const getTipoNome = useMemo(
-    () => (id) => tipos.find(t => t.id === id)?.nome || '—',
+    () => (id) => tipos.find((t) => t.id === id)?.nome || '—',
     [tipos]
   );
   const getSetorNome = useMemo(
-    () => (id) => setores.find(s => s.id === id)?.nome || '—',
+    () => (id) => setores.find((s) => s.id === id)?.nome || '—',
     [setores]
   );
 
@@ -345,13 +415,27 @@ function CadastroEspeciesProcesso() {
       </div>
     );
 
-  const modalTitle = editando ? 'Editar Especie' : somenteLeitura ? 'Visualizar Especie' : 'Novo Especie de Processo';
+  const modalTitle = editando
+    ? 'Editar Especie'
+    : somenteLeitura
+      ? 'Visualizar Especie'
+      : 'Novo Especie de Processo';
 
   return (
     <div className="page-content">
       <div className="form-hero">
         <div className="form-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: 'white' }}
+          >
             <path d="M4 4h16v16H4z" opacity="0.25" />
             <path d="M9 9h6M9 13h6M7 4v16" />
           </svg>
@@ -445,7 +529,11 @@ function CadastroEspeciesProcesso() {
                 <div className="form-hero-content" style={{ marginTop: 2 }}>
                   <h1 style={{ fontSize: 24 }}>{modalTitle}</h1>
                   <p style={{ marginTop: 2 }}>
-                    {somenteLeitura ? 'Somente visualização.' : editando ? 'Atualize os dados da espécie.' : 'Preencha os dados para cadastrar.'}
+                    {somenteLeitura
+                      ? 'Somente visualização.'
+                      : editando
+                        ? 'Atualize os dados da espécie.'
+                        : 'Preencha os dados para cadastrar.'}
                   </p>
                 </div>
               </div>
@@ -564,7 +652,181 @@ function CadastroEspeciesProcesso() {
                   </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                {erro && (
+                  <div className="alert alert-danger" style={{ marginTop: 14 }}>
+                    {erro}
+                  </div>
+                )}
+
+                {/* Campos/Anexos configurados para a espécie */}
+                <div className="anexos-especie-section">
+                  <div className="anexos-especie-header">
+                    <div>
+                      <div className="anexos-especie-title">Campos de anexos da espécie</div>
+                      <div className="anexos-especie-desc">Configure campos necessários (texto/número/data) e upload (arquivo).</div>
+                    </div>
+
+                    {!somenteLeitura && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setAnexosCampos((prev) => [
+                            ...prev,
+                            {
+                              titulo: '',
+                              tipo: 'PDF',
+                              obrigatorio: false,
+                              ordem: prev.length
+                                ? Math.max(...prev.map((x) => Number(x.ordem) || 0)) + 1
+                                : 1,
+                              opcoes: null,
+                            },
+                          ]);
+                        }}
+                        style={{ borderRadius: 12 }}
+                      >
+                        Adicionar campo
+                      </button>
+                    )}
+                  </div>
+
+                  {loadingAnexosCampos && (
+                    <div className="alert alert-info" style={{ marginTop: 12 }}>
+                      Carregando campos...
+                    </div>
+                  )}
+                  {erroAnexosCampos && (
+                    <div className="alert alert-danger" style={{ marginTop: 12 }}>
+                      {erroAnexosCampos}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {anexosCampos.length === 0 ? (
+                      <div className="empty-state" style={{ fontSize: 13, opacity: 0.85 }}>
+                        Nenhum campo/anexo configurado para esta espécie.
+                      </div>
+                    ) : (
+                      anexosCampos
+                        .slice()
+                        .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0))
+                        .map((campo, idx) => {
+                          const ordemValue = Number(campo.ordem) || idx + 1;
+                          return (
+                            <div key={`${campo.titulo || 'campo'}-${idx}`} className="campo-anexo-card">
+                              <div className="campo-anexo-top">
+                                <div className="campo-anexo-meta">
+                                  <span className="campo-anexo-ordem">#{ordemValue}</span>
+                                  <span className={'campo-anexo-tipo-badge ' + String(campo.tipo || '').toLowerCase()}>
+                                    {campo.tipo || 'arquivo'}
+                                  </span>
+                                  <span className="campo-anexo-obrigatorio">
+                                    <span className="dot" aria-hidden="true" />
+                                    {campo.obrigatorio ? 'Obrigatório' : 'Opcional'}
+                                  </span>
+                                </div>
+
+                                {!somenteLeitura && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    style={{ borderRadius: 12, padding: '8px 14px' }}
+                                    onClick={() =>
+                                      setAnexosCampos((prev) =>
+                                        prev.filter((_, i) => i !== prev.findIndex((x) => x === campo))
+                                      )
+                                    }
+                                  >
+                                    Remover
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="campo-anexo-fields">
+                                <div className="form-row-modern" style={{ gap: 12 }}>
+                                  <div className="form-group" style={{ flex: 1, minWidth: 220 }}>
+                                    <label>Nome documento</label>
+                                    <input
+                                      type="text"
+                                      className="form-control"
+                                      value={campo.titulo}
+                                      disabled={somenteLeitura}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        setAnexosCampos((prev) =>
+                                          prev.map((x, i) =>
+                                            i === prev.indexOf(campo) ? { ...x, titulo: v } : x
+                                          )
+                                        );
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div className="form-group" style={{ width: 180 }}>
+                                    <label>Tipo</label>
+                                    <select
+                                      className="form-control"
+                                      value={campo.tipo}
+                                      disabled={somenteLeitura}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        setAnexosCampos((prev) =>
+                                          prev.map((x, i) =>
+                                            i === prev.indexOf(campo) ? { ...x, tipo: v } : x
+                                          )
+                                        );
+                                      }}
+                                    >
+                                      <option value="PDF">PDF</option>
+                                      <option value="DOC">DOC</option>
+                                      <option value="PNG">PNG</option>
+                                      <option value="JPEG">JPEG</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="form-group" style={{ width: 180 }}>
+                                    <label>Ordem</label>
+                                    <input
+                                      type="number"
+                                      className="form-control"
+                                      value={ordemValue}
+                                      disabled={somenteLeitura}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        setAnexosCampos((prev) =>
+                                          prev.map((x, i) =>
+                                            i === prev.indexOf(campo) ? { ...x, ordem: v } : x
+                                          )
+                                        );
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 28 }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={!!campo.obrigatorio}
+                                      disabled={somenteLeitura}
+                                      onChange={(e) => {
+                                        const v = e.target.checked;
+                                        setAnexosCampos((prev) =>
+                                          prev.map((x, i) =>
+                                            i === prev.indexOf(campo) ? { ...x, obrigatorio: v } : x
+                                          )
+                                        );
+                                      }}
+                                    />
+                                    <span style={{ fontWeight: 800 }}>Obrigatório</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
 
                 <div className="modal-footer" style={{ marginTop: 14 }}>
                   <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>

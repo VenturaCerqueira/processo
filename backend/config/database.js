@@ -286,6 +286,41 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    // Campos/anexos configuráveis por espécie (ex: arquivo + texto + número + data)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS especie_anexos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        especie_id INT NOT NULL,
+        titulo VARCHAR(255) NOT NULL,
+        tipo ENUM('texto','numero','data','arquivo') NOT NULL,
+        obrigatorio TINYINT DEFAULT 0,
+        ordem INT DEFAULT 0,
+        opcoes JSON,
+        ativo TINYINT DEFAULT 1,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (especie_id) REFERENCES especies_processo(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Valores preenchidos no processo para os campos da espécie
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS processo_anexos_valores (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        processo_id INT NOT NULL,
+        especie_anexo_id INT NOT NULL,
+        valor_texto TEXT,
+        valor_numero DECIMAL(18,2),
+        valor_data DATE,
+        documento_id INT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE CASCADE,
+        FOREIGN KEY (especie_anexo_id) REFERENCES especie_anexos(id) ON DELETE CASCADE,
+        FOREIGN KEY (documento_id) REFERENCES documentos(id) ON DELETE SET NULL
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     // Garantir coluna codigo e unicidade nas especies (bases antigas)
     try {
       await connection.query(`ALTER TABLE especies_processo ADD COLUMN codigo VARCHAR(50) NOT NULL`);

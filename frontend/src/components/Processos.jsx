@@ -52,7 +52,7 @@ function Processos() {
       <div className="card" style={{ marginBottom: 24 }}>
         <form onSubmit={handleBuscar}>
           <div className="search-box">
-            <input type="text" className="form-control" placeholder="Buscar por número, requerente ou assunto..."
+            <input type="text" className="form-control" placeholder="Buscar por número, Interresado ou assunto..."
               value={filtros.busca} onChange={e => setFiltros({...filtros, busca: e.target.value})} />
             <button type="submit" className="btn btn-primary">Buscar</button>
             <button type="button" className="btn btn-secondary" onClick={handleLimpar}>Limpar</button>
@@ -83,7 +83,7 @@ function Processos() {
           <table>
             <thead>
               <tr>
-                <th>Número</th><th>Tipo</th><th>Assunto</th><th>Requerente</th><th>Status</th><th>Prioridade</th><th>Setor Atual</th><th>Data</th>
+                <th>Número</th><th>Tipo</th><th>Assunto</th><th>Interresado</th><th>Status</th><th>Prioridade</th><th>Setor Atual</th><th>Data</th>
               </tr>
             </thead>
             <tbody>

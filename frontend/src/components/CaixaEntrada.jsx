@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -14,20 +14,11 @@ function ActionsDropdown({ actions }) {
 
   useEffect(() => {
     if (open && btnRef.current) {
-      const btn = btnRef.current;
-      const rect = btn.getBoundingClientRect();
-      const menuHeight = Math.min(actions.length * 38 + 8, 320); // estimativa
+      const rect = btnRef.current.getBoundingClientRect();
+      const menuHeight = Math.min((actions?.length || 0) * 38 + 8, 320);
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-
-      let top;
-      if (spaceBelow >= menuHeight || spaceBelow >= spaceAbove) {
-        // abre para baixo
-        top = rect.bottom + 6;
-      } else {
-        // abre para cima
-        top = rect.top - menuHeight - 6;
-      }
+      const top = spaceBelow >= menuHeight || spaceBelow >= spaceAbove ? rect.bottom + 6 : rect.top - menuHeight - 6;
 
       setMenuStyle({
         position: 'fixed',
@@ -38,13 +29,13 @@ function ActionsDropdown({ actions }) {
         zIndex: 99999,
       });
     }
-  }, [open, actions.length]);
+  }, [open, actions]);
 
   useEffect(() => {
     function handleClickOutside(e) {
       if (btnRef.current && !btnRef.current.contains(e.target)) {
         const menu = document.querySelector('.actions-dropdown-fixed-menu');
-        if (menu && menu.contains(e.target)) return; // clique dentro do menu
+        if (menu && menu.contains(e.target)) return;
         setOpen(false);
       }
     }
@@ -61,7 +52,7 @@ function ActionsDropdown({ actions }) {
       <button
         ref={btnRef}
         className="actions-dropdown-toggle"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
         style={{ position: 'relative', zIndex: open ? 99998 : undefined }}
@@ -86,7 +77,10 @@ function ActionsDropdown({ actions }) {
               <button
                 key={i}
                 className={`actions-dropdown-item ${a.variant ? `item-${a.variant}` : ''}`}
-                onClick={() => { setOpen(false); a.onClick(); }}
+                onClick={() => {
+                  setOpen(false);
+                  a.onClick();
+                }}
               >
                 {a.icon && <span className="actions-dropdown-item-icon">{a.icon}</span>}
                 <span>{a.label}</span>
@@ -99,38 +93,23 @@ function ActionsDropdown({ actions }) {
   );
 }
 
-const situacoes = [
-  { key: 'encaminhado', label: 'Encaminhado', color: 'blue',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 12h14"/></svg>,
-    desc: 'Aguardando recebimento' },
-  { key: 'recebido', label: 'Recebido', color: 'yellow',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>,
-    desc: 'Em tramitação' },
-  { key: 'aprovado', label: 'Deferido', color: 'green',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-    desc: 'Deferido e ativo' },
-  { key: 'pausado', label: 'Suspenso', color: 'purple',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-    desc: 'Aguardando retomada' },
-  { key: 'arquivado', label: 'Arquivado', color: 'gray',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>,
-    desc: 'Arquivado' },
-  { key: 'indeferido', label: 'Indeferido', color: 'red',
-    icon: <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
-    desc: 'Indeferido' },
-];
-
 function CaixaEntrada() {
   const navigate = useNavigate();
-  const [processos, setProcessos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [tabAtiva, setTabAtiva] = useState('encaminhado');
   const [user, setUser] = useState(null);
+
+  // Recebido do backend: duas caixas separadas
+  const [caixaSetor, setCaixaSetor] = useState([]);
+  const [caixaUsuario, setCaixaUsuario] = useState([]);
+  const [contagemSetor, setContagemSetor] = useState({});
+  const [contagemUsuario, setContagemUsuario] = useState({});
+
+  const [loading, setLoading] = useState(true);
+
+  // Filtros (aplicados em cada caixa)
   const [busca, setBusca] = useState('');
-  const [filtroPrioridade, setFiltroPrioridade] = useState('');
+  // Padrão: ao abrir a Caixa de Entrada, deixar selecionado “Encaminhado”
+  const [filtroPrioridade, setFiltroPrioridade] = useState('encaminhado');
   const [filtroFavorito, setFiltroFavorito] = useState(false);
-  const [contagem, setContagem] = useState({});
-  const [animarLista, setAnimarLista] = useState(false);
 
   // Modal encaminhar
   const [mostrarEncaminhar, setMostrarEncaminhar] = useState(false);
@@ -154,9 +133,17 @@ function CaixaEntrada() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) { try { setUser(JSON.parse(storedUser)); } catch { setUser(null); } }
-    carregarProcessos();
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+    }
+
     carregarOpcoes();
+    carregarProcessos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const carregarOpcoes = async () => {
@@ -164,72 +151,77 @@ function CaixaEntrada() {
       const [sRes, uRes] = await Promise.all([api.get('/setores'), api.get('/auth/usuarios-ativos')]);
       setSetores(sRes.data);
       setUsuarios(uRes.data);
-    } catch (error) { console.error('Erro ao carregar opcoes:', error); }
+    } catch (error) {
+      console.error('Erro ao carregar opcoes:', error);
+    }
   };
 
   const carregarProcessos = async () => {
     setLoading(true);
     try {
       const response = await api.get('/processos/caixa-entrada');
-      setProcessos(response.data.processos || []);
-      setContagem(response.data.contagem || {});
-    } catch (error) { console.error('Erro ao carregar processos:', error); }
-    finally { setLoading(false); }
+      setCaixaSetor(response.data?.caixaSetor?.processos || []);
+      setCaixaUsuario(response.data?.caixaUsuario?.processos || []);
+      setContagemSetor(response.data?.caixaSetor?.contagem || {});
+      setContagemUsuario(response.data?.caixaUsuario?.contagem || {});
+    } catch (error) {
+      console.error('Erro ao carregar processos:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const handleTabChange = (key) => {
-    setAnimarLista(false);
-    setTabAtiva(key);
-    setTimeout(() => setAnimarLista(true), 30);
-  };
-
-  const processosFiltrados = processos.filter(p => {
-    const matchTab = tabAtiva === 'recebido'
-      ? (p.situacao === 'recebido' || p.situacao === 'retornado')
-      : p.situacao === tabAtiva;
-    const matchBusca = !busca ||
-      (p.numero && p.numero.toLowerCase().includes(busca.toLowerCase())) ||
-      (p.requerente && p.requerente.toLowerCase().includes(busca.toLowerCase())) ||
-      (p.assunto && p.assunto.toLowerCase().includes(busca.toLowerCase()));
-    const matchPrioridade = !filtroPrioridade || p.prioridade === filtroPrioridade;
-    const matchFavorito = !filtroFavorito || p.favorito;
-    return matchTab && matchBusca && matchPrioridade && matchFavorito;
-  });
-
-  const totalAba = processos.filter(p => {
-    if (tabAtiva === 'recebido') return p.situacao === 'recebido' || p.situacao === 'retornado';
-    return p.situacao === tabAtiva;
-  }).length;
 
   const toggleFavorito = async (processoId) => {
     try {
       const response = await api.post(`/processos/${processoId}/favoritar`);
-      setProcessos(prev => prev.map(p => p.id === processoId ? { ...p, favorito: response.data.favorito } : p));
-    } catch (error) { console.error('Erro ao favoritar:', error); }
+      const update = (list) => list.map((p) => (p.id === processoId ? { ...p, favorito: response.data.favorito } : p));
+      setCaixaSetor((prev) => update(prev));
+      setCaixaUsuario((prev) => update(prev));
+    } catch (error) {
+      console.error('Erro ao favoritar:', error);
+    }
   };
 
   const executarAcao = async (acao, processoId) => {
     try {
       await api.post(`/processos/${processoId}/${acao}`);
       carregarProcessos();
-    } catch (error) { alert(error.response?.data?.message || 'Erro ao executar ação'); }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Erro ao executar ação');
+    }
   };
 
   const abrirEncaminhar = (processo) => {
     setProcessoEncaminhar(processo);
-    setParaSetor(''); setParaUsuario(''); setParecer('');
+    setParaSetor('');
+    setParaUsuario('');
+    setParecer('');
     setMostrarEncaminhar(true);
   };
+
+  const podeEncaminhar = !!processoEncaminhar?.numero;
 
   const handleEncaminhar = async (e) => {
     e.preventDefault();
     if (!paraSetor) return alert('Selecione um setor de destino');
     if (paraUsuario && parseInt(paraUsuario) === user?.id) return alert('Você não pode encaminhar para si mesmo');
+
     try {
-      await api.post(`/processos/${processoEncaminhar.id}/encaminhar`, { para: paraSetor, parecer, paraUsuario: paraUsuario || null });
-      setMostrarEncaminhar(false); setProcessoEncaminhar(null); setParaSetor(''); setParaUsuario(''); setParecer('');
+      await api.post(`/processos/${processoEncaminhar.id}/encaminhar`, {
+        para: paraSetor,
+        parecer,
+        paraUsuario: paraUsuario || null,
+      });
+
+      setMostrarEncaminhar(false);
+      setProcessoEncaminhar(null);
+      setParaSetor('');
+      setParaUsuario('');
+      setParecer('');
       carregarProcessos();
-    } catch (error) { alert(error.response?.data?.message || 'Erro ao encaminhar'); }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Erro ao encaminhar');
+    }
   };
 
   const abrirObservacao = (processo) => {
@@ -241,11 +233,16 @@ function CaixaEntrada() {
   const handleObservacao = async (e) => {
     e.preventDefault();
     if (!textoObs.trim()) return;
+
     try {
       await api.post(`/processos/${processoObs.id}/observacao`, { texto: textoObs });
-      setMostrarObs(false); setProcessoObs(null); setTextoObs('');
+      setMostrarObs(false);
+      setProcessoObs(null);
+      setTextoObs('');
       carregarProcessos();
-    } catch { alert('Erro ao adicionar observação'); }
+    } catch {
+      alert('Erro ao adicionar observação');
+    }
   };
 
   const abrirExcluir = (processo) => {
@@ -257,14 +254,18 @@ function CaixaEntrada() {
   const handleExcluir = async (e) => {
     e.preventDefault();
     if (!processoExcluir) return;
+
     if (numeroConfirmacao.trim() !== processoExcluir.numero) {
       alert('O número do processo não confere. Digite exatamente o número exibido.');
       return;
     }
+
     setExcluindo(true);
     try {
       await api.post(`/processos/${processoExcluir.id}/excluir`);
-      setMostrarExcluir(false); setProcessoExcluir(null); setNumeroConfirmacao('');
+      setMostrarExcluir(false);
+      setProcessoExcluir(null);
+      setNumeroConfirmacao('');
       carregarProcessos();
     } catch (error) {
       alert(error.response?.data?.message || 'Erro ao excluir processo');
@@ -273,24 +274,89 @@ function CaixaEntrada() {
     }
   };
 
+  const filtrarLista = (lista) => {
+    const normalizedBusca = busca.trim().toLowerCase();
+
+    return (lista || []).filter((p) => {
+      const matchBusca =
+        !normalizedBusca ||
+        (p.numero && String(p.numero).toLowerCase().includes(normalizedBusca)) ||
+        (p.requerente && String(p.requerente).toLowerCase().includes(normalizedBusca)) ||
+        (p.assunto && String(p.assunto).toLowerCase().includes(normalizedBusca));
+
+      const matchFavorito = !filtroFavorito || p.favorito;
+
+      // Quando a aba selecionada não for "encaminhado", usamos:
+      // - filtroPrioridade = status/situacao (recebido, arquivado, aprovado, etc)
+      // - então devemos filtrar por p.situacao (não por p.prioridade)
+      const matchSituacao =
+        filtroPrioridade === 'encaminhado' || !filtroPrioridade ? true : p.situacao === filtroPrioridade;
+
+      return matchBusca && matchFavorito && matchSituacao;
+    });
+  };
+
+  // Filtra aplicado em cada lista (setor/usuário). A separação visual será feita no render.
+  const listaSetor = filtrarLista(caixaSetor);
+  const listaUsuario = filtrarLista(caixaUsuario);
+
   const acoesPorSituacao = (p) => {
-    const iconReceber = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>;
-    const iconEncaminhar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 12h14"/></svg>;
-    const iconAprovar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
-    const iconIndeferir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>;
-    const iconPausar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
-    const iconArquivar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>;
-    const iconObs = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>;
-    const iconReabrir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>;
-    const iconExcluir = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>;
-    const iconRetomar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
-    const iconVoltar = <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>;
+    const iconReceber = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    );
+    const iconEncaminhar = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 12h14" />
+      </svg>
+    );
+    const iconAprovar = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+    const iconIndeferir = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    );
+    const iconPausar = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+    const iconArquivar = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      </svg>
+    );
+    const iconObs = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+    );
+    const iconReabrir = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    );
+    const iconExcluir = (
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+        />
+      </svg>
+    );
 
     switch (p.situacao) {
       case 'encaminhado':
         return [
           { label: 'Receber', variant: 'success', icon: iconReceber, onClick: () => executarAcao('receber', p.id) },
-          { label: 'Voltar', variant: 'warning', icon: iconVoltar, onClick: () => executarAcao('voltar', p.id) },
+          { label: 'Voltar', variant: 'warning', icon: <span style={{ fontSize: 14 }}>↩</span>, onClick: () => executarAcao('voltar', p.id) },
           { label: 'Excluir', variant: 'danger', icon: iconExcluir, onClick: () => abrirExcluir(p) },
         ];
       case 'recebido':
@@ -311,7 +377,7 @@ function CaixaEntrada() {
         ];
       case 'pausado':
         return [
-          { label: 'Retomar', variant: 'primary', icon: iconRetomar, onClick: () => executarAcao('receber', p.id) },
+          { label: 'Retomar', variant: 'primary', icon: iconReabrir, onClick: () => executarAcao('receber', p.id) },
           { label: 'Arquivar', variant: 'secondary', icon: iconArquivar, onClick: () => executarAcao('arquivar', p.id) },
         ];
       case 'arquivado':
@@ -324,135 +390,24 @@ function CaixaEntrada() {
     }
   };
 
-  return (
-    <div className="page-content">
-      <div className="top-bar" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            Caixa de Entrada
-            {user?.nome && (
-              <span style={{ 
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13, 
-                fontWeight: 600, 
-                color: '#1e40af', 
-                background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', 
-                padding: '6px 14px 6px 10px', 
-                borderRadius: 24,
-                border: '1px solid #93c5fd',
-                boxShadow: '0 1px 3px rgba(59, 130, 246, 0.12)',
-                letterSpacing: 0.2
-              }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50%',
-                  background: '#3b82f6',
-                  color: '#fff',
-                  fontSize: 11,
-                  fontWeight: 700
-                }}>
-                  {user.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </span>
-                {user.nome}
-              </span>
-            )}
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 2 }}>Gerencie seus processos por status e execute ações rapidamente</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => navigate('/processos/novo')}>
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo Processo
-        </button>
-      </div>
+  const renderTable = (lista, title, contagem) => {
+    // contagem no backend está indexada por “encaminhado”
+    // mas para evitar inconsistência quando o backend mudar/retornar outra chave,
+    // calculamos o total sempre pelo tamanho da lista em tela.
+    const total = lista.length || (contagem?.encaminhado ?? 0);
 
-      {/* Cards de Status */}
-      <div className="inbox-status-grid" style={{ marginBottom: 24 }}>
-        {situacoes.map(s => (
-          <button
-            key={s.key}
-            className={`inbox-status-card ${tabAtiva === s.key ? 'active' : ''} ${s.color}`}
-            onClick={() => handleTabChange(s.key)}
-          >
-            <div className="inbox-status-icon">{s.icon}</div>
-            <div className="inbox-status-info">
-              <span className="inbox-status-count">{contagem[s.key] || 0}</span>
-              <span className="inbox-status-label">{s.label}</span>
-              <span className="inbox-status-desc">{s.desc}</span>
-            </div>
-            {tabAtiva === s.key && <div className="inbox-status-indicator" />}
-          </button>
-        ))}
-      </div>
-
-      {/* Filtros */}
-      <div className="card" style={{ marginBottom: 24, padding: '16px 24px' }}>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Buscar por número, requerente ou assunto..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-            />
+    return (
+      <div className="card" style={{ flex: 1, minWidth: 360 }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 16 }}>{title}</h3>
+            <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>Aguardando recebimento</div>
           </div>
-          <select className="form-control" style={{ width: 180 }} value={filtroPrioridade} onChange={e => setFiltroPrioridade(e.target.value)}>
-            <option value="">Todas as prioridades</option>
-            <option value="urgente">Urgente</option>
-            <option value="alta">Alta</option>
-            <option value="normal">Normal</option>
-            <option value="baixa">Baixa</option>
-          </select>
-          <button
-            className={`btn ${filtroFavorito ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFiltroFavorito(v => !v)}
-            title="Filtrar favoritos"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            {filtroFavorito ? 'Favoritos' : 'Favoritos'}
-          </button>
-          <button
-            className="btn btn-secondary limpar-btn"
-            onClick={() => { setBusca(''); setFiltroPrioridade(''); setFiltroFavorito(false); }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M3 6h18" />
-              <path d="M8 6V4h8v2" />
-              <path d="M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-            </svg>
-            Limpar
-          </button>
-          <span style={{ fontSize: 13, color: 'var(--gray-500)', fontWeight: 600, marginLeft: 'auto' }}>
-            {processosFiltrados.length} de {totalAba} processos
-          </span>
+          <div style={{ fontWeight: 800, color: '#1e40af', background: '#dbeafe', border: '1px solid #93c5fd', borderRadius: 999, padding: '6px 12px' }}>
+            {total}
+          </div>
         </div>
-      </div>
 
-      {/* Lista */}
-      <div className="card">
         <div className="table-container">
           <table>
             <thead>
@@ -461,7 +416,7 @@ function CaixaEntrada() {
                 <th>Número</th>
                 <th>Tipo</th>
                 <th>Assunto</th>
-                <th>Requerente</th>
+                <th>Interresado</th>
                 <th>Prioridade</th>
                 <th>Situação</th>
                 <th>Setor</th>
@@ -469,21 +424,21 @@ function CaixaEntrada() {
                 <th style={{ width: 1, whiteSpace: 'nowrap' }}>Ações</th>
               </tr>
             </thead>
-            <tbody className={animarLista ? 'fade-in-list' : ''}>
-              {processosFiltrados.length === 0 ? (
+            <tbody>
+              {lista.length === 0 ? (
                 <tr>
                   <td colSpan="10">
                     <div className="empty-state small">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                       </svg>
-                      <h4>Nenhum processo {situacoes.find(s => s.key === tabAtiva)?.label.toLowerCase()}</h4>
-                      <p>Os processos atribuídos a você aparecerão aqui</p>
+                      <h4 style={{ marginTop: 8 }}>Nenhum processo</h4>
+                      <p>Filtre ou aguarde novos encaminhamentos.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                processosFiltrados.map(p => (
+                lista.map((p) => (
                   <tr key={p.id}>
                     <td style={{ textAlign: 'center' }}>
                       <button
@@ -496,25 +451,37 @@ function CaixaEntrada() {
                           padding: 4,
                           color: p.favorito ? '#f59e0b' : '#94a3b8',
                           transition: 'color 0.2s ease, transform 0.15s ease',
-                          transform: p.favorito ? 'scale(1.1)' : 'scale(1)'
+                          transform: p.favorito ? 'scale(1.1)' : 'scale(1)',
                         }}
-                        onMouseEnter={e => { if (!p.favorito) e.currentTarget.style.color = '#f59e0b'; }}
-                        onMouseLeave={e => { if (!p.favorito) e.currentTarget.style.color = '#94a3b8'; }}
+                        onMouseEnter={(e) => {
+                          if (!p.favorito) e.currentTarget.style.color = '#f59e0b';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!p.favorito) e.currentTarget.style.color = '#94a3b8';
+                        }}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill={p.favorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                         </svg>
                       </button>
                     </td>
-                    <td><Link to={`/processos/${p.id}`} className="table-link">{p.numero}</Link></td>
+                    <td>
+                      <Link to={`/processos/${p.id}`} className="table-link">
+                        {p.numero}
+                      </Link>
+                    </td>
                     <td>{p.tipo}</td>
                     <td>{p.assunto}</td>
                     <td>{p.requerente}</td>
                     <td className={`priority-${p.prioridade}`}>{p.prioridade}</td>
-                    <td><span className={`badge badge-${p.situacao}`}>{situacoes.find(s => s.key === p.situacao)?.label || p.situacao}</span></td>
+                    <td>
+                      <span className={`badge badge-${p.situacao}`}>{p.situacao}</span>
+                    </td>
                     <td>{p.setorAtual}</td>
                     <td>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</td>
-                    <td><ActionsDropdown actions={acoesPorSituacao(p)} /></td>
+                    <td>
+                      <ActionsDropdown actions={acoesPorSituacao(p)} />
+                    </td>
                   </tr>
                 ))
               )}
@@ -522,11 +489,252 @@ function CaixaEntrada() {
           </table>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="page-content">
+      <div className="top-bar" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            Caixa de Entrada
+            {user?.nome && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#1e40af',
+                  background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                  padding: '6px 14px 6px 10px',
+                  borderRadius: 24,
+                  border: '1px solid #93c5fd',
+                  boxShadow: '0 1px 3px rgba(59, 130, 246, 0.12)',
+                  letterSpacing: 0.2,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 26,
+                    height: 26,
+                    borderRadius: '50%',
+                    background: '#3b82f6',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                >
+                  {user.nome
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </span>
+                {user.nome}
+              </span>
+            )}
+          </h2>
+        </div>
+        <button className="btn btn-primary" onClick={() => navigate('/processos/novo')}>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Novo Processo
+        </button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 24, padding: '16px 24px' }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por número, Interresado ou assunto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+
+          <select className="form-control" style={{ width: 180 }} value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
+            <option value="">Todas as prioridades</option>
+            <option value="urgente">Urgente</option>
+            <option value="alta">Alta</option>
+            <option value="normal">Normal</option>
+            <option value="baixa">Baixa</option>
+          </select>
+
+          <button
+            className={`btn ${filtroFavorito ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setFiltroFavorito((v) => !v)}
+            title="Filtrar favoritos"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            {filtroFavorito ? 'Favoritos' : 'Favoritos'}
+          </button>
+
+          <button
+            className="btn btn-secondary limpar-btn"
+            onClick={() => {
+              setBusca('');
+              // não pode ficar '' porque o render filtra por p.situacao === filtroPrioridade
+              setFiltroPrioridade('encaminhado');
+              setFiltroFavorito(false);
+            }}
+          >
+            Limpar
+          </button>
+
+          <span style={{ fontSize: 13, color: 'var(--gray-500)', fontWeight: 600, marginLeft: 'auto' }}>
+            {listaSetor.length + listaUsuario.length} processos
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 600 }}>
+            (setor: {listaSetor.length} • usuário: {listaUsuario.length})
+          </span>
+        </div>
+      </div>
+
+      {/* ====== Opções antigas (recebido, deferido, arquivado etc.) ====== */}
+      <div className="inbox-status-grid" style={{ marginBottom: 16 }}>
+        {[
+          {
+            key: 'encaminhado',
+            label: 'Encaminhado',
+            color: 'blue',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 5l7 7-7 7M5 12h14" />
+              </svg>
+            ),
+          },
+          {
+            key: 'recebido',
+            label: 'Recebido',
+            color: 'yellow',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7" />
+                <path d="m22 13-3 3" />
+                <path d="M2 13l3 3" />
+                <path d="M16 13h-8" />
+              </svg>
+            ),
+          },
+          {
+            key: 'retornado',
+            label: 'Retornado',
+            color: 'orange',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 10v10h10" />
+                <path d="M3 20l7-7" />
+                <path d="M14 4h6v6" />
+                <path d="M20 4l-10 10" />
+              </svg>
+            ),
+          },
+          {
+            key: 'pausado',
+            label: 'Suspenso',
+            color: 'purple',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 9v6" />
+                <path d="M14 9v6" />
+                <path d="M7 4h10" />
+                <path d="M9 20h6" />
+              </svg>
+            ),
+          },
+          {
+            key: 'arquivado',
+            label: 'Arquivado',
+            color: 'gray',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 8h14" />
+                <path d="M5 8a2 2 0 110-4h14a2 2 0 110 4" />
+                <path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+                <path d="m9 12h6" />
+              </svg>
+            ),
+          },
+          {
+            key: 'aprovado',
+            label: 'Deferido',
+            color: 'green',
+            icon: (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 12l2 2 4-4" />
+                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ),
+          },
+
+        ].map((s) => (
+          <button
+            key={s.key}
+            className={`inbox-status-card ${filtroPrioridade === s.key ? 'active' : ''} ${s.color}`}
+            onClick={() => setFiltroPrioridade(s.key)}
+          >
+            <div className="inbox-status-icon">{s.icon}</div>
+            <div className="inbox-status-info">
+              <span className="inbox-status-label">{s.label}</span>
+            </div>
+            {filtroPrioridade === s.key && <div className="inbox-status-indicator" />}
+          </button>
+        ))}
+      </div>
+
+      {/* ====== Renderização: encaminhado dividido; demais opções em lista única ====== */}
+      {filtroPrioridade === 'encaminhado' ? (
+        <div style={{ display: 'flex', gap: 16, flexDirection: 'column' }}>
+          {renderTable(
+            listaSetor.filter((p) => p.situacao === 'encaminhado'),
+            'Caixa de entrada do setor',
+            contagemSetor
+          )}
+          {renderTable(
+            listaUsuario.filter((p) => p.situacao === 'encaminhado'),
+            'Caixa encaminhadao do usuario',
+            contagemUsuario
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 16, flexDirection: 'column' }}>
+          {renderTable(
+            // lista única = setor + usuário
+            // se filtroPrioridade estiver vazio, não filtramos por situacao
+            (filtroPrioridade
+              ? [...(listaSetor || []), ...(listaUsuario || [])].filter((p) => p.situacao === filtroPrioridade)
+              : [...(listaSetor || []), ...(listaUsuario || [])]),
+            'Caixa de Entrada',
+            {
+              encaminhado: (filtroPrioridade
+                ? [...(listaSetor || []), ...(listaUsuario || [])].filter((p) => p.situacao === filtroPrioridade).length
+                : [...(listaSetor || []), ...(listaUsuario || [])].length),
+            }
+          )}
+        </div>
+      )}
+
+
+
+
+      {loading && <div style={{ marginTop: 16, color: 'var(--gray-500)' }}>Carregando...</div>}
 
       {/* Modal Encaminhar */}
       {mostrarEncaminhar && processoEncaminhar && (
         <div className="modal-overlay" onClick={() => setMostrarEncaminhar(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Encaminhar Processo {processoEncaminhar.numero}</h3>
               <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>{processoEncaminhar.assunto}</p>
@@ -534,30 +742,53 @@ function CaixaEntrada() {
             <div className="modal-body">
               <form id="form-encaminhar" onSubmit={handleEncaminhar}>
                 <div className="form-group">
-                  <label>Setor de Destino *</label>
-                  <select className="form-control" value={paraSetor} onChange={e => { setParaSetor(e.target.value); setParaUsuario(''); }} required>
-                    <option value="">Selecione</option>
-                    {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Usuário Destino</label>
-                  <select className="form-control" value={paraUsuario} onChange={e => setParaUsuario(e.target.value)}>
-                    <option value="">Selecione o usuário (opcional)</option>
-                    {usuarios.filter(u => u.id !== user?.id && (!paraSetor || u.setor === paraSetor)).map(u => (
-                      <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
+                  <label>
+                    Setor de Destino {podeEncaminhar ? '*' : '(após gerar o processo)'}
+                  </label>
+                  <select
+                    className="form-control"
+                    value={paraSetor}
+                    onChange={(e) => { setParaSetor(e.target.value); setParaUsuario(''); }}
+                    required
+                    disabled={!podeEncaminhar}
+                    aria-disabled={!podeEncaminhar}
+                  >
+                    <option value="">{podeEncaminhar ? 'Selecione' : 'Aguardando geração'}</option>
+                    {setores.map((s) => (
+                      <option key={s.id} value={s.nome}>
+                        {s.nome}
+                      </option>
                     ))}
                   </select>
                 </div>
+
+                <div className="form-group">
+                  <label>Usuário Destino</label>
+                  <select className="form-control" value={paraUsuario} onChange={(e) => setParaUsuario(e.target.value)}>
+                    <option value="">Selecione o usuário (opcional)</option>
+                    {usuarios
+                      .filter((u) => u.id !== user?.id && (!paraSetor || u.setor === paraSetor))
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.nome} — {u.cargo}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
                 <div className="form-group">
                   <label>Parecer / Observação</label>
-                  <textarea className="form-control" rows="3" value={parecer} onChange={e => setParecer(e.target.value)} placeholder="Descreva o motivo do encaminhamento..." />
+                  <textarea className="form-control" rows="3" value={parecer} onChange={(e) => setParecer(e.target.value)} placeholder="Descreva o motivo do encaminhamento..." />
                 </div>
               </form>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setMostrarEncaminhar(false)}>Cancelar</button>
-              <button className="btn btn-primary" form="form-encaminhar">Encaminhar</button>
+              <button className="btn btn-secondary" onClick={() => setMostrarEncaminhar(false)}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" form="form-encaminhar" disabled={!podeEncaminhar}>
+                Encaminhar
+              </button>
             </div>
           </div>
         </div>
@@ -566,7 +797,7 @@ function CaixaEntrada() {
       {/* Modal Observação */}
       {mostrarObs && processoObs && (
         <div className="modal-overlay" onClick={() => setMostrarObs(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Observação — Processo {processoObs.numero}</h3>
             </div>
@@ -574,13 +805,17 @@ function CaixaEntrada() {
               <form id="form-obs" onSubmit={handleObservacao}>
                 <div className="form-group">
                   <label>Observação *</label>
-                  <textarea className="form-control" rows="4" value={textoObs} onChange={e => setTextoObs(e.target.value)} required placeholder="Digite a observação..." />
+                  <textarea className="form-control" rows="4" value={textoObs} onChange={(e) => setTextoObs(e.target.value)} required placeholder="Digite a observação..." />
                 </div>
               </form>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setMostrarObs(false)}>Cancelar</button>
-              <button className="btn btn-primary" form="form-obs">Adicionar</button>
+              <button className="btn btn-secondary" onClick={() => setMostrarObs(false)}>
+                Cancelar
+              </button>
+              <button className="btn btn-primary" form="form-obs">
+                Adicionar
+              </button>
             </div>
           </div>
         </div>
@@ -589,15 +824,12 @@ function CaixaEntrada() {
       {/* Modal Excluir */}
       {mostrarExcluir && processoExcluir && (
         <div className="modal-overlay" onClick={() => { if (!excluindo) setMostrarExcluir(false); }}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
             <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%', background: '#fee2e2',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626'
-                }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
                   <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </div>
                 <div>
@@ -606,44 +838,16 @@ function CaixaEntrada() {
                 </div>
               </div>
             </div>
+
             <div className="modal-body" style={{ paddingTop: 8 }}>
               {excluindo ? (
                 <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                  <style>{`
-                    @keyframes circlePulse {
-                      0%   { transform: scale(0.85); opacity: 0.5; }
-                      50%  { transform: scale(1.15); opacity: 1; }
-                      100% { transform: scale(0.85); opacity: 0.5; }
-                    }
-                    @keyframes trashShake {
-                      0%, 100% { transform: rotate(-6deg); }
-                      50%      { transform: rotate(6deg); }
-                    }
-                    @keyframes lidOpen {
-                      0%, 100% { transform: translateY(0) rotate(0); }
-                      50%      { transform: translateY(-3px) rotate(-8deg); }
-                    }
-                  `}</style>
-                  <div style={{
-                    width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg, #fca5a5 0%, #f87171 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    animation: 'circlePulse 1.4s ease-in-out infinite',
-                    margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(220, 38, 38, 0.25)'
-                  }}>
-                    <svg width="32" height="32" fill="none" stroke="#fff" viewBox="0 0 24 24" style={{ animation: 'trashShake 1.4s ease-in-out infinite' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                  </div>
-                  <p style={{ fontSize: 15, color: '#374151', fontWeight: 500, margin: 0 }}>Apagando o processo...</p>
-                  <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>Aguarde enquanto removemos o processo da sua Caixa de Entrada.</p>
+                  Apagando o processo...
                 </div>
               ) : (
                 <form id="form-excluir" onSubmit={handleExcluir}>
-                  <div style={{
-                    background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8,
-                    padding: '12px 14px', marginBottom: 18, color: '#991b1b', fontSize: 13, lineHeight: 1.5
-                  }}>
-                    <strong>Atenção:</strong> esta ação não pode ser desfeita. O processo será removido da Caixa de Entrada e ficará salvo com status <strong>excluído</strong>.
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '12px 14px', marginBottom: 18, color: '#991b1b', fontSize: 13, lineHeight: 1.5 }}>
+                    <strong>Atenção:</strong> esta ação não pode ser desfeita.
                   </div>
                   <div className="form-group">
                     <label>Digite o número do processo para confirmar <strong>{processoExcluir.numero}</strong></label>
@@ -651,7 +855,7 @@ function CaixaEntrada() {
                       type="text"
                       className="form-control"
                       value={numeroConfirmacao}
-                      onChange={e => setNumeroConfirmacao(e.target.value)}
+                      onChange={(e) => setNumeroConfirmacao(e.target.value)}
                       required
                       autoFocus
                       placeholder="Digite o número exatamente como mostrado acima"
@@ -660,18 +864,13 @@ function CaixaEntrada() {
                 </form>
               )}
             </div>
+
             {!excluindo && (
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setMostrarExcluir(false)}>Cancelar</button>
-                <button
-                  className="btn btn-danger"
-                  form="form-excluir"
-                  disabled={numeroConfirmacao.trim() !== processoExcluir.numero}
-                  style={{
-                    opacity: numeroConfirmacao.trim() === processoExcluir.numero ? 1 : 0.5,
-                    cursor: numeroConfirmacao.trim() === processoExcluir.numero ? 'pointer' : 'not-allowed'
-                  }}
-                >
+                <button className="btn btn-secondary" onClick={() => setMostrarExcluir(false)}>
+                  Cancelar
+                </button>
+                <button className="btn btn-danger" form="form-excluir" disabled={numeroConfirmacao.trim() !== processoExcluir.numero}>
                   Sim, excluir processo
                 </button>
               </div>

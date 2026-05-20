@@ -308,7 +308,7 @@ function Dashboard() {
                 <tr>
                   <th>Número</th>
                   <th>Tipo</th>
-                  <th>Requerente</th>
+                  <th>Interresado</th>
                   <th>Status</th>
                   <th>Setor</th>
                   <th>Data</th>

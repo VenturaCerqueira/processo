@@ -142,7 +142,21 @@ function NovoProcesso() {
   const [searchParams] = useSearchParams();
   const processoPaiId = searchParams.get('processoPaiId');
 
-  const [form, setForm] = useState({ tipo: '', assunto: '', requerente: '', cpfCnpj: '', endereco: '', telefone: '', email: '', descricao: '', prioridade: 'normal', prazo: '', setorAtual: '', especie_id: '' });
+  const [form, setForm] = useState({
+    tipo: '', // nome do tipo (tp.nome) - enviado ao backend
+    tipo_id: '', // id do tipo - usado apenas no select e para carregar espécies
+    assunto: '',
+    requerente: '',
+    cpfCnpj: '',
+    endereco: '',
+    telefone: '',
+    email: '',
+    descricao: '',
+    prioridade: 'normal',
+    prazo: '',
+    setorAtual: '',
+    especie_id: ''
+  });
   const userEditedRef = useRef(false);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
@@ -201,8 +215,9 @@ function NovoProcesso() {
 
   useEffect(() => {
     (async () => {
-      if (!form.tipo) {
+      if (!form.tipo_id) {
         setEspecies([]);
+        setLoadingEspecies(false);
         setErroEspecies('');
         setEspecieSelecionada(null);
         setForm(prev => ({ ...prev, especie_id: '', prazo: '' }));
@@ -212,7 +227,7 @@ function NovoProcesso() {
       setLoadingEspecies(true);
       setErroEspecies('');
       try {
-        const { data } = await api.get('/especies-processo', { params: { tipo: form.tipo } });
+        const { data } = await api.get('/especies-processo', { params: { tipo: form.tipo_id } });
         const list = Array.isArray(data) ? data : [];
         setEspecies(list);
 
@@ -232,7 +247,8 @@ function NovoProcesso() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.tipo]);
+  }, [form.tipo_id]);
+
 
 
 
@@ -326,7 +342,7 @@ function NovoProcesso() {
           <strong>Processo Pai:</strong>{' '}
           <Link to={`/processos/${processoPai.id}`}>{processoPai.numero}</Link> — {processoPai.assunto}
           <br />
-          <span style={{ fontSize: 12, opacity: 0.8 }}>Os dados do requerente serão copiados automaticamente.</span>
+          <span style={{ fontSize: 12, opacity: 0.8 }}>Os dados do Interresado serão copiados automaticamente.</span>
         </div>
       )}
 
@@ -353,13 +369,17 @@ function NovoProcesso() {
                   <select
                     id="tipo"
                     className="form-control select-enhanced"
-                    value={form.tipo}
+                    value={form.tipo_id}
                     onChange={e => {
-                      const tipoSelecionado = e.target.value;
+
+                      const tipoSelecionadoId = e.target.value;
+                      const tipoObj = tipos.find(t => String(t.id) === String(tipoSelecionadoId));
                       setForm(prev => ({
                         ...prev,
-                        tipo: tipoSelecionado,
+                        tipo_id: tipoSelecionadoId,
+                        tipo: tipoObj?.nome || '',
                         especie_id: '',
+
                         prazo: ''
                       }));
                       setEspecieSelecionada(null);
@@ -368,9 +388,10 @@ function NovoProcesso() {
                   >
                     <option value="">Selecione o tipo</option>
                     {tipos.map(t => (
-                      <option key={t.id} value={t.id}>{t.nome}</option>
+                      <option key={t.id} value={String(t.id)}>{t.nome}</option>
                     ))}
                   </select>
+
                 </div>
               </div>
             </div>
@@ -474,7 +495,7 @@ function NovoProcesso() {
                 <IconRequerente />
               </div>
               <div>
-                <div className="form-section-title">Dados do Requerente</div>
+                <div className="form-section-title">Dados do Interresado</div>
                 <div className="form-section-description">Informações do cidadão ou empresa solicitante</div>
               </div>
             </div>
@@ -547,16 +568,16 @@ function NovoProcesso() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="requerente">{(() => {
+                <label htmlFor="interessado">{(() => {
                       const digits = String(form.cpfCnpj || '').replace(/\D/g, '');
                       const isJuridico = digits.length === 14;
-                      return isJuridico ? 'Nome Fantasia *' : 'Nome do Requerente *';
+                      return isJuridico ? 'Nome Fantasia *' : 'Nome do Interressado *';
                     })()}</label>
 
                 <div className="input-group">
                   <span className="input-icon"><IconRequerente /></span>
                   <input
-                    id="requerente"
+                    id="interessado"
                     type="text"
                     className="form-control"
                     value={form.requerente}
@@ -654,7 +675,7 @@ function NovoProcesso() {
                     Representantes legais
                   </div>
                   <div className="form-section-description" style={{ marginBottom: 14 }}>
-                    Cadastre um ou mais representantes do requerente (CNPJ).
+                    Cadastre um ou mais representantes do Interresado (CNPJ).
                   </div>
 
                   {carregandoRepresentantes && (

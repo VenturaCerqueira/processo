@@ -200,7 +200,7 @@ function DetalheProcesso() {
         )}
         <div className="detail-grid">
           <div className="detail-item"><span className="label">Assunto</span><span className="value">{processo.assunto}</span></div>
-          <div className="detail-item"><span className="label">Requerente</span><span className="value">{processo.requerente}</span></div>
+          <div className="detail-item"><span className="label">Interresado</span><span className="value">{processo.requerente}</span></div>
           <div className="detail-item"><span className="label">CPF/CNPJ</span><span className="value">{processo.cpfCnpj || '—'}</span></div>
           <div className="detail-item"><span className="label">Status</span><span className="value"><span className={`badge badge-${processo.status}`}>{processo.status}</span></span></div>
           <div className="detail-item"><span className="label">Situação</span><span className="value"><span className={`badge badge-${processo.situacao}`}>{processo.situacao}</span></span></div>
@@ -398,17 +398,19 @@ function DetalheProcesso() {
             <div className="modal-body">
               <form id="form-encaminhar" onSubmit={handleEncaminhar}>
                 <div className="form-group">
-                  <label>Setor de Destino *</label>
-                  <select className="form-control" value={paraSetor} onChange={e => { setParaSetor(e.target.value); setParaUsuario(''); }} required>
-                    <option value="">Selecione</option>
-                    {setores.map(s => <option key={s.id} value={s.nome}>{s.nome}</option>)}
-                  </select>
+                  <label>Setor de Destino</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={processo?.setorDestino || processo?.setorAtual || ''}
+                    disabled
+                  />
                 </div>
                 <div className="form-group">
                   <label>Usuário Destino</label>
                   <select className="form-control" value={paraUsuario} onChange={e => setParaUsuario(e.target.value)}>
                     <option value="">Selecione o usuário (opcional)</option>
-                    {usuarios.filter(u => u.id !== currentUser.id && (!paraSetor || u.setor === paraSetor)).map(u => (
+                    {usuarios.filter(u => u.id !== currentUser.id).map(u => (
                       <option key={u.id} value={u.id}>{u.nome} — {u.cargo}</option>
                     ))}
                   </select>

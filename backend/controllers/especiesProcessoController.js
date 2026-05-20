@@ -157,3 +157,85 @@ export const excluirEspecie = async (req, res) => {
   }
 };
 
+// ===== Campos/Anexos cadastrados na espécie =====
+export const listarAnexosEspecie = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await pool.query(
+      `SELECT id, especie_id, titulo, tipo, obrigatorio, ordem, opcoes, ativo
+       FROM especie_anexos
+       WHERE especie_id = ? AND ativo = 1
+       ORDER BY ordem ASC, id ASC`,
+      [id],
+    );
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const salvarAnexosEspecie = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { anexos } = req.body;
+
+    if (!Array.isArray(anexos)) {
+      return res.status(400).json({ message: 'Payload invalido. Envie { anexos: [...] }.' });
+    }
+
+    // valida espécie existe
+    const [especieRows] = await pool.query(
+      `SELECT id FROM especies_processo WHERE id = ? AND ativo = 1`,
+      [id],
+    );
+    if (especieRows.length === 0) {
+      return res.status(404).json({ message: 'Especie nao encontrada.' });
+    }
+
+    // Recria (simplificação por versão)
+    await pool.query(`DELETE FROM especie_anexos WHERE especie_id = ?`, [id]);
+
+    if (anexos.length === 0) {
+      return res.json({ message: 'Anexos da especie atualizados com sucesso.', count: 0 });
+    }
+
+    // Normaliza e insere
+    const inserts = anexos.map((a, idx) => {
+      const titulo = (a?.titulo ?? '').toString().trim();
+      const tipo = (a?.tipo ?? 'arquivo').toString().trim(); // texto|numero|data|arquivo
+      const obrigatorio = a?.obrigatorio ? 1 : 0;
+      const ordem = Number.isFinite(a?.ordem) ? Number(a.ordem) : (idx + 1);
+
+      if (!titulo) return null;
+      if (!['texto', 'numero', 'data', 'arquivo'].includes(tipo)) return null;
+
+      const opcoes = a?.opcoes ?? null; // pode ser objeto/array
+      return { titulo, tipo, obrigatorio, ordem, opcoes };
+    }).filter(Boolean);
+
+    if (inserts.length === 0) {
+      return res.json({ message: 'Anexos da especie atualizados com sucesso.', count: 0 });
+    }
+
+    const values = inserts.map((i) => [
+      id,
+      i.titulo,
+      i.tipo,
+      i.obrigatorio,
+      i.ordem,
+      i.opcoes ? JSON.stringify(i.opcoes) : null,
+    ]);
+
+    await pool.query(
+      `INSERT INTO especie_anexos (especie_id, titulo, tipo, obrigatorio, ordem, opcoes)
+       VALUES ?`,
+      [values],
+    );
+
+    res.json({ message: 'Anexos da especie atualizados com sucesso.', count: inserts.length });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

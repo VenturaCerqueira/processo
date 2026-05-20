@@ -36,7 +36,7 @@ function Relatorios() {
   const handleExportar = () => {
     if (!relatorio) return;
     const csv = [
-      ['Número', 'Tipo', 'Assunto', 'Requerente', 'Status', 'Setor Atual', 'Data'].join(';'),
+      ['Número', 'Tipo', 'Assunto', 'Interresado', 'Status', 'Setor Atual', 'Data'].join(';'),
       ...relatorio.processos.map(p => [p.numero, p.tipo, p.assunto, p.requerente, p.status, p.setorAtual, new Date(p.createdAt).toLocaleDateString('pt-BR')].join(';'))
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -122,7 +122,7 @@ function Relatorios() {
             </div>
             <div className="table-container">
               <table>
-                <thead><tr><th>Número</th><th>Tipo</th><th>Assunto</th><th>Requerente</th><th>Status</th><th>Setor</th><th>Data</th></tr></thead>
+                <thead><tr><th>Número</th><th>Tipo</th><th>Assunto</th><th>Interresado</th><th>Status</th><th>Setor</th><th>Data</th></tr></thead>
                 <tbody>{relatorio.processos.map(p => (
                   <tr key={p.id}><td>{p.numero}</td><td>{p.tipo}</td><td>{p.assunto}</td><td>{p.requerente}</td>
                   <td><span className={`badge badge-${p.status}`}>{p.status}</span></td><td>{p.setorAtual}</td>

@@ -10,8 +10,10 @@ import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', auth, listarTipos);
-router.get('/:id', auth, obterTipo);
+// Leitura pública (usada no cadastro do Novo Processo)
+router.get('/', listarTipos);
+router.get('/:id', obterTipo);
+// Escrita protegida
 router.post('/', auth, criarTipo);
 router.put('/:id', auth, atualizarTipo);
 router.delete('/:id', auth, excluirTipo);
