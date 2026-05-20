@@ -2,6 +2,16 @@ import pool from "../config/database.js";
 import { gerarNumeroProcesso } from "../utils/helpers.js";
 import { criarNotificacao } from "./notificacaoController.js";
 import { registrarHistorico } from "../utils/historico.js";
+import {
+  asPrioridade,
+  isNonEmptyString,
+  parseOptionalInt,
+  parseOptionalNumber,
+  toOptionalTrimmedString,
+  validateDateISO,
+  validateEmailBasic,
+} from "../utils/validators.js";
+
 
 export const listarProcessos = async (req, res) => {
   try {
@@ -128,13 +138,61 @@ export const criarProcesso = async (req, res) => {
       anexosValores, // [{ especie_anexo_id, valor_texto?, valor_numero?, valor_data?, documento_id? }]
     } = req.body;
 
-    // Direcionamento ao setor para “Novo Processo”: entra como encaminhado de setor.
-    // Regra: criar já com situacao=encaminhado e sem atribuição direta ao usuário.
-    const usuarioResponsavelFinal = null;
+    // ===== Validação base do "Novo Processo" =====
+    if (!isNonEmptyString(tipo)) {
+      return res.status(400).json({ message: "Campo tipo é obrigatório." });
+    }
+    if (!isNonEmptyString(assunto) || String(assunto).trim().length > 200) {
+      return res.status(400).json({ message: "Campo assunto é obrigatório e deve ter até 200 caracteres." });
+    }
+    if (!isNonEmptyString(requerente)) {
+      return res.status(400).json({ message: "Campo requerente é obrigatório." });
+    }
+    if (!isNonEmptyString(setorAtual)) {
+      // no frontend costuma vir como id string/numero (ex.: "3")
+      const setorInt = parseOptionalInt(setorAtual);
+      if (setorInt === null) {
+        return res.status(400).json({ message: "Campo setorAtual é obrigatório." });
+      }
+    }
+
+    const prioridadeFinal = asPrioridade(prioridade);
+    if (!prioridadeFinal) {
+      return res.status(400).json({ message: "Prioridade inválida." });
+    }
+
+    const prazoNum =
+      prazo !== undefined && prazo !== null && String(prazo).trim() !== ""
+        ? parseOptionalNumber(prazo)
+        : null;
+
+    if (prazoNum !== null && typeof prazoNum === 'number' && !Number.isFinite(prazoNum)) {
+      return res.status(400).json({ message: "Campo prazo deve ser um número válido." });
+    }
+
+    if (email !== undefined && email !== null && String(email).trim() !== '') {
+      if (!validateEmailBasic(email)) {
+        return res.status(400).json({ message: "Email inválido." });
+      }
+    }
+
+    const tipoFinalInput = toOptionalTrimmedString(tipo);
+    const assuntoFinalInput = String(assunto).trim();
+    const requerenteFinalInput = String(requerente).trim();
+    const setorAtualFinalInput = parseOptionalInt(setorAtual) ?? setorAtual;
+
+    // normalizações opcionais
+    const cpfCnpjFinal = toOptionalTrimmedString(cpfCnpj);
+    const enderecoFinal = toOptionalTrimmedString(endereco);
+    const telefoneFinal = toOptionalTrimmedString(telefone);
+    const emailFinal = toOptionalTrimmedString(email);
+    const descricaoFinal = toOptionalTrimmedString(descricao);
+
+    const especieIdNum = parseOptionalInt(especie_id);
 
     // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
-    let tipoFinal = tipo;
-    let especieDisponivel = null;
+    // (o bloco original abaixo já fazia isso; removemos a duplicação para evitar variáveis duplicadas)
+
 
     if (especie_id) {
       const especieIdNum = parseInt(especie_id);
@@ -1160,6 +1218,9 @@ export const relatorioAndamento = async (req, res) => {
     const { dataInicio, dataFim, setor, tipo } = req.query;
     let sql = "SELECT * FROM processos WHERE 1=1";
     const params = [];
+
+    // Consistência com listarProcessos/listas: excluir processos marcados como excluídos
+    sql += " AND situacao != 'excluido'";
 
     if (dataInicio) {
       sql += " AND DATE(createdAt) >= ?";

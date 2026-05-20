@@ -19,6 +19,7 @@ import niveisAcessoRoutes from './routes/niveisAcesso.js';
 import especiesProcessoRoutes from './routes/especiesProcesso.js';
 import notificacaoRoutes from './routes/notificacoes.js';
 import requerenteRoutes from './routes/requerente.js';
+import { enviarAlertasPrazosAproximando } from './jobs/prazosAproximandoJob.js';
 
 
 dotenv.config();
@@ -54,6 +55,19 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
+  // Rotina para avisar usuários quando o prazo do processo estiver próximo de acabar
+  // (2 dias por padrão, conforme solicitado)
+  try {
+    await enviarAlertasPrazosAproximando({ diasAntecedencia: 2 });
+    setInterval(() => {
+      enviarAlertasPrazosAproximando({ diasAntecedencia: 2 }).catch((e) => {
+        console.error('Erro no job de alertas de prazo:', e.message);
+      });
+    }, 60 * 60 * 1000); // 1 vez por hora
+  } catch (e) {
+    console.error('Erro ao iniciar job de alertas de prazo:', e.message);
+  }
+
   try {
     await initDatabase();
     await criarUsuarioAdmin();
