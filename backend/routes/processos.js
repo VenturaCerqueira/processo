@@ -16,7 +16,8 @@ import {
   relatorioAndamento,
   favoritarProcesso,
   criarProcessoFilho,
-  excluirProcesso
+  excluirProcesso,
+  salvarAnexosValoresProcesso
 } from '../controllers/processoController.js';
 import { auth } from '../middleware/auth.js';
 
@@ -39,6 +40,7 @@ router.post('/:id/observacao', auth, adicionarObservacao);
 router.post('/:id/favoritar', auth, favoritarProcesso);
 router.post('/:id/excluir', auth, excluirProcesso);
 router.post('/:id/filho', auth, criarProcessoFilho);
+router.post('/:id/anexos-valores', auth, salvarAnexosValoresProcesso);
 
 export default router;
 

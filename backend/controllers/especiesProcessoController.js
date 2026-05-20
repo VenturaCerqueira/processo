@@ -233,7 +233,13 @@ export const salvarAnexosEspecie = async (req, res) => {
       [values],
     );
 
-    res.json({ message: 'Anexos da especie atualizados com sucesso.', count: inserts.length });
+    // Verifica se realmente gravou (ajuda a debugar casos de payload vazio/valores inválidos)
+    const [checkRows] = await pool.query(
+      `SELECT COUNT(*) as count FROM especie_anexos WHERE especie_id = ? AND ativo = 1`,
+      [id]
+    );
+
+    res.json({ message: 'Anexos da especie atualizados com sucesso.', count: checkRows?.[0]?.count ?? inserts.length });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

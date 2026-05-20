@@ -851,6 +851,87 @@ export const adicionarObservacao = async (req, res) => {
   }
 };
 
+// ===== Campos/Anexos preenchidos no processo =====
+// POST /api/processos/:id/anexos-valores
+export const salvarAnexosValoresProcesso = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { anexosValores } = req.body;
+
+    if (!Array.isArray(anexosValores)) {
+      return res
+        .status(400)
+        .json({ message: 'Payload invalido. Envie { anexosValores: [...] }.' });
+    }
+
+    const processoId = parseInt(id);
+    if (Number.isNaN(processoId)) {
+      return res.status(400).json({ message: 'Processo invalido.' });
+    }
+
+    const [procRows] = await pool.query(
+      'SELECT id FROM processos WHERE id = ?',
+      [processoId],
+    );
+    if (procRows.length === 0) {
+      return res.status(404).json({ message: 'Processo não encontrado.' });
+    }
+
+    const values = anexosValores
+      .filter((v) => v && !Number.isNaN(parseInt(v.especie_anexo_id)))
+      .map((v) => ({
+        especie_anexo_id: parseInt(v.especie_anexo_id),
+        valor_texto:
+          v.valor_texto !== undefined && v.valor_texto !== null
+            ? String(v.valor_texto)
+            : null,
+        valor_numero:
+          v.valor_numero !== undefined && v.valor_numero !== null
+            ? Number(v.valor_numero)
+            : null,
+        valor_data: v.valor_data ? v.valor_data : null,
+        documento_id:
+          v.documento_id !== undefined && v.documento_id !== null
+            ? (v.documento_id ? parseInt(v.documento_id) : null)
+            : null,
+      }));
+
+    await pool.query('DELETE FROM processo_anexos_valores WHERE processo_id = ?', [processoId]);
+
+    if (values.length === 0) {
+      return res.json({ message: 'Anexos do processo atualizados com sucesso.', count: 0 });
+    }
+
+    const insertValues = values.map((v) => [
+      processoId,
+      v.especie_anexo_id,
+      v.valor_texto,
+      v.valor_numero,
+      v.valor_data,
+      v.documento_id,
+    ]);
+
+    await pool.query(
+      `INSERT INTO processo_anexos_valores
+       (processo_id, especie_anexo_id, valor_texto, valor_numero, valor_data, documento_id)
+       VALUES ?`,
+      [insertValues],
+    );
+
+    const [check] = await pool.query(
+      'SELECT COUNT(*) as count FROM processo_anexos_valores WHERE processo_id = ?',
+      [processoId],
+    );
+
+    res.json({
+      message: 'Anexos do processo atualizados com sucesso.',
+      count: check?.[0]?.count ?? insertValues.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const criarProcessoFilho = async (req, res) => {
   try {
     const processoPaiId = req.params.id;

@@ -675,7 +675,7 @@ function CadastroEspeciesProcesso() {
                             ...prev,
                             {
                               titulo: '',
-                              tipo: 'PDF',
+                              tipo: 'arquivo',
                               obrigatorio: false,
                               ordem: prev.length
                                 ? Math.max(...prev.map((x) => Number(x.ordem) || 0)) + 1
@@ -778,10 +778,10 @@ function CadastroEspeciesProcesso() {
                                         );
                                       }}
                                     >
-                                      <option value="PDF">PDF</option>
-                                      <option value="DOC">DOC</option>
-                                      <option value="PNG">PNG</option>
-                                      <option value="JPEG">JPEG</option>
+                                      <option value="texto">Texto</option>
+                                      <option value="numero">Número</option>
+                                      <option value="data">Data</option>
+                                      <option value="arquivo">Arquivo</option>
                                     </select>
                                   </div>
 

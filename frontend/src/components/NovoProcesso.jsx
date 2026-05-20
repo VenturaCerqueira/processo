@@ -289,10 +289,63 @@ function NovoProcesso() {
     }
   };
 
+  // Campos/anexos configurados na espécie
+  const [loadingAnexosCampos, setLoadingAnexosCampos] = useState(false);
+  const [anexosCampos, setAnexosCampos] = useState([]);
+  const [erroAnexosCampos, setErroAnexosCampos] = useState('');
+
+  const [valoresAnexos, setValoresAnexos] = useState({
+    // [especie_anexo_id]: { valor_texto?, valor_numero?, valor_data?, arquivo?, arquivoDocumento? }
+  });
+
+  const carregarAnexosCampos = async (especieId) => {
+    setLoadingAnexosCampos(true);
+    setErroAnexosCampos('');
+    try {
+      if (!especieId) {
+        setAnexosCampos([]);
+        setValoresAnexos({});
+        return;
+      }
+      const { data } = await api.get(`/especies-processo/${especieId}/anexos`);
+      const list = Array.isArray(data)
+        ? data.map((x) => ({
+            id: x.id,
+            especie_id: x.especie_id,
+            titulo: x.titulo ?? '',
+            tipo: x.tipo ?? 'arquivo',
+            obrigatorio: !!x.obrigatorio,
+            ordem: x.ordem ?? 0,
+            opcoes: x.opcoes ?? null,
+          }))
+        : [];
+      setAnexosCampos(list);
+      // resetar valores ao trocar espécie
+      setValoresAnexos({});
+    } catch {
+      setErroAnexosCampos('Erro ao carregar campos de anexos da espécie.');
+      setAnexosCampos([]);
+      setValoresAnexos({});
+    } finally {
+      setLoadingAnexosCampos(false);
+    }
+  };
+
+  useEffect(() => {
+    if (form.especie_id) {
+      carregarAnexosCampos(form.especie_id);
+    } else {
+      setAnexosCampos([]);
+      setValoresAnexos({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.especie_id]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErro('');
+    setErroAnexosCampos('');
     try {
       // Persistir representantes legais (somente se houver CNPJ/jurídico e requerente identificado)
       const normalizar = (v) => String(v || '').replace(/\D/g, '');
@@ -306,11 +359,92 @@ function NovoProcesso() {
         setCarregandoRepresentantes(false);
       }
 
-      const response = processoPaiId
-        ? await api.post(`/processos/${processoPaiId}/filho`, form)
-        : await api.post('/processos', form);
+      // ===== Arquivos dos campos da espécie =====
+      // Para campos do tipo 'arquivo', primeiro criamos o processo para obter o id,
+      // depois fazemos upload via multipart e finalmente salvamos documento_id.
+      const anexosValoresSemArquivo = anexosCampos.map((campo) => {
+        const v = valoresAnexos[campo.id] || {};
+        return {
+          especie_anexo_id: campo.id,
+          valor_texto:
+            campo.tipo === 'texto' ? (v.valor_texto ?? '') : null,
+          valor_numero:
+            campo.tipo === 'numero' ? (v.valor_numero ?? null) : null,
+          valor_data:
+            campo.tipo === 'data' ? (v.valor_data ?? null) : null,
+          documento_id:
+            campo.tipo === 'arquivo' ? null : null,
+        };
+      });
 
-      navigate(`/processos/${response.data.id}`);
+      const payloadBase = {
+        ...form,
+        anexosValores: anexosValoresSemArquivo,
+      };
+
+      const response = processoPaiId
+        ? await api.post(`/processos/${processoPaiId}/filho`, payloadBase)
+        : await api.post('/processos', payloadBase);
+
+      const novoProcessoId = response?.data?.id;
+      if (!novoProcessoId) {
+        throw new Error('Processo criado, mas id não foi retornado pelo backend.');
+      }
+
+      // Faz upload de cada arquivo e monta o anexosValores final
+      const anexosValoresFinal = [];
+      for (const campo of anexosCampos) {
+        const v = valoresAnexos[campo.id] || {};
+
+        if (campo.tipo === 'arquivo') {
+          const file = v.arquivo;
+          let documento_id = null;
+
+          if (file) {
+            const fd = new FormData();
+            fd.append('documento', file);
+
+            const uploadRes = await api.post(
+              `/uploads/${novoProcessoId}/documento`,
+              fd,
+              {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              }
+            );
+
+            documento_id = uploadRes?.data?.documento?.id ?? null;
+          }
+
+          anexosValoresFinal.push({
+            especie_anexo_id: campo.id,
+            valor_texto: null,
+            valor_numero: null,
+            valor_data: null,
+            documento_id,
+          });
+        } else {
+          anexosValoresFinal.push({
+            especie_anexo_id: campo.id,
+            valor_texto:
+              campo.tipo === 'texto' ? (v.valor_texto ?? '') : null,
+            valor_numero:
+              campo.tipo === 'numero' ? (v.valor_numero ?? null) : null,
+            valor_data:
+              campo.tipo === 'data' ? (v.valor_data ?? null) : null,
+            documento_id: null,
+          });
+        }
+      }
+
+      // Endpoint dedicado para gravar/atualizar anexosValores com documento_id.
+      // (criado no backend: POST /api/processos/:id/anexos-valores)
+      await api.post(`/processos/${novoProcessoId}/anexos-valores`, {
+        anexosValores: anexosValoresFinal,
+      });
+
+      navigate(`/processos/${novoProcessoId}`);
     } catch (error) {
       setCarregandoRepresentantes(false);
       setErro(error.response?.data?.message || 'Erro ao criar processo');
@@ -487,6 +621,137 @@ function NovoProcesso() {
               )}
             </div>
           )}
+
+          {/* Campos/anexos da espécie */}
+          <div className="form-section">
+            <div className="form-section-header">
+              <div className="form-section-icon">
+                <IconDocumento />
+              </div>
+              <div>
+                <div className="form-section-title">Campos e anexos da espécie</div>
+                <div className="form-section-description">Preencha os campos configurados na espécie selecionada</div>
+              </div>
+            </div>
+
+            {loadingAnexosCampos && (
+              <div className="alert alert-info" style={{ marginTop: 12 }}>
+                Carregando campos da espécie...
+              </div>
+            )}
+
+            {erroAnexosCampos && (
+              <div className="alert alert-danger" style={{ marginTop: 12 }}>
+                {erroAnexosCampos}
+              </div>
+            )}
+
+            {!loadingAnexosCampos && anexosCampos.length === 0 && (
+              <div className="empty-state" style={{ fontSize: 13, opacity: 0.85 }}>
+                Nenhum campo/anexo configurado para esta espécie.
+              </div>
+            )}
+
+            {anexosCampos.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {anexosCampos
+                  .slice()
+                  .sort((a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0))
+                  .map((campo) => {
+                    const v = valoresAnexos[campo.id] || {};
+                    const obrigatorio = campo.obrigatorio;
+
+                    return (
+                      <div
+                        key={campo.id}
+                        className="card"
+                        style={{ padding: 16, borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                          <div style={{ fontWeight: 900 }}>
+                            {campo.titulo || 'Campo'}{' '}
+                            {obrigatorio && <span style={{ color: '#dc2626', fontWeight: 800 }}>*</span>}
+                          </div>
+                          <div style={{ fontSize: 12, opacity: 0.75 }}>
+                            Tipo: <b>{campo.tipo || 'arquivo'}</b>
+                          </div>
+                        </div>
+
+                        <div style={{ marginTop: 12 }}>
+                          {campo.tipo === 'texto' && (
+                            <input
+                              type="text"
+                              className="form-control"
+                              value={v.valor_texto ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setValoresAnexos((prev) => ({
+                                  ...prev,
+                                  [campo.id]: { ...(prev[campo.id] || {}), valor_texto: val },
+                                }));
+                              }}
+                              placeholder={campo.opcoes?.placeholder || 'Digite...'}
+                              disabled={loading}
+                            />
+                          )}
+
+                          {campo.tipo === 'numero' && (
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={v.valor_numero ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setValoresAnexos((prev) => ({
+                                  ...prev,
+                                  [campo.id]: {
+                                    ...(prev[campo.id] || {}),
+                                    valor_numero: val === '' ? null : Number(val),
+                                  },
+                                }));
+                              }}
+                              placeholder={campo.opcoes?.placeholder || 'Digite um número...'}
+                              disabled={loading}
+                            />
+                          )}
+
+                          {campo.tipo === 'data' && (
+                            <input
+                              type="date"
+                              className="form-control"
+                              value={v.valor_data ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setValoresAnexos((prev) => ({
+                                  ...prev,
+                                  [campo.id]: { ...(prev[campo.id] || {}), valor_data: val },
+                                }));
+                              }}
+                              disabled={loading}
+                            />
+                          )}
+
+                          {campo.tipo === 'arquivo' && (
+                            <input
+                              type="file"
+                              className="form-control"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                setValoresAnexos((prev) => ({
+                                  ...prev,
+                                  [campo.id]: { ...(prev[campo.id] || {}), arquivo: file, documento_id: null },
+                                }));
+                              }}
+                              disabled={loading}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
 
           {/* Requester Details */}
           <div className="form-section">
