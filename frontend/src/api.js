@@ -27,7 +27,11 @@ api.interceptors.response.use(
       isRedirecting = true;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+
+      // Se for rota do requerente, não jogue para /login (staff)
+      const currentPath = window.location.pathname || '';
+      const target = currentPath.startsWith('/requerente') ? '/requerente/login' : '/login';
+      window.location.href = target;
     }
     return Promise.reject(error);
   }

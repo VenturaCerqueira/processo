@@ -178,9 +178,23 @@ function AppContent() {
 <Route path="/requerente/cadastro" element={!user ? <RequerenteCadastro /> : <Navigate to="/requerente/dashboard" />} />
           <Route path="/requerente/esqueci-senha" element={!user ? <RequerenteEsqueciSenha /> : <Navigate to="/requerente/dashboard" />} />
           
-          {/* Requerente protected */}
-          <Route path="/requerente/inbox" element={user && user.tipo === 'requerente' ? <RequerenteCaixaEntrada /> : <Navigate to="/requerente/login" />} />
-          <Route path="/requerente/dashboard" element={user && user.tipo === 'requerente' ? <RequerenteDashboard /> : <Navigate to="/requerente/login" />} />
+          {/* Requerente protected (não perder acesso por inconsistência do localStorage) */}
+          <Route
+            path="/requerente/inbox"
+            element={
+              user?.tipo === 'requerente' || localStorage.getItem('token')
+                ? <RequerenteCaixaEntrada />
+                : <Navigate to="/requerente/login" />
+            }
+          />
+          <Route
+            path="/requerente/dashboard"
+            element={
+              user?.tipo === 'requerente' || localStorage.getItem('token')
+                ? <RequerenteDashboard />
+                : <Navigate to="/requerente/login" />
+            }
+          />
           
           {/* Staff protected */}
           <Route path="/caixa-entrada" element={user && user.tipo !== 'requerente' ? <CaixaEntrada /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
