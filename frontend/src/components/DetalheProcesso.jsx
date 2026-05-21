@@ -198,18 +198,60 @@ function DetalheProcesso() {
             )}
           </div>
         )}
-        <div className="detail-grid">
-          <div className="detail-item"><span className="label">Assunto</span><span className="value">{processo.assunto}</span></div>
-          <div className="detail-item"><span className="label">Interresado</span><span className="value">{processo.requerente}</span></div>
-          <div className="detail-item"><span className="label">CPF/CNPJ</span><span className="value">{processo.cpfCnpj || '—'}</span></div>
-          <div className="detail-item"><span className="label">Status</span><span className="value"><span className={`badge badge-${processo.status}`}>{processo.status}</span></span></div>
-          <div className="detail-item"><span className="label">Situação</span><span className="value"><span className={`badge badge-${processo.situacao}`}>{processo.situacao}</span></span></div>
-          <div className="detail-item"><span className="label">Prioridade</span><span className={`value priority-${processo.prioridade}`}>{processo.prioridade}</span></div>
-          <div className="detail-item"><span className="label">Setor Atual</span><span className="value">{processo.setorAtual}</span></div>
-          <div className="detail-item"><span className="label">Usuário Responsável</span><span className="value">{processo.usuarioResponsavelNome || '—'}</span></div>
-          <div className="detail-item"><span className="label">Data de Recebimento</span><span className="value">{new Date(processo.dataRecebimento).toLocaleDateString('pt-BR')}</span></div>
-          <div className="detail-item"><span className="label">Prazo</span><span className="value">{processo.prazo ? new Date(processo.prazo).toLocaleDateString('pt-BR') : '—'}</span></div>
-          {processo.especie_nome && <div className="detail-item"><span className="label">Especie</span><span className="value">{processo.especie_nome}</span></div>}
+        <div className="detail-hero">
+          <div className="detail-hero-left">
+            <div className="detail-hero-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" />
+              </svg>
+            </div>
+          </div>
+
+          <div className="detail-hero-center">
+            <div className="detail-hero-title-row">
+              <span className="detail-hero-id">Em processo</span>
+              <span className="detail-main-name">{processo.assunto}</span>
+            </div>
+            <div className="detail-hero-subtitle">
+              {processo.requerente} · {processo.cpfCnpj || '—'}
+            </div>
+
+            <div className="detail-chip-row">
+              <span className={`detail-chip info`}>Status: {processo.status}</span>
+              <span className={`detail-chip gray`}>Situação: {processo.situacao}</span>
+              <span className={`detail-chip primary`}>Prioridade: {processo.prioridade}</span>
+              {processo.especie_nome && <span className="detail-chip">Espécie: {processo.especie_nome}</span>}
+            </div>
+          </div>
+
+          <div className="detail-hero-right">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+              <span className={`badge badge-${processo.status}`}>{processo.status}</span>
+              <span className={`badge badge-${processo.situacao}`}>{processo.situacao}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="detail-fields-grid">
+          <div className="detail-field">
+            <span className="detail-field-label">Setor Atual</span>
+            <span className="detail-field-value">{processo.setorAtual}</span>
+          </div>
+
+          <div className="detail-field">
+            <span className="detail-field-label">Usuário Responsável</span>
+            <span className="detail-field-value">{processo.usuarioResponsavelNome || '—'}</span>
+          </div>
+
+          <div className="detail-field">
+            <span className="detail-field-label">Data de Recebimento</span>
+            <span className="detail-field-value">{new Date(processo.dataRecebimento).toLocaleDateString('pt-BR')}</span>
+          </div>
+
+          <div className="detail-field">
+            <span className="detail-field-label">Prazo</span>
+            <span className="detail-field-value">{processo.prazo ? new Date(processo.prazo).toLocaleDateString('pt-BR') : '—'}</span>
+          </div>
         </div>
         {processo.descricao && <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--gray-100)' }}>
           <span className="label">Descrição</span>
@@ -300,14 +342,58 @@ function DetalheProcesso() {
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
-        <div className="card-header"><span className="card-title">Anexar Documento</span></div>
-        <form onSubmit={handleUpload}>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input type="file" className="form-control" style={{ flex: 1, minWidth: 200 }} onChange={e => setArquivo(e.target.files[0])} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" />
-            <button type="submit" className="btn btn-success" disabled={!arquivo}>Upload</button>
+        <div className="card-header">
+          <span className="card-title">Anexar Documento</span>
+        </div>
+
+        <div className="upload-card">
+          <div className="upload-card-header">
+            <div className="upload-card-badge">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M7 10l5-5 5 5" />
+                <path d="M12 15V5" />
+              </svg>
+            </div>
+
+            <div className="upload-card-title-block">
+              <div className="upload-card-title">Enviar novo anexo</div>
+              <div className="upload-card-subtitle">Selecione um arquivo para anexar ao processo.</div>
+            </div>
           </div>
-          <p style={{ marginTop: 8, fontSize: 12, color: 'var(--gray-400)' }}>Formatos: PDF, DOC, DOCX, JPG, PNG, TXT • Máximo: 10MB</p>
-        </form>
+
+          <form onSubmit={handleUpload} className="upload-form">
+            <div className="upload-actions">
+              <label className="upload-file" aria-label="Selecionar arquivo">
+                <input
+                  type="file"
+                  onChange={e => setArquivo(e.target.files[0])}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                />
+
+                <span className="upload-file-label">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <path d="M7 10l5-5 5 5" />
+                    <path d="M12 15V5" />
+                  </svg>
+                  {arquivo ? arquivo.name : 'Escolher arquivo'}
+                </span>
+              </label>
+
+              <button type="submit" className="btn btn-success upload-btn" disabled={!arquivo} aria-disabled={!arquivo}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="M7 10l5-5 5 5" />
+                  <path d="M12 15V5" />
+                </svg>
+                Upload
+              </button>
+            </div>
+
+            <p className="upload-hint">Formatos: PDF, DOC, DOCX, JPG, PNG, TXT • Máximo: 10MB</p>
+          </form>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: 24 }}>
@@ -322,7 +408,85 @@ function DetalheProcesso() {
             <table>
               <thead><tr><th>Nome</th><th>Tipo</th><th>Versão</th><th>Usuário</th><th>Data</th></tr></thead>
               <tbody>{processo.documentos.map((doc, i) => (
-                <tr key={i}><td>{doc.nome}</td><td>{doc.tipo}</td><td>v{doc.versao}</td><td>{doc.usuarioNome || 'N/A'}</td><td>{new Date(doc.dataUpload).toLocaleDateString('pt-BR')}</td></tr>
+                <tr key={i}>
+                  <td>
+                    <div className="document-name-cell">
+                      {(() => {
+                        const tipo = (doc.tipo || '').toLowerCase();
+                        const nome = (doc.nome || '').toLowerCase();
+                        let kind = 'generic';
+                        if (tipo.includes('pdf') || nome.endsWith('.pdf')) kind = 'pdf';
+                        else if (tipo.includes('word') || tipo.includes('msword') || nome.endsWith('.doc') || nome.endsWith('.docx')) kind = 'doc';
+                        else if (tipo.startsWith('image/') || nome.match(/\.(png|jpe?g|gif|webp)$/)) kind = 'image';
+                        else if (tipo.includes('text') || nome.endsWith('.txt') || nome.endsWith('.md')) kind = 'txt';
+
+                        const Icon = () => {
+                          if (kind === 'pdf') {
+                            return (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <path d="M14 2v6h6" />
+                                <path d="M8 13h2a2 2 0 0 1 0 4H8z" />
+                                <path d="M14 13h2v4h-2z" />
+                              </svg>
+                            );
+                          }
+                          if (kind === 'doc') {
+                            return (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <path d="M14 2v6h6" />
+                                <path d="M8 13h8" />
+                                <path d="M8 17h8" />
+                                <path d="M8 9h3" />
+                              </svg>
+                            );
+                          }
+                          if (kind === 'image') {
+                            return (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <path d="M8.5 10.5l-1 1" />
+                                <path d="M21 15l-5-5L5 21" />
+                                <path d="M16 8a1 1 0 0 1 0 2" />
+                              </svg>
+                            );
+                          }
+                          if (kind === 'txt') {
+                            return (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <path d="M14 2v6h6" />
+                                <path d="M8 13h8" />
+                                <path d="M8 17h5" />
+                                <path d="M8 9h3" />
+                              </svg>
+                            );
+                          }
+                          return (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <path d="M14 2v6h6" />
+                              <path d="M8 13h8" />
+                              <path d="M8 17h6" />
+                            </svg>
+                          );
+                        };
+
+                        return (
+                          <span className={`document-icon ${kind}`} aria-hidden="true">
+                            <Icon />
+                          </span>
+                        );
+                      })()}
+                      <span className="document-name">{doc.nome}</span>
+                    </div>
+                  </td>
+                  <td>{doc.tipo}</td>
+                  <td>v{doc.versao}</td>
+                  <td>{doc.usuarioNome || 'N/A'}</td>
+                  <td>{new Date(doc.dataUpload).toLocaleDateString('pt-BR')}</td>
+                </tr>
               ))}</tbody>
             </table>
           </div>
@@ -484,3 +648,6 @@ function DetalheProcesso() {
 }
 
 export default DetalheProcesso;
+
+
+

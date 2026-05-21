@@ -891,8 +891,46 @@ tr:hover td {
   text-decoration: underline;
 }
 
+/* Document icons (DetalheProcesso - Documentos) */
+.document-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.document-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 360px;
+}
+
+.document-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  color: var(--gray-500);
+}
+
+.document-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.document-icon.pdf { background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.20); color: var(--danger); }
+.document-icon.doc { background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.20); color: var(--info); }
+.document-icon.image { background: rgba(14, 165, 233, 0.08); border-color: rgba(14, 165, 233, 0.20); color: #0ea5e9; }
+.document-icon.txt { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.22); color: #d97706; }
+
 /* Breadcrumb */
-.breadcrumb {
+.breadcrumb { 
   display: flex;
   align-items: center;
   gap: 8px;
@@ -925,32 +963,8 @@ tr:hover td {
 .priority-normal { color: var(--info); }
 .priority-baixa { color: var(--gray-400); }
 
-/* Process Detail */
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-}
 
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
-.detail-item .label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--gray-400);
-}
-
-.detail-item .value {
-  font-size: 14px;
-  color: var(--gray-800);
-  font-weight: 500;
-}
 
 /* Dashboard Welcome */
 .welcome-section {
@@ -3497,6 +3511,129 @@ tr:hover td {
   backdrop-filter: blur(12px);
   z-index: 10;
 }
+
+/* =========================================
+   Upload (DetalheProcesso) - moderno
+   ========================================= */
+.upload-card {
+  background: linear-gradient(180deg, rgba(5, 150, 105, 0.06) 0%, rgba(255, 255, 255, 1) 100%);
+  border: 1px solid rgba(5, 150, 105, 0.22);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.upload-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.upload-card-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(5, 150, 105, 0.10);
+  border: 1px solid rgba(5, 150, 105, 0.20);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.upload-card-title-block {
+  min-width: 0;
+}
+
+.upload-card-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--gray-900);
+}
+
+.upload-card-subtitle {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.upload-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.upload-file {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  border-radius: 12px;
+  border: 1.5px dashed rgba(5, 150, 105, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.upload-file:hover {
+  border-color: rgba(5, 150, 105, 0.65);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+}
+
+.upload-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-file-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--success);
+  font-weight: 800;
+  font-size: 13px;
+  user-select: none;
+  padding: 6px 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.upload-file-label svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.upload-btn {
+  min-width: 160px;
+}
+
+.upload-hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--gray-400);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .upload-card { padding: 14px; }
+  .upload-actions { gap: 10px; }
+  .upload-file { min-width: 180px; }
+  .upload-btn { min-width: 140px; }
+}
+
+
 
 
 /* Alert Custom for Especie */

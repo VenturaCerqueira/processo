@@ -4,33 +4,62 @@ import App from './App.jsx'
 import './index.css'
 import './responsive.css'
 
-// Suppress noisy unhandledrejection caused by some browser extensions/devtools messaging.
+// Suppress noisy browser-devtools/extension messaging errors.
 // Keep this narrow so we don't hide real app errors.
-window.addEventListener('unhandledrejection', (event) => {
-  try {
-    const reason = event?.reason;
+const suppressMessagePatterns = [
+  'message channel closed',
+  'A listener indicated an asynchronous response',
+  'Channel closed',
+  'Extension context invalidated',
+  'chrome-extension',
+];
 
-    // Normalize message for all shapes (string | Error | object)
-    const msg =
-      (reason && typeof reason === 'object' && 'message' in reason && typeof reason.message === 'string')
-        ? reason.message
-        : (typeof reason === 'string' ? reason : String(reason));
-
-    const shouldSuppress =
-      msg.includes('message channel closed') ||
-      msg.includes('A listener indicated an asynchronous response') ||
-      msg.includes('Channel closed') ||
-      msg.includes('Extension context invalidated') ||
-      msg.includes('chrome-extension');
-
-    if (!shouldSuppress) return;
-
-    // Swallow the rejection to avoid spamming console.
-    // (preventDefault is not consistently reliable for this case)
-  } catch {
-    // Never break app because of this handler
+function normalizeMessage(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    if (typeof value.message === 'string') return value.message;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      // fall through
+    }
   }
-});
+  return String(value);
+}
+
+function shouldSuppressMessage(msg) {
+  const s = normalizeMessage(msg);
+  if (!s) return false;
+  return suppressMessagePatterns.some((p) => s.includes(p));
+}
+
+// Capture phase to try to intercept before the browser/devtools logs.
+window.addEventListener(
+  'unhandledrejection',
+  (event) => {
+    try {
+      if (!shouldSuppressMessage(event?.reason)) return;
+      event.preventDefault?.();
+    } catch {
+      // Never break app because of this handler
+    }
+  },
+  true
+);
+
+window.addEventListener(
+  'error',
+  (event) => {
+    try {
+      if (!shouldSuppressMessage(event?.message)) return;
+      event.preventDefault?.();
+    } catch {
+      // ignore
+    }
+  },
+  true
+);
 
 
 
