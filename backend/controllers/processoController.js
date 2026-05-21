@@ -1,4 +1,5 @@
 import pool from "../config/database.js";
+import logger from '../config/logger.js';
 import { gerarNumeroProcesso } from "../utils/helpers.js";
 import { criarNotificacao } from "./notificacaoController.js";
 import { registrarHistorico } from "../utils/historico.js";
@@ -61,51 +62,63 @@ export const listarProcessos = async (req, res) => {
 
 export const obterProcesso = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `
-      SELECT p.*, e.nome as especie_nome, e.mensagem_customizada as especie_mensagem,
-             e.prazo_minimo as especie_prazo_minimo, e.prazo_maximo as especie_prazo_maximo,
-             e.dias_uteis as especie_dias_uteis, u.nome as usuarioResponsavelNome
-      FROM processos p
-      LEFT JOIN especies_processo e ON p.especie_id = e.id
-      LEFT JOIN users u ON p.usuarioResponsavel = u.id
-      LEFT JOIN tipos_processo tp ON p.tipo = tp.nome
-      WHERE p.id = ?
-    `,
-      [req.params.id],
-    );
+    // Fazer todas as queries em paralelo ao invés de sequencial
+    const [rows, movimentacoes, documentos, observacoes, filhos, historico] = await Promise.all([
+      pool.query(
+        `SELECT p.*, e.nome as especie_nome, e.mensagem_customizada as especie_mensagem,
+               e.prazo_minimo as especie_prazo_minimo, e.prazo_maximo as especie_prazo_maximo,
+               e.dias_uteis as especie_dias_uteis, u.nome as usuarioResponsavelNome
+        FROM processos p
+        LEFT JOIN especies_processo e ON p.especie_id = e.id
+        LEFT JOIN users u ON p.usuarioResponsavel = u.id
+        LEFT JOIN tipos_processo tp ON p.tipo = tp.nome
+        WHERE p.id = ?`,
+        [req.params.id],
+      ).then(r => r[0]),
+      pool.query(
+        `SELECT m.*, u.nome as usuarioNome, ud.nome as usuarioDestinoNome 
+         FROM movimentacoes m 
+         LEFT JOIN users u ON m.usuario = u.id 
+         LEFT JOIN users ud ON m.usuarioDestino = ud.id 
+         WHERE m.processoId = ? ORDER BY m.data DESC`,
+        [req.params.id],
+      ).then(r => r[0]),
+      pool.query(
+        `SELECT d.*, u.nome as usuarioNome FROM documentos d 
+         LEFT JOIN users u ON d.usuario = u.id WHERE d.processoId = ? ORDER BY d.dataUpload DESC`,
+        [req.params.id],
+      ).then(r => r[0]),
+      pool.query(
+        `SELECT o.*, u.nome as usuarioNome FROM observacoes o 
+         LEFT JOIN users u ON o.usuario = u.id WHERE o.processoId = ? ORDER BY o.data DESC`,
+        [req.params.id],
+      ).then(r => r[0]),
+      pool.query(
+        `SELECT id, numero, tipo, assunto, status, situacao, createdAt FROM processos WHERE processoPaiId = ? ORDER BY createdAt DESC`,
+        [req.params.id],
+      ).then(r => r[0]),
+      pool.query(
+        `SELECT h.*, u.nome as usuarioNome FROM historico h 
+         LEFT JOIN users u ON h.usuario = u.id WHERE h.processoId = ? ORDER BY h.data DESC`,
+        [req.params.id],
+      ).then(r => r[0]),
+    ]);
+
     if (rows.length === 0) {
       return res.status(404).json({ message: "Processo não encontrado." });
     }
-    const processo = rows[0];
-    const [movimentacoes] = await pool.query(
-      `SELECT m.*, u.nome as usuarioNome, ud.nome as usuarioDestinoNome 
-       FROM movimentacoes m 
-       LEFT JOIN users u ON m.usuario = u.id 
-       LEFT JOIN users ud ON m.usuarioDestino = ud.id 
-       WHERE m.processoId = ? ORDER BY m.data DESC`,
-      [req.params.id],
-    );
-    const [documentos] = await pool.query(
-      `SELECT d.*, u.nome as usuarioNome FROM documentos d 
-       LEFT JOIN users u ON d.usuario = u.id WHERE d.processoId = ? ORDER BY d.dataUpload DESC`,
-      [req.params.id],
-    );
-    const [observacoes] = await pool.query(
-      `SELECT o.*, u.nome as usuarioNome FROM observacoes o 
-       LEFT JOIN users u ON o.usuario = u.id WHERE o.processoId = ? ORDER BY o.data DESC`,
-      [req.params.id],
-    );
-    const [filhos] = await pool.query(
-      `SELECT id, numero, tipo, assunto, status, situacao, createdAt FROM processos WHERE processoPaiId = ? ORDER BY createdAt DESC`,
-      [req.params.id],
-    );
 
-    // Carregar documentos dos processos filhos (para exibição na tela do pai)
-    let filhosDocumentos = [];
+    const processo = rows[0];
+
+    // Carregar documentos dos processos filhos em uma única query
+    let filhosComDocumentos = filhos.map((f) => ({
+      ...f,
+      documentos: [],
+    }));
+
     if (filhos.length > 0) {
       const placeholders = filhos.map(() => '?').join(',');
-      const [docsFilhos] = await pool.query(
+      const [filhosDocumentos] = await pool.query(
         `SELECT d.*, u.nome as usuarioNome
          FROM documentos d
          LEFT JOIN users u ON d.usuario = u.id
@@ -113,24 +126,13 @@ export const obterProcesso = async (req, res) => {
          ORDER BY d.dataUpload DESC`,
         filhos.map((f) => f.id),
       );
-      filhosDocumentos = docsFilhos;
+
+      const idxPorId = new Map(filhosComDocumentos.map((f, i) => [f.id, i]));
+      filhosDocumentos.forEach((doc) => {
+        const i = idxPorId.get(doc.processoId);
+        if (i !== undefined) filhosComDocumentos[i].documentos.push(doc);
+      });
     }
-
-    const filhosComDocumentos = filhos.map((f) => ({
-      ...f,
-      documentos: [],
-    }));
-
-    const idxPorId = new Map(filhosComDocumentos.map((f, i) => [f.id, i]));
-    filhosDocumentos.forEach((doc) => {
-      const i = idxPorId.get(doc.processoId);
-      if (i !== undefined) filhosComDocumentos[i].documentos.push(doc);
-    });
-    const [historico] = await pool.query(
-      `SELECT h.*, u.nome as usuarioNome FROM historico h 
-       LEFT JOIN users u ON h.usuario = u.id WHERE h.processoId = ? ORDER BY h.data DESC`,
-      [req.params.id],
-    );
 
     res.json({
       ...processo,
@@ -440,8 +442,25 @@ export const criarProcesso = async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
       result.insertId,
     ]);
+    
+    logger.info(`Novo processo criado: ${numero}`, {
+      processoId: result.insertId,
+      numero,
+      tipo: tipoFinal,
+      assunto,
+      requerente,
+      setor: setorAtual,
+      prioridade: prioridade || "normal",
+      usuarioId: req.user.id,
+    });
+    
     res.status(201).json(rows[0]);
   } catch (error) {
+    logger.error(`Erro ao criar novo processo: ${error.message}`, {
+      error: error.stack,
+      usuarioId: req.user?.id,
+      body: req.body,
+    });
     res.status(500).json({ message: error.message });
   }
 };
@@ -572,8 +591,25 @@ export const encaminharProcesso = async (req, res) => {
       "SELECT * FROM processos WHERE id = ?",
       [req.params.id],
     );
+    
+    logger.info(`Processo encaminhado: ${processo.numero}`, {
+      processoId: req.params.id,
+      numero: processo.numero,
+      deSetor: processo.setorAtual,
+      paraSetor: para,
+      paraUsuario: paraUsuario || null,
+      usuarioId: req.user.id,
+      parecer: parecer ? parecer.substring(0, 100) : null,
+    });
+    
     res.json(atualizado[0]);
   } catch (error) {
+    logger.error(`Erro ao encaminhar processo ${req.params.id}: ${error.message}`, {
+      error: error.stack,
+      usuarioId: req.user?.id,
+      processoId: req.params.id,
+      body: req.body,
+    });
     res.status(500).json({ message: error.message });
   }
 };
@@ -590,10 +626,7 @@ export const receberProcesso = async (req, res) => {
       "Processo recebido.",
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ id: req.params.id, situacao: "recebido", status: "tramitando" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -746,10 +779,7 @@ export const aprovarProcesso = async (req, res) => {
       "Processo deferido.",
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ id: req.params.id, situacao: "aprovado" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -767,10 +797,7 @@ export const pausarProcesso = async (req, res) => {
       "Processo suspenso.",
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ id: req.params.id, situacao: "pausado", status: "aguardando" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -788,10 +815,7 @@ export const arquivarProcesso = async (req, res) => {
       "Processo arquivado.",
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ id: req.params.id, situacao: "arquivado", status: "arquivado" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -809,10 +833,7 @@ export const indeferirProcesso = async (req, res) => {
       "Processo indeferido.",
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ id: req.params.id, situacao: "indeferido", status: "indeferido" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -944,7 +965,7 @@ export const favoritarProcesso = async (req, res) => {
 
 export const excluirProcesso = async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
+    const [rows] = await pool.query("SELECT situacao FROM processos WHERE id = ?", [
       req.params.id,
     ]);
     if (rows.length === 0) {
@@ -970,11 +991,7 @@ export const excluirProcesso = async (req, res) => {
       "Processo excluído da Caixa de Entrada.",
       req.user.id,
     );
-    const [atualizado] = await pool.query(
-      "SELECT * FROM processos WHERE id = ?",
-      [req.params.id],
-    );
-    res.json(atualizado[0]);
+    res.json({ id: req.params.id, situacao: "excluido" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -983,7 +1000,7 @@ export const excluirProcesso = async (req, res) => {
 export const adicionarObservacao = async (req, res) => {
   try {
     const { texto } = req.body;
-    await pool.query(
+    const [result] = await pool.query(
       "INSERT INTO observacoes (processoId, texto, usuario) VALUES (?, ?, ?)",
       [req.params.id, texto, req.user.id],
     );
@@ -993,11 +1010,19 @@ export const adicionarObservacao = async (req, res) => {
       `Observação adicionada: ${texto}`,
       req.user.id,
     );
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
-      req.params.id,
-    ]);
-    res.json(rows[0]);
+    res.json({ 
+      id: result.insertId, 
+      processoId: req.params.id, 
+      texto, 
+      usuario: req.user.id,
+      createdAt: new Date()
+    });
   } catch (error) {
+    logger.error(`Erro ao adicionar observação: ${error.message}`, {
+      error: error.stack,
+      processoId: req.params.id,
+      usuarioId: req.user?.id,
+    });
     res.status(500).json({ message: error.message });
   }
 };

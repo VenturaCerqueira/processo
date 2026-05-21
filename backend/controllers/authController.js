@@ -3,6 +3,7 @@ import pool from '../config/database.js';
 import { hashSenha, compararSenha } from '../utils/helpers.js';
 import { randomBytes } from 'crypto';
 import { enviarEmailRecuperacao, enviarEmailPrimeiroAcesso } from '../utils/email.js';
+import logger from '../config/logger.js';
 
 const gerarToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
@@ -14,16 +15,27 @@ export const login = async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ? AND ativo = 1', [email]);
     const user = rows[0];
     if (!user) {
+      logger.warn(`Tentativa de login com email não encontrado: ${email}`, { email, ip: req.ip });
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
     if (user.primeiroAcesso === 1) {
+      logger.warn(`Tentativa de login em conta pendente: ${email}`, { email, userId: user.id });
       return res.status(403).json({ message: 'Conta pendente de ativação. Use a área de Primeiro Acesso.' });
     }
     const senhaValida = await compararSenha(senha, user.senha);
     if (!senhaValida) {
+      logger.warn(`Tentativa de login com senha incorreta: ${email}`, { email, userId: user.id, ip: req.ip });
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
     const token = gerarToken(user.id);
+    logger.info(`Login bem-sucedido: ${email}`, { 
+      email, 
+      userId: user.id, 
+      cargo: user.cargo, 
+      setor: user.setor, 
+      nivelAcesso: user.nivelAcesso,
+      ip: req.ip 
+    });
     res.json({
       token,
       user: {
@@ -36,6 +48,7 @@ export const login = async (req, res) => {
       }
     });
   } catch (error) {
+    logger.error(`Erro ao fazer login: ${error.message}`, { error: error.stack, email: req.body?.email });
     res.status(500).json({ message: error.message });
   }
 };

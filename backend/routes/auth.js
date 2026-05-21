@@ -1,16 +1,17 @@
 import express from 'express';
 import { login, registrar, perfil, esqueciSenha, redefinirSenha, listarUsuarios, listarUsuariosAtivos, obterUsuario, atualizarUsuario, resetarSenhaUsuario, atualizarPerfil, primeiroAcesso } from '../controllers/authController.js';
 import { auth, adminOnly } from '../middleware/auth.js';
+import { limiterLogin, limiterSenha } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.post('/login', login);
+router.post('/login', limiterLogin, login);
 router.post('/registrar', auth, adminOnly, registrar);
 router.get('/perfil', auth, perfil);
 router.put('/perfil', auth, atualizarPerfil);
-router.post('/esqueci-senha', esqueciSenha);
-router.post('/redefinir-senha', redefinirSenha);
-router.post('/primeiro-acesso', primeiroAcesso);
+router.post('/esqueci-senha', limiterSenha, esqueciSenha);
+router.post('/redefinir-senha', limiterSenha, redefinirSenha);
+router.post('/primeiro-acesso', limiterLogin, primeiroAcesso);
 router.get('/usuarios', auth, adminOnly, listarUsuarios);
 router.get('/usuarios-ativos', auth, listarUsuariosAtivos);
 router.get('/usuarios/:id', auth, adminOnly, obterUsuario);

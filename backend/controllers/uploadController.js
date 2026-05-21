@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import logger from '../config/logger.js';
 import { registrarHistorico } from '../utils/historico.js';
 
 export const uploadDocumento = async (req, res) => {
@@ -8,6 +9,11 @@ export const uploadDocumento = async (req, res) => {
     }
     const [rows] = await pool.query('SELECT * FROM processos WHERE id = ?', [req.params.id]);
     if (rows.length === 0) {
+      logger.warn(`Tentativa de upload em processo inexistente: ${req.params.id}`, {
+        processoId: req.params.id,
+        arquivo: req.file.originalname,
+        usuarioId: req.user.id,
+      });
       return res.status(404).json({ message: 'Processo não encontrado.' });
     }
 
@@ -16,6 +22,12 @@ export const uploadDocumento = async (req, res) => {
       'image/jpeg', 'image/png', 'text/plain'];
     
     if (!tiposPermitidos.includes(req.file.mimetype)) {
+      logger.warn(`Upload de tipo de arquivo não permitido`, {
+        processoId: req.params.id,
+        arquivo: req.file.originalname,
+        mimeType: req.file.mimetype,
+        usuarioId: req.user.id,
+      });
       return res.status(400).json({ message: 'Tipo de arquivo não permitido.' });
     }
 
@@ -34,12 +46,28 @@ export const uploadDocumento = async (req, res) => {
 
     const [doc] = await pool.query('SELECT * FROM documentos WHERE id = ?', [result.insertId]);
 
+    logger.info(`Documento enviado com sucesso`, {
+      processoId: req.params.id,
+      documentoId: result.insertId,
+      arquivo: req.file.originalname,
+      mimeType: req.file.mimetype,
+      tamanho: req.file.size,
+      versao,
+      usuarioId: req.user.id,
+    });
+
     res.status(201).json({ 
       message: 'Documento anexado com sucesso.',
       documento: doc[0],
       notificacao: 'Partes e órgãos envolvidos notificados automaticamente.'
     });
   } catch (error) {
+    logger.error(`Erro ao fazer upload de documento: ${error.message}`, {
+      error: error.stack,
+      processoId: req.params.id,
+      arquivo: req.file?.originalname,
+      usuarioId: req.user?.id,
+    });
     res.status(500).json({ message: error.message });
   }
 };
