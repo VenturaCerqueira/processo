@@ -4,6 +4,7 @@ import path from 'path';
 import { uploadDocumento, listarDocumentos } from '../controllers/uploadController.js';
 import { auth } from '../middleware/auth.js';
 import { limiterUpload } from '../middleware/rateLimiter.js';
+import { validateUploadDocumento, handleValidationErrors } from '../middleware/validation.js';
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -22,8 +23,8 @@ const upload = multer({
 
 const router = express.Router();
 
-router.post('/:id/documento', auth, limiterUpload, upload.single('documento'), uploadDocumento);
-router.get('/:id/documentos', auth, listarDocumentos);
+router.post('/:id/documento', auth, limiterUpload, validateUploadDocumento, handleValidationErrors, upload.single('documento'), uploadDocumento);
+router.get('/:id/documentos', auth, validateUploadDocumento, handleValidationErrors, listarDocumentos);
 
 export default router;
 

@@ -20,27 +20,35 @@ import {
   salvarAnexosValoresProcesso
 } from '../controllers/processoController.js';
 import { auth } from '../middleware/auth.js';
+import {
+  validateCriarProcesso,
+  validateEncaminharProcesso,
+  validateAdicionarObservacao,
+  validateParamId,
+  validatePaginacao,
+  handleValidationErrors
+} from '../middleware/validation.js';
 
 const router = express.Router();
 
-router.get('/', auth, listarProcessos);
+router.get('/', auth, validatePaginacao, handleValidationErrors, listarProcessos);
 router.get('/caixa-entrada', auth, listarCaixaEntrada);
 router.get('/relatorio', auth, relatorioAndamento);
-router.get('/:id', auth, obterProcesso);
-router.post('/', auth, criarProcesso);
-router.put('/:id', auth, atualizarProcesso);
-router.post('/:id/encaminhar', auth, encaminharProcesso);
-router.post('/:id/receber', auth, receberProcesso);
-router.post('/:id/voltar', auth, voltarProcesso);
-router.post('/:id/aprovar', auth, aprovarProcesso);
-router.post('/:id/pausar', auth, pausarProcesso);
-router.post('/:id/arquivar', auth, arquivarProcesso);
-router.post('/:id/indeferir', auth, indeferirProcesso);
-router.post('/:id/observacao', auth, adicionarObservacao);
-router.post('/:id/favoritar', auth, favoritarProcesso);
-router.post('/:id/excluir', auth, excluirProcesso);
-router.post('/:id/filho', auth, criarProcessoFilho);
-router.post('/:id/anexos-valores', auth, salvarAnexosValoresProcesso);
+router.get('/:id', auth, validateParamId, handleValidationErrors, obterProcesso);
+router.post('/', auth, validateCriarProcesso, handleValidationErrors, criarProcesso);
+router.put('/:id', auth, validateParamId, handleValidationErrors, atualizarProcesso);
+router.post('/:id/encaminhar', auth, validateParamId, validateEncaminharProcesso, handleValidationErrors, encaminharProcesso);
+router.post('/:id/receber', auth, validateParamId, handleValidationErrors, receberProcesso);
+router.post('/:id/voltar', auth, validateParamId, handleValidationErrors, voltarProcesso);
+router.post('/:id/aprovar', auth, validateParamId, handleValidationErrors, aprovarProcesso);
+router.post('/:id/pausar', auth, validateParamId, handleValidationErrors, pausarProcesso);
+router.post('/:id/arquivar', auth, validateParamId, handleValidationErrors, arquivarProcesso);
+router.post('/:id/indeferir', auth, validateParamId, handleValidationErrors, indeferirProcesso);
+router.post('/:id/observacao', auth, validateParamId, validateAdicionarObservacao, handleValidationErrors, adicionarObservacao);
+router.post('/:id/favoritar', auth, validateParamId, handleValidationErrors, favoritarProcesso);
+router.post('/:id/excluir', auth, validateParamId, handleValidationErrors, excluirProcesso);
+router.post('/:id/filho', auth, validateParamId, validateCriarProcesso, handleValidationErrors, criarProcessoFilho);
+router.post('/:id/anexos-valores', auth, validateParamId, handleValidationErrors, salvarAnexosValoresProcesso);
 
 export default router;
 

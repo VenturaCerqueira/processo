@@ -4,6 +4,7 @@ import { hashSenha, compararSenha } from '../utils/helpers.js';
 import { randomBytes } from 'crypto';
 import { enviarEmailRecuperacao, enviarEmailPrimeiroAcesso } from '../utils/email.js';
 import logger from '../config/logger.js';
+import { sanitizeRequestForLog } from '../middleware/sanitizer.js';
 
 const gerarToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
@@ -48,7 +49,10 @@ export const login = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error(`Erro ao fazer login: ${error.message}`, { error: error.stack, email: req.body?.email });
+    logger.error(`Erro ao fazer login: ${error.message}`, { 
+      error: error.stack, 
+      request: sanitizeRequestForLog(req)
+    });
     res.status(500).json({ message: error.message });
   }
 };
