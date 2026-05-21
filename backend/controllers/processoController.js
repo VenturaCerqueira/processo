@@ -100,6 +100,32 @@ export const obterProcesso = async (req, res) => {
       `SELECT id, numero, tipo, assunto, status, situacao, createdAt FROM processos WHERE processoPaiId = ? ORDER BY createdAt DESC`,
       [req.params.id],
     );
+
+    // Carregar documentos dos processos filhos (para exibição na tela do pai)
+    let filhosDocumentos = [];
+    if (filhos.length > 0) {
+      const placeholders = filhos.map(() => '?').join(',');
+      const [docsFilhos] = await pool.query(
+        `SELECT d.*, u.nome as usuarioNome
+         FROM documentos d
+         LEFT JOIN users u ON d.usuario = u.id
+         WHERE d.processoId IN (${placeholders})
+         ORDER BY d.dataUpload DESC`,
+        filhos.map((f) => f.id),
+      );
+      filhosDocumentos = docsFilhos;
+    }
+
+    const filhosComDocumentos = filhos.map((f) => ({
+      ...f,
+      documentos: [],
+    }));
+
+    const idxPorId = new Map(filhosComDocumentos.map((f, i) => [f.id, i]));
+    filhosDocumentos.forEach((doc) => {
+      const i = idxPorId.get(doc.processoId);
+      if (i !== undefined) filhosComDocumentos[i].documentos.push(doc);
+    });
     const [historico] = await pool.query(
       `SELECT h.*, u.nome as usuarioNome FROM historico h 
        LEFT JOIN users u ON h.usuario = u.id WHERE h.processoId = ? ORDER BY h.data DESC`,
@@ -111,7 +137,7 @@ export const obterProcesso = async (req, res) => {
       movimentacoes,
       documentos,
       observacoes,
-      filhos,
+      filhos: filhosComDocumentos,
       historico,
     });
   } catch (error) {

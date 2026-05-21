@@ -375,7 +375,7 @@ function DetalheProcesso() {
         ) : (
           <div className="table-container">
             <table>
-              <thead><tr><th>Número</th><th>Tipo</th><th>Assunto</th><th>Status</th><th>Situação</th><th>Data</th></tr></thead>
+              <thead><tr><th>Número</th><th>Tipo</th><th>Assunto</th><th>Status</th><th>Situação</th><th>Data</th><th>Documentos</th></tr></thead>
               <tbody>{processo.filhos.map((f, i) => (
                 <tr key={i}>
                   <td><Link to={`/processos/${f.id}`} className="table-link">{f.numero}</Link></td>
@@ -384,6 +384,27 @@ function DetalheProcesso() {
                   <td><span className={`badge badge-${f.status}`}>{f.status}</span></td>
                   <td><span className={`badge badge-${f.situacao}`}>{f.situacao}</span></td>
                   <td>{new Date(f.createdAt).toLocaleDateString('pt-BR')}</td>
+                  <td>
+                    {f.documentos && f.documentos.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {f.documentos.slice(0, 3).map((doc, idx) => (
+                          <div key={idx} style={{ fontSize: 12, color: 'var(--gray-700)' }}>
+                            {doc.nome}
+                            <span style={{ color: 'var(--gray-400)' }}>
+                              {' '}(v{doc.versao})
+                            </span>
+                          </div>
+                        ))}
+                        {f.documentos.length > 3 && (
+                          <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>
+                            +{f.documentos.length - 3} documento(s)
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--gray-400)' }}>—</span>
+                    )}
+                  </td>
                 </tr>
               ))}</tbody>
             </table>
