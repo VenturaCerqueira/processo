@@ -31,8 +31,10 @@ import Sidebar from './components/Sidebar';
 import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
 import ToastContainer from './components/ToastContainer';
+import { ModalConfirmProvider } from './components/ModalConfirmProvider';
 
 function AppContent() {
+
   const [user, setUser] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
@@ -226,12 +228,17 @@ function AppContent() {
 }
 
 function App() {
+
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AppContent />
+      <ModalConfirmProvider>
+        <AppContent />
+      </ModalConfirmProvider>
     </BrowserRouter>
   );
 }
 
 export default App;
+
+
 

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../api';
+import { useModalConfirm } from './ModalConfirmProvider';
+
 
 function AcoesDropdown({ btnRef, actions }) {
   const [open, setOpen] = useState(false);
@@ -151,6 +153,8 @@ function AcoesDropdownLinha({ u, abrirModalEditar, resetarSenha, alterarAtivo })
 }
 
 function CadastroUsuarios() {
+  const modalConfirm = useModalConfirm();
+
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -289,24 +293,48 @@ function CadastroUsuarios() {
   };
 
   const resetarSenha = async (id) => {
-    const novaSenha = prompt('Nova senha (mín. 6 caracteres):');
-    if (!novaSenha || novaSenha.length < 6) {
-      alert('Senha inválida');
-      return;
-    }
+    const novaSenha = await modalConfirm.prompt({
+      title: 'Resetar senha',
+      message: 'Informe a nova senha (mínimo 6 caracteres).',
+      inputLabel: 'Nova senha',
+      inputPlaceholder: 'Digite a nova senha',
+      inputType: 'password',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      validate: (value) => {
+        if (!value || String(value).length < 6) return false;
+        return true;
+      },
+    });
+
+    if (!novaSenha) return;
+
     try {
       await api.post(`/auth/usuarios/${id}/resetar-senha`, { novaSenha });
-      alert('Senha resetada!');
+      await modalConfirm.alert({
+        title: 'Senha resetada',
+        message: 'Senha resetada com sucesso.',
+      });
     } catch {
-      alert('Erro ao resetar senha');
+      await modalConfirm.alert({
+        title: 'Erro',
+        message: 'Erro ao resetar senha.',
+      });
     }
   };
+
 
   const alterarAtivo = async (u, novoAtivo) => {
     setErro('');
     setMensagem('');
 
-    const ok = confirm(novoAtivo === 1 ? 'Deseja reativar este usuário?' : 'Deseja inativar este usuário?');
+    const ok = await modalConfirm.confirm({
+      title: 'Confirmar ação',
+      message: novoAtivo === 1 ? 'Deseja reativar este usuário?' : 'Deseja inativar este usuário?',
+      variant: 'danger',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+    });
     if (!ok) return;
 
     try {
@@ -326,6 +354,7 @@ function CadastroUsuarios() {
       setErro(error.response?.data?.message || 'Erro ao alterar status do usuário');
     }
   };
+
 
   if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
 

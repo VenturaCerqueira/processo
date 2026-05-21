@@ -158,6 +158,8 @@ function CadastroTiposProcesso() {
   const [tipos, setTipos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
+  const [somenteInativos, setSomenteInativos] = useState(false);
+
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -175,7 +177,8 @@ function CadastroTiposProcesso() {
 
   useEffect(() => {
     carregarTipos();
-  }, []);
+  }, [somenteInativos]);
+
   
   useEffect(() => {
     const onDocDown = (e) => {
@@ -195,7 +198,9 @@ function CadastroTiposProcesso() {
     setLoading(true);
     setErro('');
     try {
-      const res = await api.get('/tipos-processo');
+      const res = await api.get('/tipos-processo', {
+        params: somenteInativos ? { incluiInativos: 1 } : undefined,
+      });
       setTipos(res.data);
     } catch {
       setErro('Erro ao carregar tipos.');
@@ -203,6 +208,7 @@ function CadastroTiposProcesso() {
       setLoading(false);
     }
   };
+
 
   const opcoesIcones = useMemo(
     () => [
@@ -352,10 +358,41 @@ function CadastroTiposProcesso() {
       <div className="card" style={{ overflow: 'visible' }}>
         <div className="card-header" style={{ marginBottom: 12 }}>
           <div className="card-title">Lista de Tipos</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>
             {tipos.length} {tipos.length === 1 ? 'registro' : 'registros'}
           </div>
         </div>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-700)' }}>
+            Exibir:
+          </label>
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{
+              background: somenteInativos ? 'var(--gray-100)' : 'var(--primary)15',
+              borderColor: 'var(--gray-200)',
+              color: 'var(--gray-900)',
+            }}
+            onClick={() => setSomenteInativos(false)}
+          >
+            Ativos
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{
+              background: somenteInativos ? 'var(--primary)15' : 'var(--gray-100)',
+              borderColor: 'var(--gray-200)',
+              color: 'var(--gray-900)',
+            }}
+            onClick={() => setSomenteInativos(true)}
+          >
+            Todos (inclui Inativos)
+          </button>
+        </div>
+
 
         <div className="table-container">
           <table>
@@ -363,7 +400,9 @@ function CadastroTiposProcesso() {
               <tr>
                 <th style={{ width: 320 }}>Nome</th>
                 <th>Codigo</th>
+                <th style={{ width: 140 }}>Status</th>
                 <th style={{ width: 160 }}>Ações</th>
+
               </tr>
             </thead>
             <tbody>
@@ -408,7 +447,15 @@ function CadastroTiposProcesso() {
                     </td>
                     <td>{t.codigo || '—'}</td>
                     <td>
+                      <span
+                        className={`badge ${t.ativo === 0 ? 'arquivado' : 'concluido'}`}
+                      >
+                        {t.ativo === 0 ? 'Inativo' : 'Ativo'}
+                      </span>
+                    </td>
+                    <td>
                       <div className="actions-dropdown" style={{ position: 'relative' }}>
+
                         <AcoesDropdownLinha
                           t={t}
                           viewTipo={viewTipo}

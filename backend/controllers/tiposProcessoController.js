@@ -2,8 +2,13 @@ import pool from '../config/database.js';
 
 export const listarTipos = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM tipos_processo WHERE ativo = 1 ORDER BY nome');
+    const incluiInativos = req.query?.incluiInativos === '1';
+    const sql = incluiInativos
+      ? 'SELECT * FROM tipos_processo ORDER BY nome'
+      : 'SELECT * FROM tipos_processo WHERE ativo = 1 ORDER BY nome';
+    const [rows] = await pool.query(sql);
     res.json(rows);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
