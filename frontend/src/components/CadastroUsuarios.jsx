@@ -90,8 +90,33 @@ function AcoesDropdown({ btnRef, actions }) {
   );
 }
 
-function AcoesDropdownLinha({ u, abrirModalEditar, resetarSenha }) {
+function AcoesDropdownLinha({ u, abrirModalEditar, resetarSenha, alterarAtivo }) {
   const btnRef = useRef(null);
+
+  const acaoAtivo = u.ativo ?
+    {
+      label: 'Inativar',
+      variant: 'danger',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 21h18" />
+          <path d="M7 7l10 10" />
+          <path d="M17 7L7 17" />
+        </svg>
+      ),
+      onClick: () => alterarAtivo(u, 0),
+    } :
+    {
+      label: 'Reativar',
+      variant: 'secondary',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      ),
+      onClick: () => alterarAtivo(u, 1),
+    };
 
   return (
     <AcoesDropdown
@@ -119,6 +144,7 @@ function AcoesDropdownLinha({ u, abrirModalEditar, resetarSenha }) {
           ),
           onClick: () => resetarSenha(u.id),
         },
+        acaoAtivo,
       ]}
     />
   );
@@ -276,6 +302,31 @@ function CadastroUsuarios() {
     }
   };
 
+  const alterarAtivo = async (u, novoAtivo) => {
+    setErro('');
+    setMensagem('');
+
+    const ok = confirm(novoAtivo === 1 ? 'Deseja reativar este usuário?' : 'Deseja inativar este usuário?');
+    if (!ok) return;
+
+    try {
+      // enviar campos obrigatórios para evitar dependência do backend em validações
+      await api.put(`/auth/usuarios/${u.id}`, {
+        nome: u.nome || '',
+        email: u.email || '',
+        cargo: u.cargo || '',
+        setor: u.setor || '',
+        nivelAcesso: u.nivelAcesso || 'operador',
+        ativo: novoAtivo,
+      });
+
+      setMensagem(novoAtivo === 1 ? 'Usuário reativado!' : 'Usuário inativado!');
+      carregarUsuarios();
+    } catch (error) {
+      setErro(error.response?.data?.message || 'Erro ao alterar status do usuário');
+    }
+  };
+
   if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
 
   return (
@@ -350,7 +401,12 @@ function CadastroUsuarios() {
                     </td>
                     <td>
                       <div className="actions-dropdown" style={{ position: 'relative' }}>
-                        <AcoesDropdownLinha u={u} abrirModalEditar={abrirModalEditar} resetarSenha={resetarSenha} />
+                        <AcoesDropdownLinha
+                          u={u}
+                          abrirModalEditar={abrirModalEditar}
+                          resetarSenha={resetarSenha}
+                          alterarAtivo={alterarAtivo}
+                        />
                       </div>
                     </td>
                   </tr>

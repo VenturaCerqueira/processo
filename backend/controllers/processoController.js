@@ -399,7 +399,9 @@ export const criarProcesso = async (req, res) => {
       }
     }
 
-    // Notificação removida: Novo Processo vai direto para o setor, sem atribuição direta ao usuário.
+    // Notificação: quando o processo chega no setor (usuarioResponsavel = NULL),
+    // avisamos todos os usuários ativos do setorAtual.
+    // (Quando houver usuário responsável, notificamos apenas ele.)
     if (usuarioResponsavelFinal) {
       await criarNotificacao(
         usuarioResponsavelFinal,
@@ -409,6 +411,22 @@ export const criarProcesso = async (req, res) => {
         "info",
         prioridade || "normal",
       );
+    } else {
+      const [usuariosSetor] = await pool.query(
+        'SELECT id FROM users WHERE ativo = 1 AND setor = ? ORDER BY id',
+        [setorAtual],
+      );
+
+      for (const u of usuariosSetor) {
+        await criarNotificacao(
+          u.id,
+          result.insertId,
+          "Novo processo na Caixa de Entrada do setor",
+          `O processo ${numero} chegou ao setor ${setorAtual}.`,
+          "info",
+          prioridade || "normal",
+        );
+      }
     }
 
     await registrarHistorico(
@@ -1210,7 +1228,9 @@ export const criarProcessoFilho = async (req, res) => {
       ],
     );
 
-    // Notificação removida: Novo Processo Filho vai direto para o setor, sem atribuição direta ao usuário.
+    // Notificação: quando o processo filho chega no setor (usuarioResponsavel = NULL),
+    // avisamos todos os usuários ativos do setorAtual.
+    // (Quando houver usuário responsável, notificamos apenas ele.)
     if (usuarioResponsavelFinal) {
       await criarNotificacao(
         usuarioResponsavelFinal,
