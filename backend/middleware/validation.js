@@ -1,4 +1,5 @@
 import { body, param, query, validationResult } from 'express-validator';
+import { validateCpfCnpj } from '../utils/validators.js';
 
 /**
  * Middleware para validar resultado de validações
@@ -17,6 +18,17 @@ export const handleValidationErrors = (req, res, next) => {
     });
   }
   next();
+};
+
+/**
+ * Validador customizado para CPF/CNPJ com dígito verificador
+ */
+export const validateCpfCnpjWithDigit = (value) => {
+  const result = validateCpfCnpj(value);
+  if (!result.valid) {
+    throw new Error(`${result.tipo === 'cpf' ? 'CPF' : result.tipo === 'cnpj' ? 'CNPJ' : 'CPF/CNPJ'} inválido.`);
+  }
+  return true;
 };
 
 /**
@@ -132,7 +144,7 @@ export const validateCriarProcesso = [
   body('cpfCnpj')
     .optional()
     .trim()
-    .matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)
+    .custom(validateCpfCnpjWithDigit)
     .withMessage('CPF ou CNPJ inválido'),
 ];
 
@@ -176,7 +188,7 @@ export const validateCriarRequerente = [
   body('cpfCnpj')
     .optional()
     .trim()
-    .matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$|^\d{11}$|^\d{14}$/)
+    .custom(validateCpfCnpjWithDigit)
     .withMessage('CPF ou CNPJ inválido'),
   body('email')
     .optional()
@@ -250,7 +262,7 @@ export const validateRegistroRequerente = [
     .withMessage('Nome deve ter entre 3 e 255 caracteres'),
   body('cpfCnpj')
     .trim()
-    .matches(/^\d{11}$|^\d{14}$|^\d{3}\.\d{3}\.\d{3}-\d{2}$|^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)
+    .custom(validateCpfCnpjWithDigit)
     .withMessage('CPF ou CNPJ inválido'),
   body('email')
     .trim()

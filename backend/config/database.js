@@ -93,6 +93,23 @@ export async function initDatabase() {
       // Coluna ja existe ou erro nao critico
     }
 
+    // Adicionar colunas de soft delete (deletedAt, deletedBy)
+    try {
+      await connection.query(`ALTER TABLE processos ADD COLUMN deletedAt TIMESTAMP NULL`);
+    } catch {
+      // Coluna ja existe
+    }
+    try {
+      await connection.query(`ALTER TABLE processos ADD COLUMN deletedBy INT NULL`);
+    } catch {
+      // Coluna ja existe
+    }
+    try {
+      await connection.query(`ALTER TABLE processos ADD CONSTRAINT fk_processo_deleted_by FOREIGN KEY (deletedBy) REFERENCES users(id)`);
+    } catch {
+      // Constraint ja existe
+    }
+
     // Adicionar FK de usuarioResponsavel se nao existir
     try {
       await connection.query(`ALTER TABLE processos ADD CONSTRAINT fk_processo_usuario_resp FOREIGN KEY (usuarioResponsavel) REFERENCES users(id)`);
@@ -542,6 +559,79 @@ export async function initDatabase() {
         ('operador', 'Operador - Pode criar e editar processos.', '{"dashboard":true,"processos_ver":true,"processos_criar":true,"processos_editar":true,"processos_excluir":false,"relatorios_ver":true,"relatorios_gerar":false,"cadastros_ver":true,"cadastros_editar":false,"usuarios_ver":false,"usuarios_editar":false,"configuracoes_ver":false}'),
         ('visualizador', 'Visualizador - Apenas visualização de processos e relatórios.', '{"dashboard":true,"processos_ver":true,"processos_criar":false,"processos_editar":false,"processos_excluir":false,"relatorios_ver":true,"relatorios_gerar":false,"cadastros_ver":true,"cadastros_editar":false,"usuarios_ver":false,"usuarios_editar":false,"configuracoes_ver":false}');
       `);
+    }
+
+    // =============================================
+    // NOVAS TABELAS E ÍNDICES ENTERPRISE
+    // =============================================
+
+    // Tabela de sequência para números de processo (evita duplicidade)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS procesos_sequencial (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ano INT NOT NULL,
+        sequencial INT NOT NULL DEFAULT 1,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_ano (ano)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Tabela de audit_log para compliance enterprise
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT,
+        usuarioTipo ENUM('staff', 'requerente') DEFAULT 'staff',
+        acao VARCHAR(100) NOT NULL,
+        recurso VARCHAR(100) NOT NULL,
+        recursoId INT,
+        detalhes JSON,
+        ip VARCHAR(45),
+        userAgent TEXT,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_audit_user (userId),
+        INDEX idx_audit_acao (acao),
+        INDEX idx_audit_recurso (recurso),
+        INDEX idx_audit_created (createdAt)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Tabela de refresh tokens para JWT
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        userId INT NOT NULL,
+        usuarioTipo ENUM('staff', 'requerente') NOT NULL,
+        token VARCHAR(255) NOT NULL,
+        expiresAt TIMESTAMP NOT NULL,
+        revoked TINYINT DEFAULT 0,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_rt_user (userId),
+        INDEX idx_rt_token (token),
+        INDEX idx_rt_expires (expiresAt)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Adicionar índices de performance se não existirem
+    const indicesExtras = [
+      'CREATE INDEX IF NOT EXISTS idx_processos_numero ON processos(numero)',
+      'CREATE INDEX IF NOT EXISTS idx_processos_prazo ON processos(prazo)',
+      'CREATE INDEX IF NOT EXISTS idx_processos_status ON processos(status)',
+      'CREATE INDEX IF NOT EXISTS idx_processos_situacao ON processos(situacao)',
+      'CREATE INDEX IF NOT EXISTS idx_movimentacoes_processo ON movimentacoes(processoId)',
+      'CREATE INDEX IF NOT EXISTS idx_movimentacoes_data ON movimentacoes(data)',
+      'CREATE INDEX IF NOT EXISTS idx_notificacoes_usuario_lida ON notificacoes(usuarioId, lida)',
+      'CREATE INDEX IF NOT EXISTS idx_documentos_processo ON documentos(processoId)',
+      'CREATE INDEX IF NOT EXISTS idx_historico_processo ON historico(processoId)'
+    ];
+
+    for (const idxSql of indicesExtras) {
+      try {
+        await connection.query(idxSql);
+      } catch {
+        // Índice pode já existir
+      }
     }
 
     console.log('MySQL: Banco de dados inicializado com sucesso');

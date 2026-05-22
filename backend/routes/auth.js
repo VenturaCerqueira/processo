@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, registrar, perfil, esqueciSenha, redefinirSenha, listarUsuarios, listarUsuariosAtivos, obterUsuario, atualizarUsuario, resetarSenhaUsuario, atualizarPerfil, primeiroAcesso } from '../controllers/authController.js';
+import { login, registrar, perfil, esqueciSenha, redefinirSenha, listarUsuarios, listarUsuariosAtivos, obterUsuario, atualizarUsuario, resetarSenhaUsuario, atualizarPerfil, primeiroAcesso, refreshToken, logout } from '../controllers/authController.js';
 import { auth, adminOnly } from '../middleware/auth.js';
 import { limiterLogin, limiterSenha } from '../middleware/rateLimiter.js';
 import {
@@ -15,6 +15,8 @@ import {
 const router = express.Router();
 
 router.post('/login', limiterLogin, validateLogin, handleValidationErrors, login);
+router.post('/refresh-token', refreshToken);
+router.post('/logout', auth, logout);
 router.post('/registrar', auth, adminOnly, validateRegistroUsuario, handleValidationErrors, registrar);
 router.get('/perfil', auth, perfil);
 router.put('/perfil', auth, validateAtualizarPerfil, handleValidationErrors, atualizarPerfil);

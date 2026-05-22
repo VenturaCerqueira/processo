@@ -3,6 +3,7 @@ import pool from '../config/database.js';
 import { hashSenha, compararSenha } from '../utils/helpers.js';
 import { randomBytes } from 'crypto';
 import { enviarEmailRecuperacao, enviarEmailPrimeiroAcesso } from '../utils/email.js';
+import { generateTokens, refreshAccessToken, revokeRefreshToken } from '../utils/refreshTokens.js';
 import logger from '../config/logger.js';
 import { sanitizeRequestForLog } from '../middleware/sanitizer.js';
 
@@ -28,17 +29,22 @@ export const login = async (req, res) => {
       logger.warn(`Tentativa de login com senha incorreta: ${email}`, { email, userId: user.id, ip: req.ip });
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
-    const token = gerarToken(user.id);
-    logger.info(`Login bem-sucedido: ${email}`, { 
-      email, 
-      userId: user.id, 
-      cargo: user.cargo, 
-      setor: user.setor, 
+
+    // Gerar tokens (access + refresh)
+    const userWithTipo = { ...user, tipo: 'staff' };
+    const tokens = await generateTokens(userWithTipo);
+
+    logger.info(`Login bem-sucedido: ${email}`, {
+      email,
+      userId: user.id,
+      cargo: user.cargo,
+      setor: user.setor,
       nivelAcesso: user.nivelAcesso,
-      ip: req.ip 
+      ip: req.ip
     });
+
     res.json({
-      token,
+      ...tokens,
       user: {
         id: user.id,
         nome: user.nome,
@@ -49,8 +55,8 @@ export const login = async (req, res) => {
       }
     });
   } catch (error) {
-    logger.error(`Erro ao fazer login: ${error.message}`, { 
-      error: error.stack, 
+    logger.error(`Erro ao fazer login: ${error.message}`, {
+      error: error.stack,
       request: sanitizeRequestForLog(req)
     });
     res.status(500).json({ message: error.message });
@@ -289,5 +295,55 @@ export const criarUsuarioAdmin = async () => {
     }
   } catch (error) {
     console.error('Erro ao criar admin:', error);
+  }
+};
+
+/**
+ * Refresh token - gera novo access token a partir do refresh token
+ */
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token é obrigatório.' });
+    }
+
+    const result = await refreshAccessToken(refreshToken);
+    if (!result) {
+      return res.status(401).json({ message: 'Refresh token inválido ou expirado.' });
+    }
+
+    res.json(result);
+  } catch (error) {
+    logger.error(`Erro ao fazer refresh token: ${error.message}`, {
+      error: error.stack,
+      request: sanitizeRequestForLog(req)
+    });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Logout - revoga o refresh token
+ */
+export const logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
+
+    logger.info(`Logout: ${req.user?.email || 'Unknown'}`, {
+      userId: req.user?.id,
+      ip: req.ip
+    });
+
+    res.json({ message: 'Logout realizado com sucesso.' });
+  } catch (error) {
+    logger.error(`Erro ao fazer logout: ${error.message}`, {
+      error: error.stack,
+      request: sanitizeRequestForLog(req)
+    });
+    res.status(500).json({ message: error.message });
   }
 };

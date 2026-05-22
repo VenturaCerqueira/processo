@@ -300,7 +300,7 @@ export const criarProcesso = async (req, res) => {
       }
     }
 
-    const numero = gerarNumeroProcesso();
+    const numero = await gerarNumeroProcesso();
     const [result] = await pool.query(
       `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -519,80 +519,68 @@ export const atualizarProcesso = async (req, res) => {
 };
 
 export const encaminharProcesso = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
+
     const { para, parecer, paraUsuario } = req.body;
-    const [rows] = await pool.query("SELECT * FROM processos WHERE id = ?", [
+    const [rows] = await connection.query("SELECT * FROM processos WHERE id = ?", [
       req.params.id,
     ]);
     if (rows.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ message: "Processo não encontrado." });
     }
     const processo = rows[0];
 
-    // Regra: só permitir encaminhar após o processo estar gerado (ex.: com numero)
     if (!processo.numero) {
+      await connection.rollback();
       return res.status(400).json({
-        message:
-          "O processo precisa estar gerado para permitir encaminhamento (número do processo ausente).",
+        message: "O processo precisa estar gerado para permitir encaminhamento (número do processo ausente).",
       });
     }
 
     if (processo.situacao === "encaminhado") {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Processo já encaminhado. Aguarde o recebimento para reencaminhar.",
-        });
+      await connection.rollback();
+      return res.status(400).json({
+        message: "Processo já inúmeracional. Aguarde o recebimento para reencaminhar.",
+      });
     }
     if (paraUsuario && parseInt(paraUsuario) === req.user.id) {
-      return res
-        .status(400)
-        .json({
-          message: "Você não pode encaminhar um processo para si mesmo.",
-        });
+      await connection.rollback();
+      return res.status(400).json({
+        message: "Você não pode encaminhante um processo para si mesmo.",
+      });
     }
-    await pool.query(
+    await connection.query(
       "INSERT INTO movimentacoes (processoId, de, para, usuarioDestino, usuario, parecer) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        req.params.id,
-        processo.setorAtual,
-        para,
-        paraUsuario || null,
-        req.user.id,
-        parecer || null,
-      ],
+      [req.params.id, processo.setorAtual, para, paraUsuario || null, req.user.id, parecer || null],
     );
-    await pool.query(
+    await connection.query(
       "UPDATE processos SET setorAtual = ?, usuarioResponsavel = ?, situacao = ? WHERE id = ?",
       [para, paraUsuario || null, "encaminhado", req.params.id],
     );
 
     if (paraUsuario) {
-      await criarNotificacao(
-        paraUsuario,
-        req.params.id,
-        "Processo encaminhado para você",
-        `O processo ${processo.numero} foi encaminhado para o setor ${para} com você como responsável.`,
-        "info",
-        processo.prioridade || "normal",
+      await connection.query(
+        "INSERT INTO notificacoes (usuarioId, processoId, titulo, mensagem, tipo, prioridade) VALUES (?, ?, ?, ?, ?, ?)",
+        [paraUsuario, req.params.id, "Processo encaminhante para você",
+         `O processo ${processo.numero} foi encaminhante para o setor ${para} com você como responsável.`,
+         "info", processo.prioridade || "normal"]
       );
     }
 
-    await registrarHistorico(
-      req.params.id,
-      "encaminhamento",
-      `Processo encaminhado de ${processo.setorAtual} para ${para}.`,
-      req.user.id,
-      { de: processo.setorAtual, para, parecer, paraUsuario },
+    await connection.query(
+      `INSERT INTO historico (processoId, tipo, descricao, usuario, metadata) VALUES (?, ?, ?, ?, ?)`,
+      [req.params.id, "encaminhamento", `Processo encaminhante de ${processo.setorAtual} para ${para}.`,
+       req.user.id, JSON.stringify({ de: processo.setorAtual, para, parecer, paraUsuario })]
     );
 
-    const [atualizado] = await pool.query(
-      "SELECT * FROM processos WHERE id = ?",
-      [req.params.id],
-    );
-    
-    logger.info(`Processo encaminhado: ${processo.numero}`, {
+    await connection.commit();
+
+    const [atualizado] = await pool.query("SELECT * FROM processos WHERE id = ?", [req.params.id]);
+
+    logger.info(`Processo encaminhante: ${processo.numero}`, {
       processoId: req.params.id,
       numero: processo.numero,
       deSetor: processo.setorAtual,
@@ -601,16 +589,19 @@ export const encaminharProcesso = async (req, res) => {
       usuarioId: req.user.id,
       parecer: parecer ? parecer.substring(0, 100) : null,
     });
-    
+
     res.json(atualizado[0]);
   } catch (error) {
-    logger.error(`Erro ao encaminhar processo ${req.params.id}: ${error.message}`, {
+    await connection.rollback();
+    logger.error(`Erro ao encaminhante processo ${req.params.id}: ${error.message}`, {
       error: error.stack,
       usuarioId: req.user?.id,
       processoId: req.params.id,
       body: req.body,
     });
     res.status(500).json({ message: error.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -964,11 +955,15 @@ export const favoritarProcesso = async (req, res) => {
 };
 
 export const excluirProcesso = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-    const [rows] = await pool.query("SELECT situacao FROM processos WHERE id = ?", [
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query("SELECT id, numero, situacao FROM processos WHERE id = ?", [
       req.params.id,
     ]);
     if (rows.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ message: "Processo não encontrado." });
     }
     const processo = rows[0];
@@ -977,23 +972,43 @@ export const excluirProcesso = async (req, res) => {
       processo.situacao !== "recebido" &&
       processo.situacao !== "retornado"
     ) {
-      return res
-        .status(400)
-        .json({ message: "Este processo não pode ser excluído." });
+      await connection.rollback();
+      return res.status(400).json({ message: "Este processo não pode ser excluído." });
     }
-    await pool.query("UPDATE processos SET situacao = ? WHERE id = ?", [
-      "excluido",
-      req.params.id,
-    ]);
-    await registrarHistorico(
-      req.params.id,
-      "exclusao",
-      "Processo excluído da Caixa de Entrada.",
-      req.user.id,
+
+    await connection.query(
+      "UPDATE processos SET situacao = ?, deletedAt = NOW(), deletedBy = ? WHERE id = ?",
+      ["excluido", req.user.id, req.params.id]
     );
+
+    await connection.query(
+      `INSERT INTO historico (processoId, tipo, descricao, usuario, metadata) VALUES (?, ?, ?, ?, ?)`,
+      [req.params.id, "exclusao", "Processo excluído da Caixa de Entrada.", req.user.id,
+       JSON.stringify({ numero: processo.numero })]
+    );
+
+    // Registrar no audit_log
+    await connection.query(
+      `INSERT INTO audit_log (userId, usuarioTipo, acao, recurso, recursoId, detalhes, ip) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.id, req.user.tipo || 'staff', 'EXCLUIR_PROCESSO', 'processo', req.params.id,
+       JSON.stringify({ numero: processo.numero }), req.ip]
+    );
+
+    await connection.commit();
+
+    logger.info(`Processo ${processo.numero} excluído por usuário ${req.user.id}`, {
+      processoId: req.params.id,
+      numero: processo.numero,
+      usuarioId: req.user.id,
+      ip: req.ip
+    });
+
     res.json({ id: req.params.id, situacao: "excluido" });
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ message: error.message });
+  } finally {
+    connection.release();
   }
 };
 
@@ -1227,7 +1242,7 @@ export const criarProcessoFilho = async (req, res) => {
       }
     }
 
-    const numero = gerarNumeroProcesso();
+    const numero = await gerarNumeroProcesso();
 
     const [result] = await pool.query(
       `INSERT INTO processos (numero, tipo, assunto, requerente, cpfCnpj, endereco, telefone, email, descricao, setorAtual, usuarioResponsavel, prioridade, prazo, especie_id, situacao, criadoPor, processoPaiId)
