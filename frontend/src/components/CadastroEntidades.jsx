@@ -78,8 +78,28 @@ function CadastroEntidades() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" className="btn btn-primary">{editando ? 'Atualizar' : 'Salvar'}</button>
-            {editando && <button type="button" className="btn btn-secondary" onClick={() => { setEditando(false); setForm({ id: null, nome: '', slug: '', database_name: '', username: '', host: '', port: '' }); }}>Cancelar</button>}
+            <button type="submit" className="btn btn-primary">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {editando ? 'Atualizar' : 'Salvar'}
+            </button>
+
+            {editando && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setEditando(false);
+                  setForm({ id: null, nome: '', slug: '', database_name: '', username: '', host: '', port: '' });
+                }}
+              >
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancelar
+              </button>
+            )}
           </div>
         </form>
       </div>
@@ -98,8 +118,20 @@ function CadastroEntidades() {
                     <td>{s.host || '—'}</td>
                     <td>{s.port || '—'}</td>
                     <td>
-                      <button className="btn btn-sm btn-secondary" onClick={() => editar(s)} style={{ marginRight: 6 }}>Editar</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => excluir(s.id)}>Desativar</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => editar(s)} style={{ marginRight: 6 }}>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                        </svg>
+                        Editar
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => excluir(s.id)}>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8" />
+                        </svg>
+                        Desativar
+                      </button>
                     </td>
                   </tr>
                 ))}

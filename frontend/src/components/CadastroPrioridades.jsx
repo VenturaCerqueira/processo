@@ -264,9 +264,17 @@ function CadastroPrioridades() {
                     <td>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <button className="btn btn-sm btn-secondary" onClick={() => abrirModalEditar(p)}>
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
                           Editar
                         </button>
                         <button className="btn btn-sm btn-danger" onClick={() => excluir(p.id)}>
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8" />
+                          </svg>
                           Desativar
                         </button>
                       </div>
@@ -350,10 +358,16 @@ function CadastroPrioridades() {
 
                 <div className="modal-footer" style={{ marginTop: 14 }}>
                   <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     Cancelar
                   </button>
                   {!somenteLeitura && (
                     <button type="submit" className="btn btn-primary" disabled={salvando}>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                       {salvando ? 'Salvando...' : (editando ? 'Atualizar' : 'Salvar')}
                     </button>
                   )}

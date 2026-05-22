@@ -1152,3 +1152,44 @@
   }
 }
 
+/* -----------------------------------------
+   CALIBRACAO ESPECIFICA
+   Alvo sugerido: 1413.33px x 673.33px
+   (ajuste conservador para estabilizar layout)
+   ----------------------------------------- */
+@media (min-width: 1410px) and (max-width: 1420px) and (min-height: 650px) and (max-height: 700px) {
+  .page-content {
+    padding: 30px;
+    max-width: 1220px;
+    margin: 0 auto;
+  }
+
+  .stats-grid {
+    gap: 20px;
+  }
+
+  .dashboard-grid {
+    gap: 24px;
+  }
+
+  .quick-actions {
+    gap: 14px;
+  }
+
+  .form-row {
+    gap: 22px;
+  }
+
+  .detail-grid {
+    gap: 20px;
+  }
+
+  .inbox-status-grid {
+    gap: 12px;
+  }
+
+  .modal-content {
+    max-width: 580px;
+  }
+}
+

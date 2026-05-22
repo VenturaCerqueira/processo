@@ -39,3 +39,13 @@ export const limiterUpload = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+// Rate limiter para notificações - 200 requisições por minuto (suporta polling a cada 12s com múltiplas abas)
+export const limiterNotificacoes = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  message: 'Muitas requisições. Tente novamente em alguns segundos.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.user?.nivelAcesso === 'admin'
+});

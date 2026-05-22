@@ -147,6 +147,9 @@ function AppContent() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={() => setMostrarBemVindo(false)}>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m-7-7 7 7-7 7"/>
+                </svg>
                 Continuar
               </button>
             </div>

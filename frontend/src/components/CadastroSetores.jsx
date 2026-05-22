@@ -530,12 +530,23 @@ function CadastroSetores() {
                 )}
 
                 <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={fecharModal}
+                    disabled={salvando}
+                  >
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     {somenteLeitura ? 'Fechar' : 'Cancelar'}
                   </button>
 
                   {!somenteLeitura && (
                     <button type="submit" className="btn btn-primary" disabled={salvando}>
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                       {salvando ? 'Salvando...' : editando ? 'Atualizar' : 'Salvar'}
                     </button>
                   )}

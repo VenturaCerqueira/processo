@@ -6,11 +6,12 @@ import {
   marcarTodasComoLidas
 } from '../controllers/notificacaoController.js';
 import { auth } from '../middleware/auth.js';
+import { limiterNotificacoes } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
 router.get('/', auth, listarNotificacoes);
-router.get('/nao-lidas', auth, listarNaoLidas);
+router.get('/nao-lidas', auth, limiterNotificacoes, listarNaoLidas);
 router.put('/:id/lida', auth, marcarComoLida);
 router.put('/marcar-todas-lidas', auth, marcarTodasComoLidas);
 

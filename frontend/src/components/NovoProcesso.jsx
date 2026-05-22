@@ -580,7 +580,10 @@ function NovoProcesso() {
                       {loadingEspecies
                         ? 'Carregando espécies...'
                         : especies.length === 0
-                          ? 'Selecione um tipo para ver espécies'
+                          ? (form.tipo_id
+                              ? 'Nenhuma espécie ativa para este tipo'
+                              : 'Selecione um tipo para ver espécies'
+                            )
                           : 'Selecione uma espécie'}
                     </option>
                     {especies.map(ep => (
@@ -611,6 +614,12 @@ function NovoProcesso() {
 
           {/* Especie Info */}
           {erroEspecies && <div className="alert alert-danger" style={{ marginBottom: 16 }}>{erroEspecies}</div>}
+          {!erroEspecies && !loadingEspecies && form.tipo_id && especies.length === 0 && (
+            <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+              Não há <b>espécies ativas</b> cadastradas para o tipo selecionado. Cadastre/ative em{' '}
+              <b>Cadastros → Espécies de Processo</b>.
+            </div>
+          )}
           {especieSelecionada?.mensagem_customizada && (
             <div className="alert alert-especie">
               <strong>Informações da Especie:</strong>

@@ -63,7 +63,7 @@ function ToastContainer() {
           });
         }
       } catch (error) {
-        // Silencioso em caso de erro de autenticação
+        // Silencioso em caso de erro (inclui 429 rate limit)
       }
     };
 
