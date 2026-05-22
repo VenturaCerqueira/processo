@@ -16,13 +16,14 @@ export const listarRequerentes = async (req, res) => {
       // Para CPF/CNPJ fazemos comparação normalizada por dígitos.
       if (tipo === 'Fisica' || tipo === 'Juridico') {
         const normalizado = normalizarCpfCnpj(digits);
-        sql += ' AND (nome LIKE ? OR cpfCnpj LIKE ? OR cpfCnpj = ?)';
-        const likeNomeOuCpf = `%${buscaStr}%`;
-        params.push(likeNomeOuCpf, `%${buscaStr}%`, normalizado);
+        // Escapa curingas LIKE para evitar SQL injection via payload LIKE
+        const escapeLike = (str) => str.replace(/[%_\\]/g, '\\$&');
+        sql += ' AND (nome LIKE ? ESCAPE "\\" OR cpfCnpj LIKE ? ESCAPE "\\" OR cpfCnpj = ?)';
+        params.push(`%${escapeLike(buscaStr)}%`, `%${escapeLike(buscaStr)}%`, normalizado);
       } else {
-        sql += ' AND (nome LIKE ? OR cpfCnpj LIKE ?)';
-        const like = `%${buscaStr}%`;
-        params.push(like, like);
+        const escapeLike = (str) => str.replace(/[%_\\]/g, '\\$&');
+        sql += ' AND (nome LIKE ? ESCAPE "\\" OR cpfCnpj LIKE ? ESCAPE "\\")';
+        params.push(`%${escapeLike(buscaStr)}%`, `%${escapeLike(buscaStr)}%`);
       }
     }
 

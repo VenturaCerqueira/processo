@@ -65,8 +65,16 @@ app.use(errorLogger);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
+  try {
+    await initDatabase();
+    await criarUsuarioAdmin();
+    console.log(`Servidor rodando na porta ${PORT}`);
+  } catch (error) {
+    console.error('Erro ao iniciar servidor:', error.message);
+  }
+
   // Rotina para avisar usuários quando o prazo do processo estiver próximo de acabar
-  // (2 dias por padrão, conforme solicitado)
+  // (2 dias por padrão, conforme solicitado) - inicia APÓS banco estar disponível
   try {
     await enviarAlertasPrazosAproximando({ diasAntecedencia: 2 });
     setInterval(() => {
@@ -76,14 +84,6 @@ app.listen(PORT, async () => {
     }, 60 * 60 * 1000); // 1 vez por hora
   } catch (e) {
     console.error('Erro ao iniciar job de alertas de prazo:', e.message);
-  }
-
-  try {
-    await initDatabase();
-    await criarUsuarioAdmin();
-    console.log(`Servidor rodando na porta ${PORT}`);
-  } catch (error) {
-    console.error('Erro ao iniciar servidor:', error.message);
   }
 });
 

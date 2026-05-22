@@ -6,8 +6,8 @@ import { enviarEmailRecuperacao } from '../utils/email.js'; // Reuse if possible
 import { detectarTipoPessoa, normalizarCpfCnpj, onlyDigits } from '../utils/cpfCnpj.js';
 
 
-const gerarToken = (id, tipo = 'requerente') => {
-  return jwt.sign({ id, tipo }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+const gerarToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 };
 
 export const login = async (req, res) => {
@@ -67,8 +67,11 @@ export const registrar = async (req, res) => {
       return res.status(400).json({ message: 'Email ou CPF/CNPJ já cadastrado.' });
     }
 
-    if (senha.length < 6) {
-      return res.status(400).json({ message: 'Senha deve ter pelo menos 6 caracteres.' });
+    if (senha.length < 8) {
+      return res.status(400).json({ message: 'Senha deve ter pelo menos 8 caracteres.' });
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(senha)) {
+      return res.status(400).json({ message: 'Senha deve conter: letra maiúscula, minúscula e número.' });
     }
 
     const senhaHash = await hashSenha(senha);
@@ -100,9 +103,9 @@ export const registrar = async (req, res) => {
       }
 
       await pool.query(
-        `INSERT INTO requerente_representantes (requerenteId, nome, cpfCnpj, telefone, email, ativo)
+        `INSERT INTO requerente_representantes (requerenteId, nome, cpfCnpj, telefone, email, funcao, ativo)
          VALUES ?`,
-        [inserts.map((i) => [i[0], i[1], i[2], i[3], i[4], 1])]
+        [inserts.map((i) => [i[0], i[1], i[2], i[3], i[4], i[5], 1])]
       );
     }
 

@@ -35,15 +35,28 @@ export const obterProcessoRequerente = async (req, res) => {
   try {
     const requerenteId = req.user.id;
     const processoId = req.params.id;
-    // First check if belongs to requerente
+
+    // Buscar dados do requerente para verificar acesso
+    const [reqRows] = await pool.query(
+      'SELECT nome, cpfCnpj, email FROM requerentes WHERE id = ?',
+      [requerenteId]
+    );
+    if (reqRows.length === 0) {
+      return res.status(404).json({ message: 'Requerente não encontrado.' });
+    }
+    const reqData = reqRows[0];
+
+    // Verifica acesso: processo pertence ao requerente via cpfCnpj OU via nome+email
     const [ownCheck] = await pool.query(
-      'SELECT id FROM processos WHERE id = ? AND (LOWER(requerente) LIKE LOWER((SELECT nome FROM requerentes WHERE id = ?)) OR email = (SELECT email FROM requerentes WHERE id = ?))',
-      [processoId, requerenteId, requerenteId]
+      `SELECT id FROM processos WHERE id = ?
+       AND (cpfCnpj = ? OR (LOWER(requerente) = LOWER(?) AND email = ?))`,
+      [processoId, reqData.cpfCnpj, reqData.nome, reqData.email]
     );
     if (ownCheck.length === 0) {
       return res.status(403).json({ message: 'Processo não encontrado ou acesso negado.' });
     }
-    // Reuse processoController obterProcesso logic (copy or import)
+
+    // Obter dados do processo
     const [rows] = await pool.query(`
       SELECT p.*, e.nome as especie_nome
       FROM processos p
@@ -51,7 +64,8 @@ export const obterProcessoRequerente = async (req, res) => {
       WHERE p.id = ?
     `, [processoId]);
     if (rows.length === 0) return res.status(404).json({ message: 'Processo não encontrado.' });
-    // Get movimentacoes, documentos etc. (same as processoController)
+
+    // Obter movimentacoes, documentos e observacoes
     const [movimentacoes] = await pool.query('SELECT * FROM movimentacoes WHERE processoId = ? ORDER BY data DESC', [processoId]);
     const [documentos] = await pool.query('SELECT id, processoId, nome, tipo, caminho, tamanho, versao, dataUpload FROM documentos WHERE processoId = ? ORDER BY dataUpload DESC', [processoId]);
     const [observacoes] = await pool.query('SELECT * FROM observacoes WHERE processoId = ? ORDER BY data DESC', [processoId]);

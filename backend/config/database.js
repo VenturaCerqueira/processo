@@ -129,19 +129,19 @@ export async function initDatabase() {
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS documentos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        processoId INTEGER NOT NULL,
-        nome TEXT NOT NULL,
-        tipo TEXT NOT NULL,
-        caminho TEXT,
-        tamanho INTEGER,
-        versao INTEGER DEFAULT 1,
-        usuario INTEGER NOT NULL,
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        processoId INT NOT NULL,
+        nome VARCHAR(255) NOT NULL,
+        tipo VARCHAR(100) NOT NULL,
+        caminho VARCHAR(500),
+        tamanho INT,
+        versao INT DEFAULT 1,
+        usuario INT NOT NULL,
         dataUpload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        conteudo BLOB,
+        conteudo LONGBLOB,
         FOREIGN KEY (processoId) REFERENCES processos(id) ON DELETE CASCADE,
         FOREIGN KEY (usuario) REFERENCES users(id)
-      );
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
     await connection.query(`
@@ -392,12 +392,18 @@ export async function initDatabase() {
         cpfCnpj VARCHAR(20),
         telefone VARCHAR(50),
         email VARCHAR(255),
+        funcao VARCHAR(255),
         ativo TINYINT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (requerenteId) REFERENCES requerentes(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Add funcao column to requerente_representantes if missing
+    try {
+      await connection.query(`ALTER TABLE requerente_representantes ADD COLUMN IF NOT EXISTS funcao VARCHAR(255)`);
+    } catch {}
 
     // Add senha and nivelAcesso if missing
     try {

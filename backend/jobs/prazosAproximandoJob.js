@@ -1,6 +1,9 @@
 import pool from '../config/database.js';
 import { criarNotificacao } from '../controllers/notificacaoController.js';
 
+// Título padronizado para notificações de prazo
+export const AVISO_TITULO_PRAZO = '[PRAZO] Próximo do vencimento';
+
 function toISODate(d) {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -38,8 +41,6 @@ export async function enviarAlertasPrazosAproximando({ diasAntecedencia = 2 } = 
     [hojeISO, limiteISO],
   );
 
-  const avisoTitulo = '[PRAZO] Próximo do vencimento';
-
   for (const p of rows) {
     if (isFinalSituacao(p.situacao)) continue;
     if (!p.usuarioResponsavel) continue; // regra: avisar apenas quem está no usuarioResponsavel
@@ -52,7 +53,7 @@ export async function enviarAlertasPrazosAproximando({ diasAntecedencia = 2 } = 
          AND processoId = ?
          AND titulo = ?
        LIMIT 1`,
-      [p.usuarioResponsavel, p.id, avisoTitulo],
+      [p.usuarioResponsavel, p.id, AVISO_TITULO_PRAZO],
     );
 
     if (existing.length > 0) continue;
@@ -64,7 +65,7 @@ export async function enviarAlertasPrazosAproximando({ diasAntecedencia = 2 } = 
     await criarNotificacao(
       p.usuarioResponsavel,
       p.id,
-      avisoTitulo,
+      AVISO_TITULO_PRAZO,
       `O prazo do processo ${p.numero} está próximo de vencer (vence em ${p.prazo}). Dias restantes: ${Math.max(
         diasRestantes,
         0

@@ -4,6 +4,7 @@ import pool from './database.js';
 // Buffer para logs antes da conexão estar pronta
 const logBuffer = [];
 let transportReady = false;
+let connectionCheckInterval = null;
 
 // Verificar se o banco está disponível
 async function checkConnection() {
@@ -17,18 +18,29 @@ async function checkConnection() {
 
 // Flush dos logs em buffer quando o banco ficar disponível
 async function flushBuffer() {
-  if (!transportReady) {
-    const isConnected = await checkConnection();
-    if (!isConnected) return;
+  const isConnected = await checkConnection();
+  if (!isConnected) {
+    // Não marca transportReady como true se não há conexão
+    return false;
+  }
 
+  if (!transportReady) {
     transportReady = true;
     console.log('Logger: Banco de dados disponível, fluchando logs em buffer');
+
+    // Limpa o interval de verificação contínua após recuperação
+    if (connectionCheckInterval) {
+      clearInterval(connectionCheckInterval);
+      connectionCheckInterval = null;
+    }
 
     for (const logInfo of logBuffer) {
       await writeToDatabase(logInfo);
     }
     logBuffer.length = 0;
+    return true;
   }
+  return true;
 }
 
 // Escrever log no banco
@@ -43,6 +55,20 @@ async function writeToDatabase(info) {
     );
   } catch (err) {
     console.error('Erro ao gravar log no banco:', err.message);
+    // Se falhar por perda de conexão, marca para rediscover
+    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ER_NO_SUCH_TABLE') {
+      transportReady = false;
+      scheduleConnectionCheck();
+    }
+  }
+}
+
+// Agenda verificação periódica de conexão quando banco cai
+function scheduleConnectionCheck() {
+  if (!connectionCheckInterval) {
+    connectionCheckInterval = setInterval(async () => {
+      await flushBuffer();
+    }, 5000); // Tentar reconectar a cada 5 segundos
   }
 }
 
@@ -55,14 +81,19 @@ const databaseTransport = {
     setImmediate(async () => {
       try {
         if (!transportReady) {
-          await flushBuffer();
+          const flushed = await flushBuffer();
+          if (!flushed) {
+            // Banco indisponível, bufferiza
+            logBuffer.push(info);
+            callback(null, true);
+            return;
+          }
         }
 
         if (transportReady) {
           await writeToDatabase(info);
           callback(null, true);
         } else {
-          // Bufferizar se o banco ainda não está disponível
           logBuffer.push(info);
           callback(null, true);
         }
@@ -75,7 +106,6 @@ const databaseTransport = {
 
 // Inicializar verificação de conexão
 flushBuffer().catch(() => {});
-setInterval(flushBuffer, 5000); // Tentar a cada 5 segundos
 
 // Levels de log
 const logLevels = {
