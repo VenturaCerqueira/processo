@@ -1,4 +1,5 @@
 import winston from 'winston';
+import stream from 'stream';
 import pool from './database.js';
 
 // Buffer para logs antes da conexão estar pronta
@@ -20,7 +21,6 @@ async function checkConnection() {
 async function flushBuffer() {
   const isConnected = await checkConnection();
   if (!isConnected) {
-    // Não marca transportReady como true se não há conexão
     return false;
   }
 
@@ -28,7 +28,6 @@ async function flushBuffer() {
     transportReady = true;
     console.log('Logger: Banco de dados disponível, fluchando logs em buffer');
 
-    // Limpa o interval de verificação contínua após recuperação
     if (connectionCheckInterval) {
       clearInterval(connectionCheckInterval);
       connectionCheckInterval = null;
@@ -55,7 +54,6 @@ async function writeToDatabase(info) {
     );
   } catch (err) {
     console.error('Erro ao gravar log no banco:', err.message);
-    // Se falhar por perda de conexão, marca para rediscover
     if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ER_NO_SUCH_TABLE') {
       transportReady = false;
       scheduleConnectionCheck();
@@ -68,41 +66,38 @@ function scheduleConnectionCheck() {
   if (!connectionCheckInterval) {
     connectionCheckInterval = setInterval(async () => {
       await flushBuffer();
-    }, 5000); // Tentar reconectar a cada 5 segundos
+    }, 5000);
   }
 }
 
-// Transport para gravar logs no banco de dados
-const databaseTransport = {
-  name: 'database',
-  level: 'info',
-
-  log(info, callback) {
+// Transform stream para usar como transport do Winston
+const databaseStream = new stream.Writable({
+  objectMode: true,
+  write(info, encoding, callback) {
     setImmediate(async () => {
       try {
         if (!transportReady) {
           const flushed = await flushBuffer();
           if (!flushed) {
-            // Banco indisponível, bufferiza
             logBuffer.push(info);
-            callback(null, true);
+            callback();
             return;
           }
         }
 
         if (transportReady) {
           await writeToDatabase(info);
-          callback(null, true);
+          callback();
         } else {
           logBuffer.push(info);
-          callback(null, true);
+          callback();
         }
       } catch (err) {
-        callback(err, false);
+        callback(err);
       }
     });
-  },
-};
+  }
+});
 
 // Inicializar verificação de conexão
 flushBuffer().catch(() => {});
@@ -138,7 +133,11 @@ const logger = winston.createLogger({
   ],
 });
 
-logger.add(databaseTransport);
+// Adicionar database transport via add()
+logger.add(new winston.transports.Stream({
+  stream: databaseStream,
+  level: 'info',
+}));
 
 // Logger específico para requisições HTTP
 export const httpLogger = winston.createLogger({
@@ -155,7 +154,10 @@ export const httpLogger = winston.createLogger({
   ],
 });
 
-httpLogger.add(databaseTransport);
+httpLogger.add(new winston.transports.Stream({
+  stream: databaseStream,
+  level: 'http',
+}));
 
 // Logger específico para banco de dados
 export const dbLogger = winston.createLogger({
@@ -172,6 +174,9 @@ export const dbLogger = winston.createLogger({
   ],
 });
 
-dbLogger.add(databaseTransport);
+dbLogger.add(new winston.transports.Stream({
+  stream: databaseStream,
+  level: 'debug',
+}));
 
 export default logger;

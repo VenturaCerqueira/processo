@@ -1,5 +1,12 @@
 import rateLimit from 'express-rate-limit';
 
+// Helper para normalizar IP (trata IPv4 e IPv6)
+const normalizeIP = (req) => {
+  const ip = req.ip || req.socket?.remoteAddress || '';
+  // Normaliza IPv6 localhost para IPv4
+  return ip.replace(/^::ffff:/, '');
+};
+
 // Rate limiter geral - 100 requisições por 15 minutos
 export const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -18,7 +25,7 @@ export const limiterLogin = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  keyGenerator: (req) => req.body?.email || req.ip
+  keyGenerator: (req) => req.body?.email || normalizeIP(req)
 });
 
 // Rate limiter para recuperação de senha - 3 tentativas por hora
@@ -28,7 +35,7 @@ export const limiterSenha = rateLimit({
   message: 'Muitas tentativas de recuperação de senha. Tente novamente em 1 hora.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.body?.email || req.ip
+  keyGenerator: (req) => req.body?.email || normalizeIP(req)
 });
 
 // Rate limiter para upload - 10 uploads por hora
