@@ -41,7 +41,6 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(limiterGeral); // Rate limiter geral para todas as rotas
 app.use(requestLogger); // Logger de requisições HTTP
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/processos', processoRoutes);

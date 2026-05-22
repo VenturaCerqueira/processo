@@ -38,13 +38,13 @@ export const uploadDocumento = async (req, res) => {
     const versao = docExistente.length > 0 ? docExistente[0].versao + 1 : 1;
 
     const [result] = await pool.query(
-      'INSERT INTO documentos (processoId, nome, tipo, caminho, tamanho, versao, usuario) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [req.params.id, req.file.originalname, req.file.mimetype, `/uploads/${req.file.filename}`, req.file.size, versao, req.user.id]
+      'INSERT INTO documentos (processoId, nome, tipo, caminho, tamanho, versao, usuario, conteudo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.params.id, req.file.originalname, req.file.mimetype, null, req.file.size, versao, req.user.id, req.file.buffer]
     );
 
     await registrarHistorico(req.params.id, 'documento', `Documento "${req.file.originalname}" anexado (v${versao}).`, req.user.id, { nome: req.file.originalname, versao, tamanho: req.file.size });
 
-    const [doc] = await pool.query('SELECT * FROM documentos WHERE id = ?', [result.insertId]);
+    const [doc] = await pool.query('SELECT id, processoId, nome, tipo, caminho, tamanho, versao, dataUpload, usuario FROM documentos WHERE id = ?', [result.insertId]);
 
     logger.info(`Documento enviado com sucesso`, {
       processoId: req.params.id,
@@ -75,11 +75,28 @@ export const uploadDocumento = async (req, res) => {
 export const listarDocumentos = async (req, res) => {
   try {
     const [documentos] = await pool.query(
-      `SELECT d.*, u.nome as usuarioNome FROM documentos d 
+      `SELECT d.id, d.processoId, d.nome, d.tipo, d.tamanho, d.versao, d.dataUpload, u.nome as usuarioNome FROM documentos d
        LEFT JOIN users u ON d.usuario = u.id WHERE d.processoId = ? ORDER BY d.dataUpload DESC`,
       [req.params.id]
     );
     res.json(documentos);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const downloadDocumento = async (req, res) => {
+  try {
+    const [documentos] = await pool.query(
+      'SELECT conteudo, nome, tipo FROM documentos WHERE id = ?',
+      [req.params.id]
+    );
+    if (documentos.length === 0 || !documentos[0].conteudo) {
+      return res.status(404).json({ message: 'Documento não encontrado.' });
+    }
+    res.setHeader('Content-Type', documentos[0].tipo);
+    res.setHeader('Content-Disposition', `attachment; filename="${documentos[0].nome}"`);
+    res.send(documentos[0].conteudo);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

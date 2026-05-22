@@ -479,7 +479,7 @@ function DetalheProcesso() {
                           </span>
                         );
                       })()}
-                      <span className="document-name">{doc.nome}</span>
+                      <span className="document-name" onClick={() => { api.get(`/uploads/download/${doc.id}`, { responseType: 'blob' }).then(res => { const url = window.URL.createObjectURL(res.data); const a = document.createElement('a'); a.href = url; a.download = doc.nome; a.click(); window.URL.revokeObjectURL(url); }).catch(() => alert('Erro ao baixar documento')); }} style={{ cursor: 'pointer' }}>{doc.nome}</span>
                     </div>
                   </td>
                   <td>{doc.tipo}</td>

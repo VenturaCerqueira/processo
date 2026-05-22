@@ -129,18 +129,19 @@ export async function initDatabase() {
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS documentos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        processoId INT NOT NULL,
-        nome VARCHAR(255) NOT NULL,
-        tipo VARCHAR(100) NOT NULL,
-        caminho VARCHAR(500) NOT NULL,
-        tamanho INT,
-        versao INT DEFAULT 1,
-        usuario INT NOT NULL,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        processoId INTEGER NOT NULL,
+        nome TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        caminho TEXT,
+        tamanho INTEGER,
+        versao INTEGER DEFAULT 1,
+        usuario INTEGER NOT NULL,
         dataUpload TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        conteudo BLOB,
         FOREIGN KEY (processoId) REFERENCES processos(id) ON DELETE CASCADE,
         FOREIGN KEY (usuario) REFERENCES users(id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      );
     `);
 
     await connection.query(`

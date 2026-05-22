@@ -53,7 +53,7 @@ export const obterProcessoRequerente = async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ message: 'Processo não encontrado.' });
     // Get movimentacoes, documentos etc. (same as processoController)
     const [movimentacoes] = await pool.query('SELECT * FROM movimentacoes WHERE processoId = ? ORDER BY data DESC', [processoId]);
-    const [documentos] = await pool.query('SELECT * FROM documentos WHERE processoId = ? ORDER BY dataUpload DESC', [processoId]);
+    const [documentos] = await pool.query('SELECT id, processoId, nome, tipo, caminho, tamanho, versao, dataUpload FROM documentos WHERE processoId = ? ORDER BY dataUpload DESC', [processoId]);
     const [observacoes] = await pool.query('SELECT * FROM observacoes WHERE processoId = ? ORDER BY data DESC', [processoId]);
     res.json({ ...rows[0], movimentacoes, documentos, observacoes });
   } catch (error) {

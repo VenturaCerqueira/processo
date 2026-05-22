@@ -84,7 +84,7 @@ export const obterProcesso = async (req, res) => {
         [req.params.id],
       ).then(r => r[0]),
       pool.query(
-        `SELECT d.*, u.nome as usuarioNome FROM documentos d 
+        `SELECT d.id, d.processoId, d.nome, d.tipo, d.caminho, d.tamanho, d.versao, d.dataUpload, u.nome as usuarioNome FROM documentos d 
          LEFT JOIN users u ON d.usuario = u.id WHERE d.processoId = ? ORDER BY d.dataUpload DESC`,
         [req.params.id],
       ).then(r => r[0]),
@@ -119,7 +119,7 @@ export const obterProcesso = async (req, res) => {
     if (filhos.length > 0) {
       const placeholders = filhos.map(() => '?').join(',');
       const [filhosDocumentos] = await pool.query(
-        `SELECT d.*, u.nome as usuarioNome
+        `SELECT d.id, d.processoId, d.nome, d.tipo, d.caminho, d.tamanho, d.versao, d.dataUpload, u.nome as usuarioNome
          FROM documentos d
          LEFT JOIN users u ON d.usuario = u.id
          WHERE d.processoId IN (${placeholders})
