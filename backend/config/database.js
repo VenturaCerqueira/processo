@@ -448,6 +448,19 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    // Tabela de logs do sistema
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        level VARCHAR(20) NOT NULL,
+        message TEXT NOT NULL,
+        meta JSON,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_level (level),
+        INDEX idx_timestamp (timestamp)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     try {
       await connection.query(`ALTER TABLE notificacoes ADD COLUMN prioridade VARCHAR(50) DEFAULT 'normal'`);
     } catch {

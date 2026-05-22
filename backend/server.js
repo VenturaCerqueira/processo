@@ -18,6 +18,7 @@ import requerentesRoutes from './routes/requerentes.js';
 import entidadesRoutes from './routes/entidades.js';
 import niveisAcessoRoutes from './routes/niveisAcesso.js';
 import especiesProcessoRoutes from './routes/especiesProcesso.js';
+import logsRoutes from './routes/logs.js';
 import notificacaoRoutes from './routes/notificacoes.js';
 import requerenteRoutes from './routes/requerente.js';
 import { enviarAlertasPrazosAproximando } from './jobs/prazosAproximandoJob.js';
@@ -52,6 +53,7 @@ app.use('/api/requerentes', requerentesRoutes);
 app.use('/api/entidades', entidadesRoutes);
 app.use('/api/niveis-acesso', niveisAcessoRoutes);
 app.use('/api/especies-processo', especiesProcessoRoutes);
+app.use('/api/logs', logsRoutes);
 app.use('/api/notificacoes', notificacaoRoutes);
 app.use('/api/requerente', requerenteRoutes);
 

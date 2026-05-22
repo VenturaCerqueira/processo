@@ -7,7 +7,6 @@ import EsqueciSenha from './components/EsqueciSenha';
 import RedefinirSenha from './components/RedefinirSenha';
 import Dashboard from './components/Dashboard';
 import CaixaEntrada from './components/CaixaEntrada';
-import Processos from './components/Processos';
 import NovoProcesso from './components/NovoProcesso';
 import DetalheProcesso from './components/DetalheProcesso';
 import Relatorios from './components/Relatorios';

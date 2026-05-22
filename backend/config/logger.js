@@ -1,11 +1,83 @@
 import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import pool from './database.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Buffer para logs antes da conexão estar pronta
+const logBuffer = [];
+let transportReady = false;
 
-// Níveis de log customizados
+// Verificar se o banco está disponível
+async function checkConnection() {
+  try {
+    await pool.query('SELECT 1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Flush dos logs em buffer quando o banco ficar disponível
+async function flushBuffer() {
+  if (!transportReady) {
+    const isConnected = await checkConnection();
+    if (!isConnected) return;
+
+    transportReady = true;
+    console.log('Logger: Banco de dados disponível, fluchando logs em buffer');
+
+    for (const logInfo of logBuffer) {
+      await writeToDatabase(logInfo);
+    }
+    logBuffer.length = 0;
+  }
+}
+
+// Escrever log no banco
+async function writeToDatabase(info) {
+  const { level, message, ...meta } = info;
+  const metaJson = Object.keys(meta).length > 0 ? JSON.stringify(meta) : null;
+
+  try {
+    await pool.query(
+      'INSERT INTO logs (level, message, meta, timestamp) VALUES (?, ?, ?, NOW())',
+      [level, String(message), metaJson]
+    );
+  } catch (err) {
+    console.error('Erro ao gravar log no banco:', err.message);
+  }
+}
+
+// Transport para gravar logs no banco de dados
+const databaseTransport = {
+  name: 'database',
+  level: 'info',
+
+  log(info, callback) {
+    setImmediate(async () => {
+      try {
+        if (!transportReady) {
+          await flushBuffer();
+        }
+
+        if (transportReady) {
+          await writeToDatabase(info);
+          callback(null, true);
+        } else {
+          // Bufferizar se o banco ainda não está disponível
+          logBuffer.push(info);
+          callback(null, true);
+        }
+      } catch (err) {
+        callback(err, false);
+      }
+    });
+  },
+};
+
+// Inicializar verificação de conexão
+flushBuffer().catch(() => {});
+setInterval(flushBuffer, 5000); // Tentar a cada 5 segundos
+
+// Levels de log
 const logLevels = {
   error: 0,
   warn: 1,
@@ -14,109 +86,62 @@ const logLevels = {
   debug: 4,
 };
 
-// Cores para console (apenas em desenvolvimento)
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'white',
-};
-
-winston.addColors(colors);
-
-// Formato de log customizado
-const format = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+// Formato de log
+const logFormat = winston.format.combine(
+  winston.format.timestamp(),
   winston.format.errors({ stack: true }),
-  winston.format.printf(
-    (info) => {
-      const { timestamp, level, message, stack, ...args } = info;
-      
-      // Se houver stack trace (erro), incluir
-      const stackTrace = stack ? `\n${stack}` : '';
-      
-      // Se houver args adicionais, converter para JSON
-      const extraData = Object.keys(args).length > 0 ? `\n${JSON.stringify(args, null, 2)}` : '';
-      
-      return `${timestamp} | [${level.toUpperCase()}] | ${message}${stackTrace}${extraData}`;
-    }
-  )
+  winston.format.json()
 );
 
-// Transporte para console (development)
-const consoleTransport = new winston.transports.Console({
-  format: winston.format.combine(
-    winston.format.colorize({ all: true }),
-    format
-  ),
-});
-
-// Transporte para arquivo de erros (rotation diária)
-const errorFileTransport = new DailyRotateFile({
-  filename: path.join(__dirname, '../logs/error-%DATE%.log'),
-  datePattern: 'YYYY-MM-DD',
-  maxSize: '20m',
-  maxFiles: '14d',
-  level: 'error',
-  format: format,
-});
-
-// Transporte para arquivo de logs combinados (rotation diária)
-const combinedFileTransport = new DailyRotateFile({
-  filename: path.join(__dirname, '../logs/combined-%DATE%.log'),
-  datePattern: 'YYYY-MM-DD',
-  maxSize: '20m',
-  maxFiles: '14d',
-  format: format,
-});
-
-// Transporte para arquivo HTTP/requisições (rotation diária)
-const httpFileTransport = new DailyRotateFile({
-  filename: path.join(__dirname, '../logs/http-%DATE%.log'),
-  datePattern: 'YYYY-MM-DD',
-  maxSize: '20m',
-  maxFiles: '7d',
-  level: 'http',
-  format: format,
-});
-
-// Configurar transports baseado no ambiente
-const transports = [errorFileTransport, combinedFileTransport];
-
-if (process.env.NODE_ENV === 'development') {
-  transports.push(consoleTransport);
-  transports.push(httpFileTransport);
-}
-
-// Criar logger
+// Criar logger principal
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   levels: logLevels,
-  transports,
+  format: logFormat,
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+  ],
 });
+
+logger.add(databaseTransport);
 
 // Logger específico para requisições HTTP
 export const httpLogger = winston.createLogger({
   level: 'http',
   levels: logLevels,
-  format: format,
-  transports: [httpFileTransport, ...(process.env.NODE_ENV === 'development' ? [consoleTransport] : [])],
+  format: logFormat,
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+  ],
 });
+
+httpLogger.add(databaseTransport);
 
 // Logger específico para banco de dados
 export const dbLogger = winston.createLogger({
-  level: 'debug',
+  level: process.env.LOG_LEVEL === 'debug' ? 'debug' : 'info',
   levels: logLevels,
-  format: format,
-  transports: process.env.LOG_LEVEL === 'debug' 
-    ? [...transports, new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize({ all: true }),
-          format
-        ),
-      })]
-    : transports,
+  format: logFormat,
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+  ],
 });
+
+dbLogger.add(databaseTransport);
 
 export default logger;
