@@ -14,8 +14,8 @@ function Login({ onLogin }) {
     setErro('');
     try {
       const response = await api.post('/auth/login', { email, senha });
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
+      const { accessToken, user } = response.data;
+      localStorage.setItem('token', accessToken);
       onLogin(user);
     } catch (error) {
       setErro(error.response?.data?.message || 'Erro ao fazer login');
