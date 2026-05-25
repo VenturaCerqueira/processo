@@ -1,259 +1,388 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+const features = [
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    title: 'Gestão Completa',
+    description: 'Cadastro, tramitação e acompanhamento de processos em um único lugar.',
+    color: '#3b82f6',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    ),
+    title: 'Trâmites',
+    description: 'Encaminhe processos entre setores com controle de fluxo completo.',
+    color: '#8b5cf6',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    ),
+    title: 'Prazos',
+    description: 'Controle de prazos com alertas automáticos para não perder nenhuma data.',
+    color: '#10b981',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+      </svg>
+    ),
+    title: 'Notificações',
+    description: 'Receba alertas sobre andamentos, prazos e movimentações.',
+    color: '#f59e0b',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+      </svg>
+    ),
+    title: 'Anexos',
+    description: 'Upload e gerenciamento de documentos com suporte a múltiplos formatos.',
+    color: '#ec4899',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+    title: 'Relatórios',
+    description: 'Gere relatórios detalhados com gráficos e estatísticas em tempo real.',
+    color: '#14b8a6',
+  },
+];
+
+const categories = [
+  { name: 'Cadastro Fiscal Municipal', color: '#6366f1' },
+  { name: 'Parcelamento do Solo', color: '#10b981' },
+  { name: 'Edificação e Postura', color: '#f59e0b' },
+  { name: 'Cadastro Fiscal Imobiliário', color: '#ec4899' },
+  { name: 'Transmissão Imobiliária', color: '#8b5cf6' },
+  { name: 'Transporte de Passageiros', color: '#14b8a6' },
+  { name: 'Atividade em Logradouro', color: '#3b82f6' },
+  { name: 'Publicidade', color: '#10b981' },
+  { name: 'Administrativo Tributário', color: '#f59e0b' },
+  { name: 'Administrativo Fiscal', color: '#ec4899' },
+  { name: 'Diversos', color: '#8b5cf6' },
+];
+
+function AnimatedCounter({ end, duration = 2000, suffix = '' }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime;
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      setCount(Math.floor(progress * end));
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }, [end, duration]);
+
+  return <>{count.toLocaleString()}{suffix}</>;
+}
 
 function LandingPage() {
   return (
-    <div className="landing-page">
+    <div className="landing">
+      {/* Navigation */}
+      <nav className="landing-nav">
+        <div className="nav-container">
+          <div className="nav-brand">
+            <div className="nav-brand-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <span className="nav-brand-text">Processo<span className="brand-plus">+</span></span>
+          </div>
+
+          <div className="nav-links">
+            <a href="#features" className="nav-link">Recursos</a>
+            <a href="#categories" className="nav-link">Categorias</a>
+            <a href="#contact" className="nav-link">Contato</a>
+          </div>
+
+          <div className="nav-actions">
+            <Link to="/login" className="btn btn-ghost-nav">Entrar</Link>
+            <Link to="/requerente/login" className="btn btn-primary-nav">Requerente</Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <header className="landing-hero">
-        <div className="landing-hero-inner">
-          <nav className="landing-nav">
-            <div className="landing-brand">
-              <div className="landing-brand-mark">
-                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <span className="landing-brand-text">Processo Eletrônico</span>
+      <section className="hero">
+        <div className="hero-bg">
+          <div className="hero-gradient-1" />
+          <div className="hero-gradient-2" />
+          <div className="hero-grid" />
+        </div>
+
+        <div className="hero-container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span className="hero-badge-dot" />
+              Sistema de Gestão Processual
             </div>
 
-            <Link to="/login" className="btn landing-primary-ghost">
-              Acessar Sistema
-            </Link>
-          </nav>
-
-          <div style={{ maxWidth: 700 }}>
-            <h1 className="landing-hero-title">
-              Gestão Moderna de<br />Processos Administrativos
+            <h1 className="hero-title">
+              Gestão de processos{' '}
+              <span className="gradient-text">inteligente</span>
             </h1>
-            <p className="landing-hero-subtitle">
-              Sistema integrado de controle e tramitação de processos eletrônicos para órgãos públicos municipais.
-              Rastreabilidade total, gestão documental e integração entre setores.
+
+            <p className="hero-subtitle">
+              Digitalize, controle e rastreie processos administrativos com segurança.
+              A solução completa para transparência e eficiência na gestão pública.
             </p>
-            <div className="landing-actions">
-              <Link to="/login" className="btn btn-primary">
-                <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+
+            <div className="hero-actions">
+              <Link to="/login" className="btn btn-primary-hero">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                Entrar no Sistema
+                Acessar Sistema
               </Link>
-              <Link to="/requerente/login" className="btn landing-primary-ghost">
-                <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              <a href="#features" className="btn btn-ghost-hero">
+                Conhecer recursos
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 9l-7 7-7-7" />
                 </svg>
-                Acesso do Requerente
-              </Link>
-              <a href="#funcionalidades" className="btn landing-primary-ghost">
-                Conhecer Funcionalidades
               </a>
             </div>
 
+            <div className="hero-stats">
+              <div className="stat-item">
+                <span className="stat-value">
+                  <AnimatedCounter end={2847} duration={2000} suffix="+" />
+                </span>
+                <span className="stat-label">Processos Finalizados</span>
+              </div>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <span className="stat-value">
+                  <AnimatedCounter end={156} duration={1500} />
+                </span>
+                <span className="stat-label">Em Andamento</span>
+              </div>
+              <div className="stat-divider" />
+              <div className="stat-item">
+                <span className="stat-value">
+                  <AnimatedCounter end={89} duration={1500} />
+                </span>
+                <span className="stat-label">Usuários Ativos</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Decorative shapes */}
-        <div className="landing-shape shape-1" />
-        <div className="landing-shape shape-2" />
-      </header>
+          <div className="hero-visual">
+            <div className="dashboard-mockup">
+              <div className="mockup-header">
+                <div className="mockup-dots">
+                  <span /><span /><span />
+                </div>
+                <span className="mockup-title">Painel de Controle</span>
+              </div>
+              <div className="mockup-body">
+                <div className="mockup-stats">
+                  <div className="mockup-stat">
+                    <div className="mockup-stat-icon blue">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="mockup-stat-value">2.847</span>
+                      <span className="mockup-stat-label">Finalizados</span>
+                    </div>
+                  </div>
+                  <div className="mockup-stat">
+                    <div className="mockup-stat-icon green">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="mockup-stat-value">156</span>
+                      <span className="mockup-stat-label">Em Andamento</span>
+                    </div>
+                  </div>
+                  <div className="mockup-stat">
+                    <div className="mockup-stat-icon purple">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="mockup-stat-value">89</span>
+                      <span className="mockup-stat-label">Usuários</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mockup-chart">
+                  <div className="chart-bar" style={{ height: '60%' }} />
+                  <div className="chart-bar" style={{ height: '80%' }} />
+                  <div className="chart-bar" style={{ height: '45%' }} />
+                  <div className="chart-bar" style={{ height: '90%' }} />
+                  <div className="chart-bar" style={{ height: '70%' }} />
+                  <div className="chart-bar" style={{ height: '55%' }} />
+                  <div className="chart-bar" style={{ height: '75%' }} />
+                </div>
+                <div className="mockup-list">
+                  <div className="mockup-item">
+                    <div className="mockup-item-dot green" />
+                    <div className="mockup-item-content">
+                      <span className="mockup-item-title">Processo #2847</span>
+                      <span className="mockup-item-sub">Cadastro Fiscal • Finalizado</span>
+                    </div>
+                    <span className="mockup-item-time">Agora</span>
+                  </div>
+                  <div className="mockup-item">
+                    <div className="mockup-item-dot yellow" />
+                    <div className="mockup-item-content">
+                      <span className="mockup-item-title">Processo #2846</span>
+                      <span className="mockup-item-sub">Edificação • Análise</span>
+                    </div>
+                    <span className="mockup-item-time">2h</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
+            <div className="float-card float-card-1">
+              <div className="float-card-icon green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <span className="float-card-value">100%</span>
+                <span className="float-card-label">Digitalizado</span>
+              </div>
+            </div>
 
-      {/* Stats Banner */}
-      <section className="landing-section">
-        <div className="landing-kpi-inner">
-          <div>
-            <div className="kpi-value">16</div>
-            <div className="kpi-label">Setores Integrados</div>
-          </div>
-          <div>
-            <div className="kpi-value">11</div>
-            <div className="kpi-label">Tipos de Processos</div>
-          </div>
-          <div>
-            <div className="kpi-value">100%</div>
-            <div className="kpi-label">Rastreabilidade</div>
-          </div>
-          <div>
-            <div className="kpi-value">24h</div>
-            <div className="kpi-label">Acesso Contínuo</div>
+            <div className="float-card float-card-2">
+              <div className="float-card-icon blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div>
+                <span className="float-card-value">Seguro</span>
+                <span className="float-card-label">Criptografia</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-
-      {/* Features */}
-      <section id="funcionalidades" className="landing-features">
-        <div className="landing-center">
-          <h2>Funcionalidades Principais</h2>
-          <p>
-            Tudo o que você precisa para gerenciar processos administrativos com eficiência e transparência.
-          </p>
-        </div>
-
-        <div className="landing-feature-grid">
-
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-            )}
-            color="#0f4c81"
-            title="Acesso Seguro"
-            description="Autenticação por login e senha com níveis de acesso diferenciados. Recuperação de senha via token seguro."
-          />
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-            )}
-            color="#059669"
-            title="Recebimento de Arquivos"
-            description="Anexação de petições iniciais e documentos processuais com validação automática de formato e registro de protocolo."
-          />
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-            )}
-            color="#d97706"
-            title="Anexar Documentos"
-            description="Upload de peças complementares com controle de versão, associação automática ao processo e notificação às partes."
-          />
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-            )}
-            color="#7c3aed"
-            title="Encaminhar Processo"
-            description="Distribuição interna entre setores com registro de movimentações, controle de prazos e rastreabilidade completa."
-          />
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-            )}
-            color="#dc2626"
-            title="Relatórios e Estatísticas"
-            description="Geração de relatórios de andamento com filtros por período, setor e tipo de processo. Exportação em CSV."
-          />
-          <FeatureCard
-            icon={(
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            )}
-            color="#2563eb"
-            title="Gestão de Usuários"
-            description="Cadastro e controle de usuários por setor, com níveis de acesso hierárquicos e gerenciamento de permissões."
-          />
-        </div>
-      </section>
-
-      {/* Process Types */}
-      <section className="landing-subsection">
-        <div className="landing-subsection-inner">
-          <div className="landing-center">
-            <h2>Tipos de Processos Atendidos</h2>
-            <p>O sistema individualiza e gerencia 11 categorias distintas de processos.</p>
+      {/* Features Section */}
+      <section id="features" className="features">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Recursos</span>
+            <h2 className="section-title">Tudo que você precisa</h2>
+            <p className="section-subtitle">
+              Ferramentas completas para gerenciar processos de forma eficiente e transparente.
+            </p>
           </div>
-          <div className="landing-subsection-grid">
 
-            {[
-              '01 — Cadastro Fiscal Municipal',
-              '02 — Parcelamento do Solo',
-              '03 — Edificação e Postura',
-              '04 — Cadastro Fiscal Imobiliário',
-              '05 — Transmissão Imobiliária',
-              '06 — Transporte de Passageiros',
-              '07 — Atividade em Logradouro Público',
-              '08 — Publicidade',
-              '09 — Administrativo Tributário',
-              '10 — Administrativo Fiscal',
-              '11 — Diversos'
-            ].map((item, i) => (
-              <div key={i} className="landing-item-pill">
-                <span className="landing-item-dot" />
-                {item}
+          <div className="features-grid">
+            {features.map((feature, index) => (
+              <div key={index} className="feature-card" style={{ '--accent': feature.color }}>
+                <div className="feature-icon">{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
               </div>
             ))}
-
           </div>
         </div>
       </section>
 
-      {/* Sectors */}
-      <section className="landing-features" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div className="landing-center" style={{ marginBottom: 60 }}>
-          <h2>Setores Integrados</h2>
-          <p>Tramitação entre todas as divisões e coordenações da Secretaria.</p>
-        </div>
-        <div className="landing-subsection-grid" style={{ gap: 12 }}>
+      {/* Categories Section */}
+      <section id="categories" className="categories">
+        <div className="section-container">
+          <div className="section-header">
+            <span className="section-tag">Categorias</span>
+            <h2 className="section-title">Tipos de Processos</h2>
+            <p className="section-subtitle">
+              O sistema gerencia diversas categorias de processos administrativos.
+            </p>
+          </div>
 
-          {[
-            'Gabinete do Secretário',
-            'Assessoria Jurídica',
-            'Assessoria Técnica',
-            'Divisão de Expediente de Processos',
-            'Divisão de Controle e Registro de Documentos',
-            'Divisão de Gestão de Tecnologia da Informação',
-            'Setor de Informática e Digitalização',
-            'Coordenação da Fazenda Municipal',
-            'Divisão Administração Tributária',
-            'Divisão de Cadastro Fiscal',
-            'Setor de Cadastramento Urbano',
-            'Setor de Cadastramento Rural',
-            'Divisão de Controle Urbano',
-            'Fiscalização do Ordenamento Uso do Solo',
-            'Divisão de Inspetoria de Obras e Postura Municipal'
-          ].map((setor, i) => (
-            <div key={i} className="landing-item-pill" style={{ background: 'var(--gray-50)' }}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--primary)', flexShrink: 0 }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              {setor}
-            </div>
-          ))}
-
+          <div className="categories-grid">
+            {categories.map((item, i) => (
+              <div key={i} className="category-pill" style={{ '--accent': item.color }}>
+                <span className="category-dot" />
+                <span className="category-name">{item.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="landing-cta">
-        <div className="landing-cta-inner">
-          <h2>Pronto para começar?</h2>
-          <p>
-            Acesse o sistema com suas credenciais e comece a gerenciar processos com eficiência e transparência.
+      {/* CTA Section */}
+      <section id="contact" className="cta">
+        <div className="cta-bg">
+          <div className="cta-gradient-1" />
+          <div className="cta-gradient-2" />
+        </div>
+        <div className="cta-content">
+          <h2 className="cta-title">Pronto para modernizar?</h2>
+          <p className="cta-subtitle">
+            Acesse agora e descubra como o Processo+ pode transformer
+            a eficiência da sua administração pública.
           </p>
-          <Link to="/login" className="btn btn-secondary" style={{ background: 'white', color: 'var(--primary)', fontWeight: 700 }}>
-            Acessar o Sistema
-          </Link>
+          <div className="cta-actions">
+            <Link to="/login" className="btn btn-white-cta">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Acessar o Sistema
+            </Link>
+            <Link to="/requerente/login" className="btn btn-outline-white-cta">
+              Área do Requerente
+            </Link>
+          </div>
         </div>
       </section>
-
 
       {/* Footer */}
-      <footer className="landing-footer">
-        <p>Processo Eletrônico — Sistema de Gestão Administrativa Municipal</p>
-        <small>Versão 1.0 • Todos os direitos reservados</small>
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-brand">
+            <div className="nav-brand-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <span className="footer-brand-text">Processo<span className="brand-plus">+</span></span>
+          </div>
+          <div className="footer-links">
+            <a href="#features">Recursos</a>
+            <a href="#categories">Categorias</a>
+            <a href="#contact">Contato</a>
+          </div>
+          <p className="footer-text">Sistema de Gestão Processual Administrativa</p>
+          <small className="footer-copy">Versão 1.0 — Todos os direitos reservados</small>
+        </div>
       </footer>
-
     </div>
   );
 }
-
-function FeatureCard({ icon, color, title, description }) {
-  return (
-    <div className="landing-feature-card">
-      <div
-        className="landing-feature-icon"
-        style={{ background: color + '15', color: color }}
-      >
-        {React.cloneElement(icon, { width: 26, height: 26 })}
-      </div>
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </div>
-  );
-}
-
 
 export default LandingPage;
-
