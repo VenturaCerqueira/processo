@@ -98,8 +98,33 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }) {
 }
 
 function LandingPage() {
+  const [isDark, setIsDark] = useState(true);
+
+  const toggleTheme = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    if (newIsDark) {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  };
+
   return (
     <div className="landing">
+      {/* Theme Toggle Button */}
+      <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+        {isDark ? (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        ) : (
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        )}
+      </button>
+
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="nav-container">
@@ -387,6 +412,10 @@ function LandingPage() {
 
       {/* Categories Section */}
       <section id="categories" className="categories">
+        <div className="categories-bg">
+          <div className="categories-pattern" />
+        </div>
+
         <div className="section-container">
           <div className="section-header">
             <span className="section-tag">Categorias</span>
@@ -396,13 +425,91 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="categories-grid">
-            {categories.map((item, i) => (
-              <div key={i} className="category-pill" style={{ '--accent': item.color }}>
-                <span className="category-dot" />
-                <span className="category-name">{item.name}</span>
+          <div className="categories-wrapper">
+            <div className="categories-main-grid">
+              {categories.slice(0, 6).map((item, i) => (
+                <div key={i} className="category-card" style={{ '--accent': item.color }}>
+                  <div className="category-card-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="category-card-content">
+                    <span className="category-card-number">0{i + 1}</span>
+                    <h3 className="category-card-name">{item.name}</h3>
+                  </div>
+                  <div className="category-card-bar" />
+                </div>
+              ))}
+            </div>
+
+            <div className="categories-side">
+              <div className="categories-side-card">
+                <div className="side-card-header">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <span>Mais Categorias</span>
+                </div>
+                <div className="side-list">
+                  {categories.slice(6).map((item, i) => (
+                    <div key={i} className="side-item" style={{ '--accent': item.color }}>
+                      <span className="side-dot" />
+                      <span className="side-name">{item.name}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+
+              <div className="categories-stats-card">
+                <div className="stats-card-header">
+                  <span>Estatísticas</span>
+                  <span className="stats-period">Este ano</span>
+                </div>
+                <div className="stats-items">
+                  <div className="stats-item">
+                    <div className="stats-icon blue">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="stats-info">
+                      <span className="stats-value">2.847</span>
+                      <span className="stats-label">Total Processos</span>
+                    </div>
+                  </div>
+                  <div className="stats-item">
+                    <div className="stats-icon green">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="stats-info">
+                      <span className="stats-value">2.691</span>
+                      <span className="stats-label">Finalizados</span>
+                    </div>
+                  </div>
+                  <div className="stats-item">
+                    <div className="stats-icon purple">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="stats-info">
+                      <span className="stats-value">156</span>
+                      <span className="stats-label">Em Andamento</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="stats-bar">
+                  <div className="stats-bar-fill" style={{ width: '94.5%' }} />
+                </div>
+                <span className="stats-bar-label">94.5% taxa de conclusão</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
