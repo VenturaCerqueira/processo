@@ -292,6 +292,11 @@ function LandingPage() {
 
       {/* Features Section */}
       <section id="features" className="features">
+        <div className="features-bg">
+          <div className="features-glow features-glow-1" />
+          <div className="features-glow features-glow-2" />
+        </div>
+
         <div className="section-container">
           <div className="section-header">
             <span className="section-tag">Recursos</span>
@@ -301,14 +306,81 @@ function LandingPage() {
             </p>
           </div>
 
-          <div className="features-grid">
-            {features.map((feature, index) => (
-              <div key={index} className="feature-card" style={{ '--accent': feature.color }}>
-                <div className="feature-icon">{feature.icon}</div>
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
+          <div className="features-layout">
+            <div className="features-main">
+              {features.slice(0, 4).map((feature, index) => (
+                <div key={index} className="feature-card-modern" style={{ '--accent': feature.color }}>
+                  <div className="feature-card-bg" />
+                  <div className="feature-card-number">0{index + 1}</div>
+                  <div className="feature-card-icon">{feature.icon}</div>
+                  <div className="feature-card-content">
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                  <div className="feature-card-arrow">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14m-7-7l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="features-highlight">
+              <div className="highlight-card">
+                <div className="highlight-icon">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="highlight-stats">
+                  <div className="highlight-stat">
+                    <span className="highlight-stat-value">2.847</span>
+                    <span className="highlight-stat-label">Processos digitalizados</span>
+                  </div>
+                  <div className="highlight-stat">
+                    <span className="highlight-stat-value">99.8%</span>
+                    <span className="highlight-stat-label">Taxa de conclusão</span>
+                  </div>
+                </div>
+                <h3>Plataforma Completa</h3>
+                <p>
+                  Solução integrada que atende desde o cadastro inicial até a conclusão final de cada processo administrativo.
+                </p>
+                <div className="highlight-badges">
+                  <span className="highlight-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Gestão
+                  </span>
+                  <span className="highlight-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Tramitação
+                  </span>
+                  <span className="highlight-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Relatórios
+                  </span>
+                </div>
               </div>
-            ))}
+
+              <div className="features-secondary">
+                {features.slice(4).map((feature, index) => (
+                  <div key={index} className="feature-card-small" style={{ '--accent': feature.color }}>
+                    <div className="feature-card-small-icon">{feature.icon}</div>
+                    <div>
+                      <h4>{feature.title}</h4>
+                      <p>{feature.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
