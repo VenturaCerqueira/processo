@@ -31,10 +31,12 @@ import MeuPerfil from './components/MeuPerfil';
 import NotFound from './components/NotFound';
 import ToastContainer from './components/ToastContainer';
 import { ModalConfirmProvider } from './components/ModalConfirmProvider';
+import LoadingScreen from './components/LoadingScreen';
 
 function AppContent() {
 
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -57,6 +59,9 @@ function AppContent() {
       console.warn('Erro ao carregar usuário do localStorage:', e.message);
       localStorage.removeItem('user');
     }
+    // Simula tempo de loading mínimo para mostrar a animação
+    const timer = setTimeout(() => setLoading(false), 3500);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -95,6 +100,7 @@ function AppContent() {
     : `main-content${sidebarCollapsed ? ' main-content-collapsed' : ''}${isMobile ? ' main-content-mobile' : ''}`;
 
   const [mostrarBemVindo, setMostrarBemVindo] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   useEffect(() => {
     // Exibe a modal na 1ª vez após login (persistido via localStorage)
@@ -113,10 +119,19 @@ function AppContent() {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Marca que o carregamento inicial terminou
+    if (!initialLoadDone && user !== null) {
+      setInitialLoadDone(true);
+    }
+  }, [user, initialLoadDone]);
+
   const primeiroNome = user?.nome ? user.nome.split(' ')[0] : 'Usuário';
 
   return (
-    <div className={appLayoutClass}>
+    <>
+      {loading && (location.pathname === '/login' || location.pathname === '/requerente/login' || !initialLoadDone) && <LoadingScreen onComplete={() => setLoading(false)} />}
+      <div className={appLayoutClass}>
 {!isPublicRoute && user && (
         <Sidebar
           user={user}
@@ -225,7 +240,8 @@ function AppContent() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
