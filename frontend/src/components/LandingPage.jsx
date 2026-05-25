@@ -99,6 +99,7 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }) {
 
 function LandingPage() {
   const [isDark, setIsDark] = useState(true);
+  const [showTopButton, setShowTopButton] = useState(false);
 
   const toggleTheme = () => {
     const newIsDark = !isDark;
@@ -108,6 +109,18 @@ function LandingPage() {
     } else {
       document.documentElement.setAttribute('data-theme', 'light');
     }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTopButton(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -138,14 +151,39 @@ function LandingPage() {
           </div>
 
           <div className="nav-links">
-            <a href="#features" className="nav-link">Recursos</a>
-            <a href="#categories" className="nav-link">Categorias</a>
-            <a href="#contact" className="nav-link">Contato</a>
+            <a href="#features" className="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              Recursos
+            </a>
+            <a href="#categories" className="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M4 5h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zM4 13h16a1 1 0 011 1v4a1 1 0 01-1 1H4a1 1 0 01-1-1v-4a1 1 0 011-1z" />
+              </svg>
+              Categorias
+            </a>
+            <a href="#contact" className="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+              </svg>
+              Contato
+            </a>
           </div>
 
           <div className="nav-actions">
-            <Link to="/login" className="btn btn-ghost-nav">Entrar</Link>
-            <Link to="/requerente/login" className="btn btn-primary-nav">Requerente</Link>
+            <Link to="/login" className="btn btn-ghost-nav">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Entrar
+            </Link>
+            <Link to="/requerente/login" className="btn btn-primary-nav">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Requerente
+            </Link>
           </div>
         </div>
       </nav>
@@ -539,6 +577,15 @@ function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Back to Top Button */}
+      {showTopButton && (
+        <button className="back-to-top" onClick={scrollToTop} aria-label="Voltar ao topo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 15l-6-6-6 6" />
+          </svg>
+        </button>
+      )}
 
       {/* Footer */}
       <footer className="footer">

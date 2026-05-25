@@ -1193,3 +1193,142 @@
   }
 }
 
+/* -----------------------------------------
+   LANDING PAGE - CATEGORIES RESPONSIVE
+   ----------------------------------------- */
+
+/* Tablet Portrait */
+@media (min-width: 640px) and (max-width: 767px) {
+  .categories-wrapper {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .categories-main-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .category-card {
+    padding: 16px;
+  }
+
+  .category-card-icon {
+    width: 36px;
+    height: 36px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .category-card-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .category-card-name {
+    font-size: 13px;
+  }
+
+  .category-card-number {
+    font-size: 10px;
+  }
+}
+
+/* Tablet Landscape / Small Laptop */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .categories-wrapper {
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+  }
+
+  .categories-main-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .category-card {
+    padding: 18px;
+  }
+
+  .category-card-icon {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Laptop */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .categories-wrapper {
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+  }
+
+  .categories-main-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .category-card {
+    padding: 18px;
+  }
+
+  .category-card-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Notebook 14" */
+@media (min-width: 1280px) and (max-width: 1399px) {
+  .categories-main-grid {
+    gap: 16px;
+  }
+}
+
+/* Compact (1024px - 1399px) */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .categories-wrapper {
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+  }
+}
+
+/* Mobile Large */
+@media (max-width: 639px) {
+  .categories-wrapper {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .categories-main-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .category-card {
+    padding: 14px;
+  }
+
+  .category-card-icon {
+    width: 32px;
+    height: 32px;
+    top: 10px;
+    right: 10px;
+    border-radius: 8px;
+  }
+
+  .category-card-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .category-card-name {
+    font-size: 12px;
+  }
+
+  .category-card-number {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+}
+
