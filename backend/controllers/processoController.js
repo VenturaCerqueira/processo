@@ -216,11 +216,13 @@ export const criarProcesso = async (req, res) => {
     const emailFinal = toOptionalTrimmedString(email);
     const descricaoFinal = toOptionalTrimmedString(descricao);
 
-    const especieIdNum = parseOptionalInt(especie_id);
+
+
+    let especieDisponivel = null;
+    let usuarioResponsavelFinal = usuarioResponsavel ?? null;
 
     // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
-    // (o bloco original abaixo já fazia isso; removemos a duplicação para evitar variáveis duplicadas)
-
+    // (validações ficam dentro do if abaixo)
 
     if (especie_id) {
       const especieIdNum = parseInt(especie_id);
@@ -401,10 +403,11 @@ export const criarProcesso = async (req, res) => {
       }
     }
 
-    // Notificação: quando o processo chega no setor (usuarioResponsavel = NULL),
-    // avisamos todos os usuários ativos do setorAtual.
-    // (Quando houver usuário responsável, notificamos apenas ele.)
+    // Regra de atribuição ao setor/caixa de entrada:
+    // - Se o cliente informar usuarioResponsavel, atribui ao usuário
+    // - Caso contrário, deixa null para notificar todos os usuários ativos do setor
     if (usuarioResponsavelFinal) {
+
       await criarNotificacao(
         usuarioResponsavelFinal,
         result.insertId,
@@ -1147,7 +1150,7 @@ export const criarProcessoFilho = async (req, res) => {
 
     // Direcionamento ao setor para “Novo Processo Filho”: entra como encaminhado de setor.
     // Regra: criar já com situacao=encaminhado e sem atribuição direta ao usuário.
-    const usuarioResponsavelFinal = null;
+    let usuarioResponsavelFinal = usuarioResponsavel ?? null;
 
     // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
     let tipoFinal = tipo;
