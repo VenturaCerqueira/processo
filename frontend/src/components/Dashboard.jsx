@@ -9,6 +9,12 @@ function Dashboard() {
   const [processosUrgentes, setProcessosUrgentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({ nome: '' });
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const hoje = new Date();
+    return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  });
+  const [selectedDeadline, setSelectedDeadline] = useState(null);
+  const [processosPorPrazo, setProcessosPorPrazo] = useState({});
   const navigate = useNavigate();
 
   const getSaudacao = () => {
@@ -16,6 +22,52 @@ function Dashboard() {
     if (hora < 12) return 'Bom dia';
     if (hora < 18) return 'Boa tarde';
     return 'Boa noite';
+  };
+
+  const parseDateValue = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  };
+
+  const getDateKey = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatDateDisplay = (date) => {
+    if (!date) return 'Sem data selecionada';
+    return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const buildCalendarDays = (month, grouped) => {
+    const days = [];
+    const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
+    const startDay = new Date(firstOfMonth);
+    startDay.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
+
+    for (let index = 0; index < 42; index += 1) {
+      const current = new Date(startDay);
+      current.setDate(startDay.getDate() + index);
+      const key = getDateKey(current);
+      days.push({
+        date: current,
+        key,
+        count: grouped[key] ? grouped[key].length : 0,
+        isCurrentMonth: current.getMonth() === month.getMonth(),
+        isToday: getDateKey(current) === getDateKey(new Date()),
+      });
+    }
+
+    return days;
+  };
+
+  const changeMonth = (amount) => {
+    setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + amount, 1));
   };
 
   const formatarData = () => {
@@ -86,6 +138,21 @@ function Dashboard() {
 
         setProcessosRecentes(ordenarPorDataDesc(meusProcessos).slice(0, 5));
         setProcessosUrgentes(ordenarPorDataDesc(meusProcessos.filter(p => p.prioridade === 'urgente')).slice(0, 5));
+
+        const groupedByPrazo = processos.reduce((acc, processo) => {
+          const prazoDate = parseDateValue(processo.prazo);
+          if (!prazoDate) return acc;
+          const key = getDateKey(prazoDate);
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(processo);
+          return acc;
+        }, {});
+
+        setProcessosPorPrazo(groupedByPrazo);
+
+        const todayKey = getDateKey(new Date());
+        setSelectedDeadline(groupedByPrazo[todayKey] ? new Date() :
+          Object.keys(groupedByPrazo).sort()[0] ? parseDateValue(Object.keys(groupedByPrazo).sort()[0]) : new Date());
       } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
       } finally {
@@ -155,6 +222,10 @@ function Dashboard() {
     }
   };
 
+  const calendarDays = buildCalendarDays(calendarMonth, processosPorPrazo);
+  const selectedDeadlineKey = selectedDeadline ? getDateKey(selectedDeadline) : null;
+  const selectedProcesses = selectedDeadlineKey ? processosPorPrazo[selectedDeadlineKey] || [] : [];
+
   return (
     <div className="page-content">
       {/* Welcome Section */}
@@ -205,6 +276,91 @@ function Dashboard() {
           </div>
           <span>Usuários</span>
         </button>
+      </div>
+
+      {/* Calendar de Prazos */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header">
+          <div>
+            <span className="card-title">Calendário de Vencimentos</span>
+            <p className="card-subtitle">{calendarMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="btn btn-secondary btn-sm" type="button" onClick={() => changeMonth(-1)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              Anterior
+            </button>
+            <button className="btn btn-secondary btn-sm" type="button" onClick={() => changeMonth(1)}>
+              Próximo
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div className="calendar-container">
+          <div className="calendar-card">
+            <div className="calendar-grid calendar-headings">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                <div key={day} className="calendar-heading">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="calendar-grid">
+              {calendarDays.map((day) => {
+                const isSelected = selectedDeadlineKey === day.key;
+                return (
+                  <button
+                    key={day.key}
+                    type="button"
+                    className={`calendar-cell${day.isCurrentMonth ? '' : ' inactive'}${day.isToday ? ' today' : ''}${isSelected ? ' selected' : ''}`}
+                    onClick={() => setSelectedDeadline(day.date)}
+                  >
+                    <span className="day-number">{day.date.getDate()}</span>
+                    {day.count > 0 && (
+                      <span className="event-count">{day.count} processo{day.count > 1 ? 's' : ''}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="calendar-details">
+            <div className="calendar-details-header">
+              <span className="card-title">{selectedDeadline ? formatDateDisplay(selectedDeadline) : 'Selecione uma data'}</span>
+              <p className="card-subtitle">Processos com prazo para este dia</p>
+            </div>
+            <div className="calendar-details-list">
+              {selectedProcesses.length === 0 ? (
+                <div className="empty-state small" style={{ padding: '24px', borderRadius: 'var(--radius)' }}>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <h4 style={{ marginTop: 12 }}>Nenhum processo</h4>
+                  <p>Não há processos com vencimento nesta data.</p>
+                </div>
+              ) : selectedProcesses.map((processo) => (
+                <button
+                  key={processo.id}
+                  type="button"
+                  className="calendar-details-item"
+                  onClick={() => navigate(`/processos/${processo.id}`)}
+                >
+                  <div className="process-info">
+                    <strong>{processo.numero}</strong>
+                    <span className="process-meta">{processo.tipo} • {processo.requerente || processo.assunto}</span>
+                  </div>
+                  <span className={`badge badge-${processo.situacao || 'info'}`} style={{ whiteSpace: 'nowrap' }}>
+                    {processo.situacao || 'Não informado'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Caixa de Entrada Resumo */}
