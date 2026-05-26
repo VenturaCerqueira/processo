@@ -32,6 +32,7 @@ import NotFound from './components/NotFound';
 import ToastContainer from './components/ToastContainer';
 import { ModalConfirmProvider } from './components/ModalConfirmProvider';
 import LoadingScreen from './components/LoadingScreen';
+import FloatingButtons from './components/FloatingButtons';
 
 function AppContent() {
 
@@ -172,6 +173,7 @@ function AppContent() {
       )}
 
       <div className={mainContentClass}>
+        <FloatingButtons />
         {isMobile && user && !isPublicRoute && (
           <button
             className="mobile-menu-toggle"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 
 const features = [
   {
@@ -98,18 +99,8 @@ function AnimatedCounter({ end, duration = 2000, suffix = '' }) {
 }
 
 function LandingPage() {
-  const [isDark, setIsDark] = useState(true);
+  const { isDark, toggleTheme } = useTheme();
   const [showTopButton, setShowTopButton] = useState(false);
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    if (newIsDark) {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => {
