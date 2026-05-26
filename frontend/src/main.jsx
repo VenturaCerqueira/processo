@@ -13,6 +13,8 @@ const suppressMessagePatterns = [
   'Channel closed',
   'Extension context invalidated',
   'chrome-extension',
+  'extensionListener',
+  'extension',
 ];
 
 function normalizeMessage(value) {
@@ -32,7 +34,13 @@ function normalizeMessage(value) {
 function shouldSuppressMessage(msg) {
   const s = normalizeMessage(msg);
   if (!s) return false;
-  return suppressMessagePatterns.some((p) => s.includes(p));
+  if (s && suppressMessagePatterns.some((p) => s.includes(p))) return true;
+  // Also try to detect patterns inside stack traces / nested objects
+  try {
+    const parsed = JSON.stringify(msg || '');
+    if (suppressMessagePatterns.some((p) => parsed.includes(p))) return true;
+  } catch {}
+  return false;
 }
 
 // Capture phase to try to intercept before the browser/devtools logs.
@@ -41,7 +49,11 @@ window.addEventListener(
   (event) => {
     try {
       if (!shouldSuppressMessage(event?.reason)) return;
+      // prevent browser default reporting
       event.preventDefault?.();
+      // keep console noise minimal; show the first few suppressed messages for diagnostics
+      suppressedCount.count += 1;
+      if (suppressedCount.count <= 5) console.debug('Suppressed extension rejection:', normalizeMessage(event?.reason));
     } catch {
       // Never break app because of this handler
     }
@@ -53,14 +65,19 @@ window.addEventListener(
   'error',
   (event) => {
     try {
-      if (!shouldSuppressMessage(event?.message)) return;
+      if (!shouldSuppressMessage(event?.message) && !shouldSuppressMessage(event?.error)) return;
       event.preventDefault?.();
+      suppressedCount.count += 1;
+      if (suppressedCount.count <= 5) console.debug('Suppressed extension error:', normalizeMessage(event?.message) || normalizeMessage(event?.error));
     } catch {
       // ignore
     }
   },
   true
 );
+
+// Track how many suppressed messages we've seen to avoid spamming console.
+const suppressedCount = { count: 0 };
 
 
 
