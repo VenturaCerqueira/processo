@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
 import { createPortal } from 'react-dom';
 
 function AcoesDropdown({ btnRef, actions }) {
-
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState({ top: 0, left: 0 });
 
@@ -58,16 +57,7 @@ function AcoesDropdown({ btnRef, actions }) {
         style={{ position: 'relative', zIndex: open ? 99998 : undefined }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5h.01" />
             <path d="M12 12h.01" />
             <path d="M12 19h.01" />
@@ -89,11 +79,7 @@ function AcoesDropdown({ btnRef, actions }) {
                   a.onClick();
                 }}
               >
-                {a.icon && (
-                  <span className="actions-dropdown-item-icon" aria-hidden="true">
-                    {a.icon}
-                  </span>
-                )}
+                {a.icon && <span className="actions-dropdown-item-icon" aria-hidden="true">{a.icon}</span>}
                 <span>{a.label}</span>
               </button>
             ))}
@@ -115,16 +101,7 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
           label: 'Editar',
           variant: 'secondary',
           icon: (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
             </svg>
@@ -135,16 +112,7 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
           label: 'Desativar',
           variant: 'danger',
           icon: (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
               <path d="M8 12h8" />
             </svg>
@@ -159,11 +127,8 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
 function CadastroSetores() {
   const [setores, setSetores] = useState([]);
   const [administradores, setAdministradores] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [erro, setErro] = useState('');
-
   const [busca, setBusca] = useState('');
 
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -178,16 +143,14 @@ function CadastroSetores() {
     carregarSetores();
   }, []);
 
-
   const carregarAdministradores = async () => {
     try {
       const res = await api.get('/auth/usuarios-ativos');
       setAdministradores(res.data.filter((u) => u.nivelAcesso === 'admin'));
     } catch {
-      // ignora: usuário admin pode não estar disponível na listagem
+      // ignora
     }
   };
-
 
   const carregarSetores = async () => {
     setLoading(true);
@@ -210,7 +173,6 @@ function CadastroSetores() {
     setMostrarModal(true);
   };
 
-
   const abrirModalEditar = (s) => {
     setErro('');
     setEditando(true);
@@ -223,7 +185,6 @@ function CadastroSetores() {
     });
     setMostrarModal(true);
   };
-
 
   const fecharModal = () => {
     setMostrarModal(false);
@@ -240,7 +201,6 @@ function CadastroSetores() {
     setSalvando(true);
 
     const payloadBase = {
-
       nome: form.nome,
       sigla: form.sigla || null,
       administradorUserId: form.administradorUserId || null,
@@ -248,13 +208,10 @@ function CadastroSetores() {
     };
 
     try {
-      const payload = payloadBase;
-
-
       if (editando) {
-        await api.put(`/setores/${form.id}`, payload);
+        await api.put(`/setores/${form.id}`, payloadBase);
       } else {
-        await api.post('/setores', payload);
+        await api.post('/setores', payloadBase);
       }
 
       fecharModal();
@@ -279,166 +236,148 @@ function CadastroSetores() {
     }
   };
 
-  const buscar = async () => {
-    setErro('');
-    // backend não implementa busca por /setores; mantém UX simples: recarrega
-    // e limpa se o usuário quiser.
-    await carregarSetores();
-  };
+  const filteredSetores = setores.filter(s =>
+    s.nome?.toLowerCase().includes(busca.toLowerCase()) ||
+    s.sigla?.toLowerCase().includes(busca.toLowerCase())
+  );
 
-  const contadorLabel = useMemo(() => {
-    const n = setores.length;
-    return `${n} ${n === 1 ? 'registro' : 'registros'}`;
-  }, [setores.length]);
-
-  if (loading) {
-    return (
-      <div className="loading">
-        <span className="spinner" />Carregando...
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ color: 'white' }}
-          >
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6M9 13h6" />
-            <path d="M7 4v16" />
+      {/* Header */}
+      <div className="setor-header">
+        <div className="setor-header-content">
+          <div className="setor-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div className="setor-title-area">
+            <h2>Cadastro de Setores</h2>
+            <p>Organize os setores e mantenha a tramitação sempre atualizada</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-setor" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
-        </div>
+          Novo Setor
+        </button>
+        <div className="setor-header-decoration"></div>
+      </div>
 
-        <div className="form-hero-content">
-          <h1>Cadastro de Setores</h1>
-          <p>Organize os setores e mantenha a tramitação sempre atualizada.</p>
-        </div>
-
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-              Novo Setor
-            </span>
-          </button>
+      {/* Stats Card */}
+      <div className="setor-stats-grid">
+        <div className="setor-stat-card">
+          <div className="setor-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div className="setor-stat-info">
+            <span className="setor-stat-number">{setores.length}</span>
+            <span className="setor-stat-label">Total de Setores</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Setores</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>{contadorLabel}</div>
-        </div>
-
-        <div className="search-box" style={{ marginBottom: 16 }}>
+      {/* Search and Filter */}
+      <div className="setor-controls">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             type="text"
-            className="form-control"
+            className="search-input"
             placeholder="Buscar por nome ou sigla..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={buscar}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.3-4.3" />
+          {busca && (
+            <button className="search-clear" onClick={() => setBusca('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-              Buscar
-            </span>
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setBusca('');
-              carregarSetores();
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 16H6L5 6" />
-              </svg>
-              Limpar
-            </span>
-          </button>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="setor-table-card">
+        <div className="setor-table-header">
+          <div className="setor-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Setores</span>
+          </div>
+          <div className="setor-table-count">
+            <span className="count-badge">{filteredSetores.length}</span>
+            <span>{filteredSetores.length === 1 ? 'registro' : 'registros'}</span>
+          </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 420 }}>Nome</th>
-                <th style={{ width: 260 }}>Usuário responsável</th>
+                <th>Setor</th>
+                <th>Responsável</th>
                 <th>Sigla</th>
-                <th style={{ width: 160 }}>Ações</th>
+                <th style={{ width: 120 }}>Ações</th>
               </tr>
             </thead>
-
             <tbody>
-              {setores.length === 0 ? (
+              {filteredSetores.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="empty-state small">
-                    Nenhum setor cadastrado
+                  <td colSpan="4">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                      <h4>Nenhum setor encontrado</h4>
+                      <p>{busca ? 'Tente ajustar sua busca' : 'Cadastre o primeiro setor'}</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                setores.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.nome}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{s.administradorNome || '—'}</td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{String(s.sigla ?? '—').trim() || '—'}</td>
+                filteredSetores.map((s, index) => (
+                  <tr key={s.id} className="setor-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <div className="actions-dropdown" style={{ position: 'relative' }}>
-                        <AcoesDropdownLinha
-                          abrirModalEditar={() => abrirModalEditar(s)}
-                          excluir={() => excluir(s.id)}
-                        />
+                      <div className="setor-cell">
+                        <div className="setor-icon-box">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            <polyline points="9 22 9 12 15 12 15 22" />
+                          </svg>
+                        </div>
+                        <span className="setor-cell-name">{s.nome}</span>
                       </div>
+                    </td>
+                    <td>
+                      <span className="responsavel-name">{s.administradorNome || '—'}</span>
+                    </td>
+                    <td>
+                      <span className="sigla-badge">{String(s.sigla ?? '—').trim() || '—'}</span>
+                    </td>
+                    <td>
+                      <AcoesDropdownLinha
+                        abrirModalEditar={() => abrirModalEditar(s)}
+                        excluir={() => excluir(s.id)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -448,55 +387,50 @@ function CadastroSetores() {
         </div>
       </div>
 
+      {/* Modal */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Setor' : 'Novo Setor'}</h1>
-                  <p style={{ marginTop: 2 }}>Preencha os dados do setor.</p>
-                </div>
+          <div className="modal-content modal-modern" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>{editando ? 'Editar Setor' : 'Novo Setor'}</h2>
+                <p>Preencha os dados do setor</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body-modern">
               <form onSubmit={salvar}>
-                <div className="form-row-modern">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={form.nome}
-                      onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                      required
-                      placeholder="Ex: Secretaria de Obras"
-                      disabled={somenteLeitura}
-                    />
-                  </div>
+                <div className="form-group-modern full-width">
+                  <label>Nome do Setor <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    className="form-control-modern"
+                    value={form.nome}
+                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    required
+                    placeholder="Ex: Secretaria de Obras"
+                    disabled={somenteLeitura}
+                  />
+                </div>
 
-                  <div className="form-group">
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
                     <label>Sigla</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.sigla}
                       onChange={(e) => setForm({ ...form, sigla: e.target.value })}
                       placeholder="Ex: SMO"
@@ -504,50 +438,49 @@ function CadastroSetores() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Usuário Administrador do Setor</label>
+                  <div className="form-group-modern">
+                    <label>Usuário Administrador</label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.administradorUserId}
                       onChange={(e) => setForm({ ...form, administradorUserId: e.target.value })}
                       disabled={somenteLeitura}
                     >
                       <option value="">Selecione (opcional)</option>
                       {administradores.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.nome}
-                        </option>
+                        <option key={u.id} value={u.id}>{u.nome}</option>
                       ))}
                     </select>
                   </div>
-
                 </div>
 
-                {erro && (
-                  <div className="alert alert-danger" style={{ marginTop: 14 }}>
-                    {erro}
-                  </div>
-                )}
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={fecharModal}
-                    disabled={salvando}
-                  >
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                     {somenteLeitura ? 'Fechar' : 'Cancelar'}
                   </button>
 
                   {!somenteLeitura && (
-                    <button type="submit" className="btn btn-primary" disabled={salvando}>
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {salvando ? 'Salvando...' : editando ? 'Atualizar' : 'Salvar'}
+                    <button type="submit" className="btn btn-primary-modern green" disabled={salvando}>
+                      {salvando ? (
+                        <>
+                          <span className="spinner"></span>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          {editando ? 'Atualizar' : 'Salvar'}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -561,4 +494,3 @@ function CadastroSetores() {
 }
 
 export default CadastroSetores;
-

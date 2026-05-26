@@ -2,10 +2,6 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../api';
 
-/* =========================================================
-   Dropdown de Ações — renderiza via Portal no body
-   usando position:fixed para nunca ser cortado por overflow.
-   ========================================================= */
 function AcoesDropdown({ btnRef, actions }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState({ top: 0, left: 0 });
@@ -14,14 +10,14 @@ function AcoesDropdown({ btnRef, actions }) {
     if (open && btnRef?.current) {
       const btn = btnRef.current;
       const rect = btn.getBoundingClientRect();
-      const menuHeight = Math.min(actions.length * 38 + 8, 320); // estimativa
+      const menuHeight = Math.min(actions.length * 38 + 8, 320);
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
 
       const top =
         spaceBelow >= menuHeight || spaceBelow >= spaceAbove
-          ? rect.bottom + 6 // abre para baixo
-          : rect.top - menuHeight - 6; // abre para cima
+          ? rect.bottom + 6
+          : rect.top - menuHeight - 6;
 
       setMenuStyle({
         position: 'fixed',
@@ -43,7 +39,6 @@ function AcoesDropdown({ btnRef, actions }) {
       }
     }
     if (!open) return;
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, btnRef]);
@@ -103,7 +98,7 @@ function AcoesDropdownLinha({ t, viewTipo, abrirModalEditar, excluir, desativarT
       btnRef={btnRef}
       actions={[
         {
-          label: 'View',
+          label: 'Visualizar',
           variant: 'secondary',
           icon: (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -119,7 +114,7 @@ function AcoesDropdownLinha({ t, viewTipo, abrirModalEditar, excluir, desativarT
           icon: (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
             </svg>
           ),
           onClick: () => abrirModalEditar(t),
@@ -159,37 +154,28 @@ function CadastroTiposProcesso() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [somenteInativos, setSomenteInativos] = useState(false);
-
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [editando, setEditando] = useState(false);
   const [somenteLeitura, setSomenteLeitura] = useState(false);
-
   const [salvando, setSalvando] = useState(false);
   const [form, setForm] = useState({ id: null, nome: '', codigo: '', icone_svg: '' });
 
-  // ====== Especies vinculadas ao tipo (VIEW) ======
   const [especiesDoTipo, setEspeciesDoTipo] = useState([]);
   const [loadingEspeciesDoTipo, setLoadingEspeciesDoTipo] = useState(false);
   const [erroEspeciesDoTipo, setErroEspeciesDoTipo] = useState('');
-  // Dropdown via Portal/FIXED (nenhuma necessidade de dropdownAbertoId/estilo no estado)
-
 
   useEffect(() => {
     carregarTipos();
   }, [somenteInativos]);
 
-  
   useEffect(() => {
     const onDocDown = (e) => {
       const target = e.target;
       if (!target) return;
-
-      // Se clicou dentro do menu ou no botão, mantém
       if (target.closest && target.closest('.actions-dropdown')) return;
-      setDropdownAbertoId(null);
     };
-
     document.addEventListener('mousedown', onDocDown);
     return () => document.removeEventListener('mousedown', onDocDown);
   }, []);
@@ -208,7 +194,6 @@ function CadastroTiposProcesso() {
       setLoading(false);
     }
   };
-
 
   const opcoesIcones = useMemo(
     () => [
@@ -249,7 +234,6 @@ function CadastroTiposProcesso() {
     setSomenteLeitura(true);
     setForm({ id: t.id, nome: t.nome || '', codigo: t.codigo || '', icone_svg: t.icone_svg || '' });
 
-    // carrega as espécies vinculadas ao tipo
     setLoadingEspeciesDoTipo(true);
     setErroEspeciesDoTipo('');
     setEspeciesDoTipo([]);
@@ -331,139 +315,203 @@ function CadastroTiposProcesso() {
 
   const iconeSelecionado = opcoesIcones.find((o) => o.path === form.icone_svg);
 
-  if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
+  const filteredTipos = tipos.filter(t =>
+    t.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.codigo?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const activeCount = tipos.filter(t => t.ativo === 1).length;
+  const inactiveCount = tipos.filter(t => t.ativo === 0).length;
+
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6M9 13h6M7 4v16" />
+      {/* Header */}
+      <div className="tipo-header">
+        <div className="tipo-header-content">
+          <div className="tipo-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16v16H4z" opacity="0.25" />
+              <path d="M9 9h6M9 13h6M7 4v16" />
+            </svg>
+          </div>
+          <div className="tipo-title-area">
+            <h2>Cadastro de Tipos de Processo</h2>
+            <p>Organize os tipos e associe um ícone para facilitar a identificação</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-tipo" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
+          Novo Tipo
+        </button>
+        <div className="tipo-header-decoration"></div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="tipo-stats-grid">
+        <div className="tipo-stat-card total">
+          <div className="tipo-stat-icon purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h16v16H4z" />
+              <path d="M9 9h6M9 13h6M7 4v16" />
+            </svg>
+          </div>
+          <div className="tipo-stat-info">
+            <span className="tipo-stat-number">{tipos.length}</span>
+            <span className="tipo-stat-label">Total de Tipos</span>
+          </div>
         </div>
-        <div className="form-hero-content">
-          <h1>Cadastro de Tipos de Processo</h1>
-          <p>Organize os tipos e associe um ícone para facilitar a identificação.</p>
+        <div className="tipo-stat-card active">
+          <div className="tipo-stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div className="tipo-stat-info">
+            <span className="tipo-stat-number">{activeCount}</span>
+            <span className="tipo-stat-label">Tipos Ativos</span>
+          </div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            Novo Tipo
-          </button>
+        <div className="tipo-stat-card inactive">
+          <div className="tipo-stat-icon gray">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+          </div>
+          <div className="tipo-stat-info">
+            <span className="tipo-stat-number">{inactiveCount}</span>
+            <span className="tipo-stat-label">Tipos Inativos</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Tipos</div>
-                <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>
-            {tipos.length} {tipos.length === 1 ? 'registro' : 'registros'}
-          </div>
+      {/* Search and Filter */}
+      <div className="tipo-controls">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Buscar por nome ou código..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="search-clear" onClick={() => setSearchTerm('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-          <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-700)' }}>
-            Exibir:
-          </label>
+        <div className="filter-toggle-group">
           <button
             type="button"
-            className="btn btn-sm"
-            style={{
-              background: somenteInativos ? 'var(--gray-100)' : 'var(--primary)15',
-              borderColor: 'var(--gray-200)',
-              color: 'var(--gray-900)',
-            }}
+            className={`filter-toggle-btn ${!somenteInativos ? 'active' : ''}`}
             onClick={() => setSomenteInativos(false)}
           >
             Ativos
           </button>
           <button
             type="button"
-            className="btn btn-sm"
-            style={{
-              background: somenteInativos ? 'var(--primary)15' : 'var(--gray-100)',
-              borderColor: 'var(--gray-200)',
-              color: 'var(--gray-900)',
-            }}
+            className={`filter-toggle-btn ${somenteInativos ? 'active' : ''}`}
             onClick={() => setSomenteInativos(true)}
           >
-            Todos (inclui Inativos)
+            Todos
           </button>
         </div>
+      </div>
 
+      {/* Types Table */}
+      <div className="tipo-table-card">
+        <div className="tipo-table-header">
+          <div className="tipo-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Tipos</span>
+          </div>
+          <div className="tipo-table-count">
+            <span className="count-badge">{filteredTipos.length}</span>
+            <span>{filteredTipos.length === 1 ? 'registro' : 'registros'}</span>
+          </div>
+        </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 320 }}>Nome</th>
-                <th>Codigo</th>
-                <th style={{ width: 140 }}>Status</th>
-                <th style={{ width: 160 }}>Ações</th>
-
+                <th>Tipo</th>
+                <th>Código</th>
+                <th>Status</th>
+                <th style={{ width: 120 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {tipos.length === 0 ? (
+              {filteredTipos.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="empty-state small">Nenhum tipo cadastrado</td>
+                  <td colSpan="4">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M4 4h16v16H4z" />
+                        <path d="M9 9h6M9 13h6M7 4v16" />
+                      </svg>
+                      <h4>Nenhum tipo encontrado</h4>
+                      <p>{searchTerm ? 'Tente ajustar sua busca' : 'Cadastre o primeiro tipo de processo'}</p>
+                    </div>
+                  </td>
                 </tr>
               ) : (
-                tipos.map((t) => (
-                  <tr key={t.id}>
+                filteredTipos.map((t, index) => (
+                  <tr key={t.id} className="tipo-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 12,
-                            background: 'var(--primary)15',
-                            border: '1px solid var(--primary)30',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            color: 'var(--primary)',
-                          }}
-                          aria-hidden="true"
-                        >
+                      <div className="tipo-cell">
+                        <div className={`tipo-icon-box ${t.ativo === 0 ? 'inactive' : ''}`}>
                           {t.icone_svg ? (
                             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                               <path d={t.icone_svg} />
                             </svg>
                           ) : (
-                            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--gray-400)' }}>—</span>
+                            <span style={{ fontSize: 12, fontWeight: 800 }}>—</span>
                           )}
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, color: 'var(--gray-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {t.nome}
-                          </div>
+                        <div className="tipo-cell-info">
+                          <span className="tipo-cell-name">{t.nome}</span>
                         </div>
                       </div>
                     </td>
-                    <td>{t.codigo || '—'}</td>
                     <td>
-                      <span
-                        className={`badge ${t.ativo === 0 ? 'arquivado' : 'concluido'}`}
-                      >
-                        {t.ativo === 0 ? 'Inativo' : 'Ativo'}
+                      <span className="codigo-badge">{t.codigo || '—'}</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${t.ativo === 1 ? 'active' : 'inactive'}`}>
+                        <span className={`status-dot ${t.ativo === 1 ? 'active' : ''}`}></span>
+                        {t.ativo === 1 ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
                     <td>
-                      <div className="actions-dropdown" style={{ position: 'relative' }}>
-
-                        <AcoesDropdownLinha
-                          t={t}
-                          viewTipo={viewTipo}
-                          abrirModalEditar={abrirModalEditar}
-                          excluir={excluir}
-                          desativarTipo={desativarTipo}
-                        />
-                      </div>
+                      <AcoesDropdownLinha
+                        t={t}
+                        viewTipo={viewTipo}
+                        abrirModalEditar={abrirModalEditar}
+                        excluir={excluir}
+                        desativarTipo={desativarTipo}
+                      />
                     </td>
                   </tr>
                 ))
@@ -473,34 +521,37 @@ function CadastroTiposProcesso() {
         </div>
       </div>
 
+      {/* Modal */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Tipo' : 'Novo Tipo de Processo'}</h1>
-                  <p style={{ marginTop: 2 }}>
-                    Selecione um ícone e salve o tipo.
-                  </p>
-                </div>
+          <div className="modal-content modal-modern" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16v16H4z" />
+                  <path d="M9 9h6M9 13h6M7 4v16" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>{somenteLeitura ? 'Detalhes do Tipo' : editando ? 'Editar Tipo' : 'Novo Tipo de Processo'}</h2>
+                <p>{somenteLeitura ? 'Informações do tipo e espécies vinculadas' : 'Selecione um ícone e salve o tipo'}</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body-modern">
               <form onSubmit={salvar}>
-                <div className="form-row-modern">
-                  <div className="form-group">
-                    <label>Nome *</label>
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
+                    <label>Nome <span className="required">*</span></label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.nome}
                       onChange={(e) => setForm({ ...form, nome: e.target.value })}
                       required
@@ -509,96 +560,90 @@ function CadastroTiposProcesso() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Codigo</label>
+                  <div className="form-group-modern">
+                    <label>Código</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.codigo}
                       onChange={(e) => setForm({ ...form, codigo: e.target.value })}
                       placeholder="(opcional)"
                       disabled={somenteLeitura}
                     />
                   </div>
+                </div>
 
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Ícone (selecionável)</label>
+                <div className="form-group-modern" style={{ gridColumn: '1 / -1' }}>
+                  <label>Ícone</label>
+                  <div className="icon-picker-modern" role="listbox">
+                    {opcoesIcones.map((op) => {
+                      const selecionado = op.path === form.icone_svg;
+                      return (
+                        <button
+                          type="button"
+                          key={op.path}
+                          className={`icon-picker-item-modern ${selecionado ? 'active' : ''}`}
+                          onClick={() => !somenteLeitura && setForm({ ...form, icone_svg: op.path })}
+                          aria-selected={selecionado}
+                          title={op.label}
+                          disabled={somenteLeitura}
+                        >
+                          <span className="icon-picker-svg">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                              <path d={op.path} />
+                            </svg>
+                          </span>
+                          <span className="icon-picker-label">{op.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                    <div className="icon-picker" role="listbox" aria-label="Selecione um ícone">
-                      {opcoesIcones.map((op) => {
-                        const selecionado = op.path === form.icone_svg;
-                        return (
-                          <button
-                            type="button"
-                            key={op.path}
-                            className={`icon-picker-item ${selecionado ? 'active' : ''}`}
-                            onClick={() => !somenteLeitura && setForm({ ...form, icone_svg: op.path })}
-                            aria-selected={selecionado}
-                            title={op.label}
-                            disabled={somenteLeitura}
-                            style={{ opacity: somenteLeitura ? 0.65 : 1, cursor: somenteLeitura ? 'not-allowed' : 'pointer' }}
-                          >
-                            <span className="icon-picker-svg" aria-hidden="true">
-                              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                                <path d={op.path} />
-                              </svg>
-                            </span>
-                            <span className="icon-picker-label">{op.label}</span>
-                          </button>
-                        );
-                      })}
+                  <div className="icon-preview-wrapper">
+                    <div className={`icon-preview-box ${form.icone_svg ? 'has-icon' : ''}`}>
+                      {iconeSelecionado ? (
+                        <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <path d={iconeSelecionado.path} />
+                        </svg>
+                      ) : (
+                        <span style={{ fontWeight: 900, fontSize: 14 }}>—</span>
+                      )}
                     </div>
-
-                    <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                      <div
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 14,
-                          background: form.icone_svg ? 'var(--primary)15' : 'var(--gray-100)',
-                          border: `1px solid ${form.icone_svg ? 'var(--primary)30' : 'var(--gray-200)'}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: form.icone_svg ? 'var(--primary)' : 'var(--gray-400)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {iconeSelecionado ? (
-                          <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                            <path d={iconeSelecionado.path} />
-                          </svg>
-                        ) : (
-                          <span style={{ fontWeight: 900, fontSize: 12 }}>—</span>
-                        )}
-                      </div>
-                      <div style={{ color: 'var(--gray-500)', fontSize: 13, fontWeight: 600 }}>
-                        {iconeSelecionado ? `Selecionado: ${iconeSelecionado.label}` : 'Nenhum ícone selecionado.'}
-                      </div>
-                    </div>
+                    <span className="icon-preview-label">
+                      {iconeSelecionado ? `Selecionado: ${iconeSelecionado.label}` : 'Nenhum ícone selecionado'}
+                    </span>
                   </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
 
                 {somenteLeitura && (
-                  <div style={{ marginTop: 18 }}>
-                    <div style={{ fontWeight: 800, color: 'var(--gray-900)', marginBottom: 8 }}>
-                      Espécies vinculadas ao tipo
+                  <div className="especies-vinculadas">
+                    <div className="especies-header">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                      </svg>
+                      <span>Espécies vinculadas ao tipo</span>
                     </div>
 
                     {loadingEspeciesDoTipo ? (
-                      <div className="empty-state small" style={{ padding: 16 }}>
+                      <div className="especies-loading">
+                        <span className="spinner"></span>
                         Carregando espécies...
                       </div>
                     ) : erroEspeciesDoTipo ? (
-                      <div className="alert alert-danger">{erroEspeciesDoTipo}</div>
+                      <div className="alert-modern alert-danger-modern">{erroEspeciesDoTipo}</div>
                     ) : especiesDoTipo.length === 0 ? (
-                      <div className="empty-state small" style={{ padding: 16 }}>
-                        Nenhuma espécie vinculada a este tipo.
+                      <div className="especies-empty">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        <p>Nenhuma espécie vinculada a este tipo</p>
                       </div>
                     ) : (
-                      <div className="table-container">
+                      <div className="especies-table-wrapper">
                         <table>
                           <thead>
                             <tr>
@@ -611,11 +656,9 @@ function CadastroTiposProcesso() {
                           <tbody>
                             {especiesDoTipo.map((e) => (
                               <tr key={e.id}>
-                                <td style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{e.nome}</td>
+                                <td style={{ fontWeight: 700, color: '#0f172a' }}>{e.nome}</td>
                                 <td>{e.setor_nome || '—'}</td>
-                                <td>
-                                  {e.prazo_minimo ?? '—'} a {e.prazo_maximo ?? '—'}
-                                </td>
+                                <td>{e.prazo_minimo ?? '—'} a {e.prazo_maximo ?? '—'}</td>
                                 <td>{e.dias_uteis ? 'Sim' : 'Não'}</td>
                               </tr>
                             ))}
@@ -626,14 +669,31 @@ function CadastroTiposProcesso() {
                   </div>
                 )}
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
                     {somenteLeitura ? 'Fechar' : 'Cancelar'}
                   </button>
 
                   {!somenteLeitura && (
-                    <button type="submit" className="btn btn-primary" disabled={salvando}>
-                      {salvando ? 'Salvando...' : (editando ? 'Atualizar' : 'Salvar')}
+                    <button type="submit" className="btn btn-primary-modern" disabled={salvando}>
+                      {salvando ? (
+                        <>
+                          <span className="spinner"></span>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          {editando ? 'Atualizar' : 'Salvar'}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -647,4 +707,3 @@ function CadastroTiposProcesso() {
 }
 
 export default CadastroTiposProcesso;
-

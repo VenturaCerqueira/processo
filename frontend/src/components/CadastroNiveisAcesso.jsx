@@ -110,16 +110,7 @@ function AcoesDropdown({ btnRef, actions }) {
         style={{ position: 'relative', zIndex: open ? 99998 : undefined }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5h.01" />
             <path d="M12 12h.01" />
             <path d="M12 19h.01" />
@@ -141,11 +132,7 @@ function AcoesDropdown({ btnRef, actions }) {
                   a.onClick();
                 }}
               >
-                {a.icon && (
-                  <span className="actions-dropdown-item-icon" aria-hidden="true">
-                    {a.icon}
-                  </span>
-                )}
+                {a.icon && <span className="actions-dropdown-item-icon" aria-hidden="true">{a.icon}</span>}
                 <span>{a.label}</span>
               </button>
             ))}
@@ -167,16 +154,7 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
           label: 'Editar',
           variant: 'secondary',
           icon: (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
             </svg>
@@ -187,16 +165,7 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir }) {
           label: 'Excluir',
           variant: 'danger',
           icon: (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
               <path d="M8 12h8" />
             </svg>
@@ -227,7 +196,7 @@ function CadastroNiveisAcesso() {
       const response = await api.get('/niveis-acesso');
       setNiveis(response.data);
     } catch {
-      setErro('Erro ao carregar niveis de acesso');
+      setErro('Erro ao carregar níveis de acesso');
     } finally {
       setLoading(false);
     }
@@ -237,11 +206,6 @@ function CadastroNiveisAcesso() {
     carregarNiveis();
   }, []);
 
-  const contadorLabel = useMemo(() => {
-    const n = niveis.length;
-    return `${n} ${n === 1 ? 'registro' : 'registros'}`;
-  }, [niveis.length]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErro('');
@@ -249,7 +213,7 @@ function CadastroNiveisAcesso() {
     setSalvando(true);
     try {
       await api.post('/niveis-acesso', form);
-      setMensagem('Nivel de acesso cadastrado!');
+      setMensagem('Nível de acesso cadastrado!');
       setForm({ nome: '', descricao: '', permissoes: { ...PERMISSOES_PADRAO } });
       setMostrarForm(false);
       await carregarNiveis();
@@ -267,7 +231,7 @@ function CadastroNiveisAcesso() {
     setSalvando(true);
     try {
       await api.put(`/niveis-acesso/${nivelEditando.id}`, nivelEditando);
-      setMensagem('Nivel de acesso atualizado!');
+      setMensagem('Nível de acesso atualizado!');
       setMostrarEditar(false);
       setNivelEditando(null);
       await carregarNiveis();
@@ -279,13 +243,13 @@ function CadastroNiveisAcesso() {
   };
 
   const handleExcluir = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este nivel de acesso?')) return;
+    if (!confirm('Tem certeza que deseja excluir este nível de acesso?')) return;
     setErro('');
     setMensagem('');
     setSalvando(true);
     try {
       await api.delete(`/niveis-acesso/${id}`);
-      setMensagem('Nivel de acesso excluido!');
+      setMensagem('Nível de acesso excluído!');
       await carregarNiveis();
     } catch (error) {
       setErro(error.response?.data?.message || 'Erro ao excluir');
@@ -304,15 +268,21 @@ function CadastroNiveisAcesso() {
   };
 
   const renderPermissoesEditor = (target) => (
-    <div className="permissoes-editor">
+    <div className="permissoes-editor-modern">
       {GRUPOS_PERMISSOES.map((grupo) => (
-        <div key={grupo.titulo} className="permissao-grupo">
-          <h4>{grupo.titulo}</h4>
-          <div className="permissao-itens">
+        <div key={grupo.titulo} className="permissao-grupo-modern">
+          <h4 className="permissao-grupo-titulo">{grupo.titulo}</h4>
+          <div className="permissao-itens-modern">
             {grupo.permissoes.map((p) => (
-              <label key={p.key} className="permissao-item">
-                <input type="checkbox" checked={!!target.permissoes[p.key]} onChange={() => togglePermissao(target, p.key)} />
-                <span>{p.label}</span>
+              <label key={p.key} className="permissao-item-modern">
+                <input
+                  type="checkbox"
+                  className="permissao-checkbox"
+                  checked={!!target.permissoes[p.key]}
+                  onChange={() => togglePermissao(target, p.key)}
+                />
+                <span className="permissao-checkbox-custom"></span>
+                <span className="permissao-label">{p.label}</span>
               </label>
             ))}
           </div>
@@ -345,94 +315,151 @@ function CadastroNiveisAcesso() {
     setErro('');
   };
 
-  if (loading) {
-    return <div className="loading"><span className="spinner" />Carregando...</div>;
-  }
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ color: 'white' }}
-          >
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6M9 13h6" />
-            <path d="M7 4v16" />
+      {/* Header */}
+      <div className="nivel-header">
+        <div className="nivel-header-content">
+          <div className="nivel-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div className="nivel-title-area">
+            <h2>Níveis de Acesso e Permissões</h2>
+            <p>Defina quais ações cada nível pode executar</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-nivel" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
-        </div>
+          Novo Nível
+        </button>
+        <div className="nivel-header-decoration"></div>
+      </div>
 
-        <div className="form-hero-content">
-          <h1>Níveis de Acesso e Permissões</h1>
-          <p>Defina quais ações cada nível pode executar.</p>
-        </div>
+      {/* Alerts */}
+      {erro && <div className="alert-modern alert-danger-modern">{erro}</div>}
+      {mensagem && <div className="alert-modern alert-success-modern">{mensagem}</div>}
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-              Novo Nível
-            </span>
-          </button>
+      {/* Stats Cards */}
+      <div className="nivel-stats-grid">
+        <div className="nivel-stat-card">
+          <div className="nivel-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div className="nivel-stat-info">
+            <span className="nivel-stat-number">{niveis.length}</span>
+            <span className="nivel-stat-label">Total de Níveis</span>
+          </div>
+        </div>
+        <div className="nivel-stat-card active">
+          <div className="nivel-stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div className="nivel-stat-info">
+            <span className="nivel-stat-number">{niveis.filter(n => n.ativo).length}</span>
+            <span className="nivel-stat-label">Níveis Ativos</span>
+          </div>
+        </div>
+        <div className="nivel-stat-card inactive">
+          <div className="nivel-stat-icon gray">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+          </div>
+          <div className="nivel-stat-info">
+            <span className="nivel-stat-number">{niveis.filter(n => !n.ativo).length}</span>
+            <span className="nivel-stat-label">Níveis Inativos</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-      {mensagem && <div className="alert alert-success">{mensagem}</div>}
-
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Níveis</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>{contadorLabel}</div>
+      {/* Table */}
+      <div className="nivel-table-card">
+        <div className="nivel-table-header">
+          <div className="nivel-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Níveis de Acesso</span>
+          </div>
+          <div className="nivel-table-count">
+            <span className="count-badge">{niveis.length}</span>
+            <span>{niveis.length === 1 ? 'registro' : 'registros'}</span>
+          </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 320 }}>Nome</th>
-                <th>Descricao</th>
-                <th style={{ width: 190 }}>Permissões Ativas</th>
-                <th style={{ width: 160 }}>Status</th>
-                <th style={{ width: 160 }}>Ações</th>
+                <th>Nível</th>
+                <th>Descrição</th>
+                <th>Permissões</th>
+                <th>Status</th>
+                <th style={{ width: 120 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {niveis.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="empty-state small">
-                    Nenhum nível cadastrado
+                  <td colSpan="5">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                      <h4>Nenhum nível cadastrado</h4>
+                      <p>Cadastre o primeiro nível de acesso</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                niveis.map((n) => (
-                  <tr key={n.id}>
+                niveis.map((n, index) => (
+                  <tr key={n.id} className="nivel-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <strong>{n.nome}</strong>
-                    </td>
-                    <td>{n.descricao}</td>
-                    <td>{Object.entries(n.permissoes || {}).filter(([, v]) => v).length} permissões</td>
-                    <td>
-                      <span className={`badge badge-${n.ativo ? 'concluido' : 'arquivado'}`}>{n.ativo ? 'Ativo' : 'Inativo'}</span>
-                    </td>
-                    <td>
-                      <div className="actions-dropdown" style={{ position: 'relative' }}>
-                        <AcoesDropdownLinha
-                          abrirModalEditar={() => abrirModalEditar(n)}
-                          excluir={() => handleExcluir(n.id)}
-                        />
+                      <div className="nivel-cell">
+                        <div className="nivel-icon-box">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          </svg>
+                        </div>
+                        <span className="nivel-cell-name">{n.nome}</span>
                       </div>
+                    </td>
+                    <td>
+                      <span className="descricao-text">{n.descricao || '—'}</span>
+                    </td>
+                    <td>
+                      <span className="permissoes-badge">
+                        {Object.entries(n.permissoes || {}).filter(([, v]) => v).length} permissões
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${n.ativo ? 'active' : 'inactive'}`}>
+                        <span className={`status-dot ${n.ativo ? 'active' : ''}`}></span>
+                        {n.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td>
+                      <AcoesDropdownLinha
+                        abrirModalEditar={() => abrirModalEditar(n)}
+                        excluir={() => handleExcluir(n.id)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -442,66 +469,87 @@ function CadastroNiveisAcesso() {
         </div>
       </div>
 
+      {/* Modal Novo */}
       {mostrarForm && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>Cadastrar Novo Nível de Acesso</h1>
-                  <p style={{ marginTop: 2 }}>Preencha os dados e selecione as permissões.</p>
-                </div>
+          <div className="modal-content modal-modern modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon violet">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>Cadastrar Novo Nível de Acesso</h2>
+                <p>Preencha os dados e selecione as permissões</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
-              <form id="form-nivel" onSubmit={handleSubmit}>
-                <div className="form-row-modern">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome *</label>
+            <div className="modal-body-modern">
+              <form onSubmit={handleSubmit}>
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
+                    <label>Nome <span className="required">*</span></label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.nome}
                       onChange={(e) => setForm({ ...form, nome: e.target.value })}
                       required
-                      placeholder="Ex: Admin" 
+                      placeholder="Ex: Admin"
                       disabled={salvando}
                     />
                   </div>
 
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <div className="form-group-modern">
                     <label>Descrição</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.descricao}
                       onChange={(e) => setForm({ ...form, descricao: e.target.value })}
                       placeholder="Breve descrição do nível"
                       disabled={salvando}
                     />
                   </div>
-
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Permissões</label>
-                    {renderPermissoesEditor(form)}
-                  </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                <div className="form-group-modern" style={{ gridColumn: '1 / -1' }}>
+                  <label>Permissões</label>
+                  {renderPermissoesEditor(form)}
+                </div>
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
+
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={salvando} form="form-nivel">
-                    {salvando ? 'Salvando...' : 'Salvar'}
+                  <button type="submit" className="btn btn-primary-modern violet" disabled={salvando}>
+                    {salvando ? (
+                      <>
+                        <span className="spinner"></span>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        Salvar
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -510,32 +558,37 @@ function CadastroNiveisAcesso() {
         </div>
       )}
 
+      {/* Modal Editar */}
       {mostrarEditar && nivelEditando && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 900 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>Editar Nível de Acesso</h1>
-                  <p style={{ marginTop: 2 }}>Atualize informações e permissões.</p>
-                </div>
+          <div className="modal-content modal-modern modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon violet">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>Editar Nível de Acesso</h2>
+                <p>Atualize informações e permissões</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
-              <form id="form-editar" onSubmit={handleEditar}>
-                <div className="form-row-modern">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome *</label>
+            <div className="modal-body-modern">
+              <form onSubmit={handleEditar}>
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
+                    <label>Nome <span className="required">*</span></label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={nivelEditando.nome}
                       onChange={(e) => setNivelEditando({ ...nivelEditando, nome: e.target.value })}
                       required
@@ -543,21 +596,21 @@ function CadastroNiveisAcesso() {
                     />
                   </div>
 
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <div className="form-group-modern">
                     <label>Descrição</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={nivelEditando.descricao || ''}
                       onChange={(e) => setNivelEditando({ ...nivelEditando, descricao: e.target.value })}
                       disabled={salvando}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Status</label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={nivelEditando.ativo}
                       onChange={(e) => setNivelEditando({ ...nivelEditando, ativo: parseInt(e.target.value, 10) })}
                       disabled={salvando}
@@ -566,21 +619,38 @@ function CadastroNiveisAcesso() {
                       <option value={0}>Inativo</option>
                     </select>
                   </div>
-
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Permissões</label>
-                    {renderPermissoesEditor(nivelEditando)}
-                  </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                <div className="form-group-modern" style={{ gridColumn: '1 / -1' }}>
+                  <label>Permissões</label>
+                  {renderPermissoesEditor(nivelEditando)}
+                </div>
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
+
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
                     Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={salvando} form="form-editar">
-                    {salvando ? 'Salvando...' : 'Atualizar'}
+                  <button type="submit" className="btn btn-primary-modern violet" disabled={salvando}>
+                    {salvando ? (
+                      <>
+                        <span className="spinner"></span>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        Atualizar
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -593,5 +663,3 @@ function CadastroNiveisAcesso() {
 }
 
 export default CadastroNiveisAcesso;
-
-

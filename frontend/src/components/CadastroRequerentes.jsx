@@ -3,7 +3,6 @@ import api from '../api';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
-
 const estados = [
   'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA',
   'PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'
@@ -145,7 +144,6 @@ function AcoesDropdownLinha({ abrirModalEditar, excluir, visualizar }) {
 function CadastroRequerentes() {
   const navigate = useNavigate();
   const [requerentes, setRequerentes] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [busca, setBusca] = useState('');
@@ -173,16 +171,6 @@ function CadastroRequerentes() {
 
   useEffect(() => {
     carregarRequerentes();
-  }, []);
-
-  useEffect(() => {
-    function onDocDown(e) {
-      const target = e.target;
-      if (!target) return;
-      if (target.closest && target.closest('.actions-dropdown')) return;
-    }
-    document.addEventListener('mousedown', onDocDown);
-    return () => document.removeEventListener('mousedown', onDocDown);
   }, []);
 
   const carregarRequerentes = async () => {
@@ -325,142 +313,161 @@ function CadastroRequerentes() {
     }
   };
 
-  const contadorLabel = useMemo(() => {
-    const n = requerentes.length;
-    return `${n} ${n === 1 ? 'registro' : 'registros'}`;
-  }, [requerentes.length]);
+  const filteredRequerentes = useMemo(() => {
+    if (!busca.trim()) return requerentes;
+    const q = busca.toLowerCase();
+    return requerentes.filter(r =>
+      r.nome?.toLowerCase().includes(q) ||
+      r.cpfCnpj?.includes(busca)
+    );
+  }, [requerentes, busca]);
 
-  if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6M9 13h6" />
-            <path d="M7 4v16" />
+      {/* Header */}
+      <div className="requerente-header">
+        <div className="requerente-header-content">
+          <div className="requerente-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="requerente-title-area">
+            <h2>Cadastro de Interessados</h2>
+            <p>Gerencie interessados e mantenha os dados organizados</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-requerente" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
-        </div>
-        <div className="form-hero-content">
-          <h1>Cadastro de Interessados</h1>
-          <p>Gerencie interessados e mantenha os dados organizados.</p>
-        </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-              Novo Interessado
-            </span>
-          </button>
+          Novo Interessado
+        </button>
+        <div className="requerente-header-decoration"></div>
+      </div>
+
+      {/* Stats Card */}
+      <div className="requerente-stats-grid">
+        <div className="requerente-stat-card">
+          <div className="requerente-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="requerente-stat-info">
+            <span className="requerente-stat-number">{requerentes.length}</span>
+            <span className="requerente-stat-label">Total de Interessados</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Interessados</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>{contadorLabel}</div>
-        </div>
-
-        <div className="search-box" style={{ marginBottom: 16 }}>
+      {/* Search and Filter */}
+      <div className="requerente-controls">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             type="text"
-            className="form-control"
+            className="search-input"
             placeholder="Buscar por nome ou CPF/CNPJ..."
             value={busca}
-            onChange={e => setBusca(e.target.value)}
+            onChange={(e) => setBusca(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={buscar}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.3-4.3" />
+          {busca && (
+            <button className="search-clear" onClick={() => setBusca('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-              Buscar
-            </span>
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setBusca('');
-              carregarRequerentes();
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 16H6L5 6" />
-              </svg>
-              Limpar
-            </span>
-          </button>
+            </button>
+          )}
+        </div>
+        <button className="btn btn-search" onClick={buscar}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          Buscar
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="requerente-table-card">
+        <div className="requerente-table-header">
+          <div className="requerente-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Interessados</span>
+          </div>
+          <div className="requerente-table-count">
+            <span className="count-badge">{filteredRequerentes.length}</span>
+            <span>{filteredRequerentes.length === 1 ? 'registro' : 'registros'}</span>
+          </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 320 }}>Nome</th>
+                <th>Interessado</th>
                 <th>CPF/CNPJ</th>
-                <th style={{ width: 180 }}>Cidade/UF</th>
-                <th style={{ width: 180 }}>Telefone</th>
-                <th style={{ width: 160 }}>Ações</th>
+                <th>Cidade/UF</th>
+                <th>Telefone</th>
+                <th style={{ width: 120 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {requerentes.length === 0 ? (
+              {filteredRequerentes.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="empty-state small">Nenhum interessado cadastrado</td>
+                  <td colSpan="5">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <h4>Nenhum interessado encontrado</h4>
+                      <p>{busca ? 'Tente ajustar sua busca' : 'Cadastre o primeiro interessado'}</p>
+                    </div>
+                  </td>
                 </tr>
               ) : (
-                requerentes.map((c) => (
-                  <tr key={c.id}>
+                filteredRequerentes.map((c, index) => (
+                  <tr key={c.id} className="requerente-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 12,
-                            background: 'var(--primary)15',
-                            border: '1px solid var(--primary)30',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            color: 'var(--primary)',
-                            fontWeight: 900,
-                          }}
-                          aria-hidden="true"
-                        >
-                          <span style={{ fontSize: 12 }}>
-                            {c.nome ? c.nome.trim().slice(0, 1).toUpperCase() : '—'}
-                          </span>
+                      <div className="requerente-cell">
+                        <div className="requerente-avatar">
+                          {c.nome ? c.nome.trim().slice(0, 1).toUpperCase() : '—'}
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, color: 'var(--gray-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {c.nome}
-                          </div>
-                        </div>
+                        <span className="requerente-cell-name">{c.nome}</span>
                       </div>
                     </td>
-                    <td>{c.cpfCnpj || '—'}</td>
-                    <td>{c.cidade ? `${c.cidade}/${c.estado}` : '—'}</td>
-                    <td>{c.telefone || '—'}</td>
                     <td>
-                      <div className="actions-dropdown" style={{ position: 'relative' }}>
-                        <AcoesDropdownLinha
-                          abrirModalEditar={() => abrirModalEditar(c)}
-                          excluir={() => excluir(c.id)}
-                          visualizar={() => navigate(`/cadastros/requerentes/${c.id}`)}
-                        />
-                      </div>
+                      <span className="cpf-cnpj-badge">{c.cpfCnpj || '—'}</span>
+                    </td>
+                    <td>
+                      <span className="cidade-uf">{c.cidade ? `${c.cidade}/${c.estado}` : '—'}</span>
+                    </td>
+                    <td>
+                      <span className="telefone">{c.telefone || '—'}</span>
+                    </td>
+                    <td>
+                      <AcoesDropdownLinha
+                        abrirModalEditar={() => abrirModalEditar(c)}
+                        excluir={() => excluir(c.id)}
+                        visualizar={() => navigate(`/cadastros/requerentes/${c.id}`)}
+                      />
                     </td>
                   </tr>
                 ))
@@ -470,44 +477,49 @@ function CadastroRequerentes() {
         </div>
       </div>
 
+      {/* Modal */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 820 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Interessado' : 'Novo Interessado'}</h1>
-                  <p style={{ marginTop: 2 }}>Preencha os dados do interessado.</p>
-                </div>
+          <div className="modal-content modal-modern" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon teal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>{editando ? 'Editar Interessado' : 'Novo Interessado'}</h2>
+                <p>Preencha os dados do interessado</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body-modern">
               <form onSubmit={salvar}>
-                <div className="form-row-modern">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={form.nome}
-                      onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                      required
-                      placeholder="Ex: João da Silva"
-                      disabled={somenteLeitura}
-                    />
-                  </div>
+                <div className="form-group-modern full-width">
+                  <label>Nome Completo <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    className="form-control-modern"
+                    value={form.nome}
+                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    required
+                    placeholder="Ex: João da Silva"
+                    disabled={somenteLeitura}
+                  />
+                </div>
 
-                  <div className="form-group">
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
                     <label>Tipo de Pessoa</label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.tipoPessoa}
                       onChange={(e) => setForm({ ...form, tipoPessoa: e.target.value })}
                       disabled={somenteLeitura}
@@ -517,99 +529,126 @@ function CadastroRequerentes() {
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>CPF/CNPJ</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.cpfCnpj}
                       onChange={(e) => setForm({ ...form, cpfCnpj: formatarCpfCnpj(e.target.value) })}
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      placeholder="000.000.000-00"
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Telefone</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.telefone}
                       onChange={(e) => setForm({ ...form, telefone: e.target.value })}
+                      placeholder="(00) 00000-0000"
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Email</label>
+                  <div className="form-group-modern">
+                    <label>E-mail</label>
                     <input
                       type="email"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="exemplo@email.com"
                       disabled={somenteLeitura}
                     />
                   </div>
+                </div>
 
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Endereco</label>
+                <div className="form-section-divider">
+                  <span>Endereço</span>
+                </div>
+
+                <div className="form-group-modern full-width">
+                  <label>Endereço</label>
+                  <input
+                    type="text"
+                    className="form-control-modern"
+                    value={form.endereco}
+                    onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+                    placeholder="Rua, Avenida..."
+                    disabled={somenteLeitura}
+                  />
+                </div>
+
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
+                    <label>Número</label>
                     <input
                       type="text"
-                      className="form-control"
-                      value={form.endereco}
-                      onChange={(e) => setForm({ ...form, endereco: e.target.value })}
-                      disabled={somenteLeitura}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Numero</label>
-                    <input
-                      type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.numero}
                       onChange={(e) => setForm({ ...form, numero: e.target.value })}
+                      placeholder="123"
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Complemento</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.complemento}
                       onChange={(e) => setForm({ ...form, complemento: e.target.value })}
+                      placeholder="Sala, Andar..."
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Bairro</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.bairro}
                       onChange={(e) => setForm({ ...form, bairro: e.target.value })}
+                      placeholder="Bairro"
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
+                    <label>CEP</label>
+                    <input
+                      type="text"
+                      className="form-control-modern"
+                      value={form.cep}
+                      onChange={(e) => setForm({ ...form, cep: e.target.value })}
+                      placeholder="00000-000"
+                      disabled={somenteLeitura}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
                     <label>Cidade</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.cidade}
                       onChange={(e) => setForm({ ...form, cidade: e.target.value })}
+                      placeholder="Cidade"
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Estado</label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.estado}
                       onChange={(e) => setForm({ ...form, estado: e.target.value })}
                       disabled={somenteLeitura}
@@ -620,29 +659,35 @@ function CadastroRequerentes() {
                       ))}
                     </select>
                   </div>
-
-                  <div className="form-group">
-                    <label>CEP</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={form.cep}
-                      onChange={(e) => setForm({ ...form, cep: e.target.value })}
-                      disabled={somenteLeitura}
-                    />
-                  </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
-                    {somenteLeitura ? 'Fechar' : 'Cancelar'}
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                    Cancelar
                   </button>
 
                   {!somenteLeitura && (
-                    <button type="submit" className="btn btn-primary" disabled={salvando}>
-                      {salvando ? 'Salvando...' : (editando ? 'Atualizar' : 'Salvar')}
+                    <button type="submit" className="btn btn-primary-modern teal" disabled={salvando}>
+                      {salvando ? (
+                        <>
+                          <span className="spinner"></span>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          {editando ? 'Atualizar' : 'Salvar'}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -655,10 +700,4 @@ function CadastroRequerentes() {
   );
 }
 
-// Patch: garantir que "Visualizar" navegue usando o router, evitando redirecionamento por troca de location
-// (window.location.assign pode causar refresh e perda momentânea do estado do usuário)
-
 export default CadastroRequerentes;
-
-
-

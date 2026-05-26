@@ -5,7 +5,6 @@ function CadastroPrioridades() {
   const [prioridades, setPrioridades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
-
   const [busca, setBusca] = useState('');
 
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -31,11 +30,6 @@ function CadastroPrioridades() {
       setLoading(false);
     }
   };
-
-  const contadorLabel = useMemo(() => {
-    const n = prioridades.length;
-    return `${n} ${n === 1 ? 'registro' : 'registros'}`;
-  }, [prioridades.length]);
 
   const abrirModalNovo = () => {
     setErro('');
@@ -121,161 +115,151 @@ function CadastroPrioridades() {
     });
   }, [prioridades, busca]);
 
-  if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6" />
-            <path d="M7 4v16" opacity="0.7" />
-            <path d="M9 13h6" />
+      {/* Header */}
+      <div className="prioridade-header">
+        <div className="prioridade-header-content">
+          <div className="prioridade-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 7h10" opacity="0.25" />
+              <path d="M7 12h10" />
+              <path d="M7 17h10" opacity="0.7" />
+            </svg>
+          </div>
+          <div className="prioridade-title-area">
+            <h2>Cadastro de Prioridades</h2>
+            <p>Gerencie níveis de prioridade com cor e hierarquia</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-prioridade" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
-        </div>
-        <div className="form-hero-content">
-          <h1>Cadastro de Prioridades</h1>
-          <p>Gerencie níveis de prioridade com cor e hierarquia.</p>
-        </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-              Nova Prioridade
-            </span>
-          </button>
+          Nova Prioridade
+        </button>
+        <div className="prioridade-header-decoration"></div>
+      </div>
+
+      {/* Stats Card */}
+      <div className="prioridade-stats-grid">
+        <div className="prioridade-stat-card">
+          <div className="prioridade-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 7h10M7 12h10M7 17h10" />
+            </svg>
+          </div>
+          <div className="prioridade-stat-info">
+            <span className="prioridade-stat-number">{prioridades.length}</span>
+            <span className="prioridade-stat-label">Total de Prioridades</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Prioridades</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>{contadorLabel}</div>
-        </div>
-
-        <div className="search-box" style={{ marginBottom: 16 }}>
+      {/* Search and Filter */}
+      <div className="prioridade-controls">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
           <input
             type="text"
-            className="form-control"
+            className="search-input"
             placeholder="Buscar por nome, nível ou cor..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={() => { /* filtro local */ }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.3-4.3" />
+          {busca && (
+            <button className="search-clear" onClick={() => setBusca('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-              Buscar
-            </span>
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setBusca('')}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 16H6L5 6" />
-              </svg>
-              Limpar
-            </span>
-          </button>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="prioridade-table-card">
+        <div className="prioridade-table-header">
+          <div className="prioridade-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Prioridades</span>
+          </div>
+          <div className="prioridade-table-count">
+            <span className="count-badge">{prioridadesFiltradas.length}</span>
+            <span>{prioridadesFiltradas.length === 1 ? 'registro' : 'registros'}</span>
+          </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 340 }}>Nome</th>
-                <th style={{ width: 120 }}>Nível</th>
+                <th>Prioridade</th>
+                <th>Nível</th>
                 <th>Cor</th>
-                <th style={{ width: 160 }}>Ações</th>
+                <th style={{ width: 140 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {prioridadesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="empty-state small">Nenhuma prioridade encontrada</td>
+                  <td colSpan="4">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M7 7h10M7 12h10M7 17h10" />
+                      </svg>
+                      <h4>Nenhuma prioridade encontrada</h4>
+                      <p>{busca ? 'Tente ajustar sua busca' : 'Cadastre a primeira prioridade'}</p>
+                    </div>
+                  </td>
                 </tr>
               ) : (
-                prioridadesFiltradas.map((p) => (
-                  <tr key={p.id}>
+                prioridadesFiltradas.map((p, index) => (
+                  <tr key={p.id} className="prioridade-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 12,
-                            background: 'var(--primary)15',
-                            border: '1px solid var(--primary)30',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            color: 'var(--primary)',
-                            fontWeight: 900,
-                          }}
-                        >
-                          <span style={{ fontSize: 12 }}>
-                            {p.nome ? p.nome.trim().slice(0, 1).toUpperCase() : '—'}
-                          </span>
+                      <div className="prioridade-cell">
+                        <div className="prioridade-icon-box" style={{ background: `${p.cor}20`, borderColor: `${p.cor}40`, color: p.cor }}>
+                          <span style={{ fontSize: 14, fontWeight: 800 }}>{p.nome ? p.nome.trim().slice(0, 1).toUpperCase() : '—'}</span>
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontWeight: 700,
-                              color: 'var(--gray-900)',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {p.nome}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{p.nivel}</td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            width: 20,
-                            height: 20,
-                            borderRadius: 6,
-                            background: p.cor,
-                            border: '1px solid var(--gray-200)',
-                          }}
-                        />
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-700)' }}>{p.cor}</span>
+                        <span className="prioridade-cell-name">{p.nome}</span>
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <button className="btn btn-sm btn-secondary" onClick={() => abrirModalEditar(p)}>
-                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      <span className="nivel-badge">{p.nivel}</span>
+                    </td>
+                    <td>
+                      <div className="cor-cell">
+                        <span className="cor-swatch" style={{ background: p.cor }} />
+                        <span className="cor-code">{p.cor}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="action-buttons">
+                        <button className="btn btn-sm btn-edit" onClick={() => abrirModalEditar(p)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                           </svg>
                           Editar
                         </button>
-                        <button className="btn btn-sm btn-danger" onClick={() => excluir(p.id)}>
-                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h8" />
+                        <button className="btn btn-sm btn-danger-modern" onClick={() => excluir(p.id)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                            <path d="M8 12h8" />
                           </svg>
-                          Desativar
                         </button>
                       </div>
                     </td>
@@ -287,65 +271,68 @@ function CadastroPrioridades() {
         </div>
       </div>
 
+      {/* Modal */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 820 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 7h10" opacity="0.25" />
-                    <path d="M7 12h10" />
-                    <path d="M7 17h10" opacity="0.7" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Prioridade' : 'Cadastrar Prioridade'}</h1>
-                  <p style={{ marginTop: 2 }}>Preencha os dados da prioridade.</p>
-                </div>
+          <div className="modal-content modal-modern" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon yellow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 7h10M7 12h10M7 17h10" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>{editando ? 'Editar Prioridade' : 'Nova Prioridade'}</h2>
+                <p>Preencha os dados da prioridade</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
-              <form id="form-prioridade" onSubmit={salvar}>
-                <div className="form-row-modern">
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                    <label>Nome *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={form.nome}
-                      onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                      required
-                      placeholder="Ex: Urgente"
-                      disabled={somenteLeitura}
-                    />
-                  </div>
+            <div className="modal-body-modern">
+              <form onSubmit={salvar}>
+                <div className="form-group-modern full-width">
+                  <label>Nome da Prioridade <span className="required">*</span></label>
+                  <input
+                    type="text"
+                    className="form-control-modern"
+                    value={form.nome}
+                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    required
+                    placeholder="Ex: Urgente"
+                    disabled={somenteLeitura}
+                  />
+                </div>
 
-                  <div className="form-group">
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
                     <label>Nível</label>
                     <input
                       type="number"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.nivel}
                       onChange={(e) => setForm({ ...form, nivel: parseInt(e.target.value) || 0 })}
                       disabled={somenteLeitura}
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Cor</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div className="color-input-wrapper">
                       <input
                         type="color"
+                        className="color-picker"
                         value={form.cor}
                         onChange={(e) => setForm({ ...form, cor: e.target.value })}
-                        style={{ width: 50, height: 40, border: 'none', cursor: 'pointer' }}
                         disabled={somenteLeitura}
                       />
                       <input
                         type="text"
-                        className="form-control"
+                        className="form-control-modern"
                         value={form.cor}
                         onChange={(e) => setForm({ ...form, cor: e.target.value })}
                         disabled={somenteLeitura}
@@ -354,21 +341,33 @@ function CadastroPrioridades() {
                   </div>
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                     Cancelar
                   </button>
+
                   {!somenteLeitura && (
-                    <button type="submit" className="btn btn-primary" disabled={salvando}>
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {salvando ? 'Salvando...' : (editando ? 'Atualizar' : 'Salvar')}
+                    <button type="submit" className="btn btn-primary-modern yellow" disabled={salvando}>
+                      {salvando ? (
+                        <>
+                          <span className="spinner"></span>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          {editando ? 'Atualizar' : 'Salvar'}
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -382,5 +381,3 @@ function CadastroPrioridades() {
 }
 
 export default CadastroPrioridades;
-
-

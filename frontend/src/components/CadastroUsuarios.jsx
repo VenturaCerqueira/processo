@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import api from '../api';
 import { useModalConfirm } from './ModalConfirmProvider';
 
-
 function AcoesDropdown({ btnRef, actions }) {
   const [open, setOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState({ top: 0, left: 0 });
@@ -159,6 +158,7 @@ function CadastroUsuarios() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [mensagem, setMensagem] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [setores, setSetores] = useState([]);
   const [niveisAcesso, setNiveisAcesso] = useState([]);
@@ -323,7 +323,6 @@ function CadastroUsuarios() {
     }
   };
 
-
   const alterarAtivo = async (u, novoAtivo) => {
     setErro('');
     setMensagem('');
@@ -338,7 +337,6 @@ function CadastroUsuarios() {
     if (!ok) return;
 
     try {
-      // enviar campos obrigatórios para evitar dependência do backend em validações
       await api.put(`/auth/usuarios/${u.id}`, {
         nome: u.nome || '',
         email: u.email || '',
@@ -355,88 +353,204 @@ function CadastroUsuarios() {
     }
   };
 
+  const filteredUsers = usuarios.filter(u => {
+    const term = searchTerm.toLowerCase();
+    return (
+      u.nome?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term) ||
+      u.cargo?.toLowerCase().includes(term) ||
+      u.setor?.toLowerCase().includes(term)
+    );
+  });
 
-  if (loading) return <div className="loading"><span className="spinner" />Carregando...</div>;
+  const activeUsers = filteredUsers.filter(u => u.ativo);
+  const inactiveUsers = filteredUsers.filter(u => !u.ativo);
+
+  if (loading) return (
+    <div className="loading-modern">
+      <span className="spinner"></span>
+      <span>Carregando...</span>
+    </div>
+  );
 
   return (
     <div className="page-content">
-      <div className="form-hero">
-        <div className="form-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'white' }}>
-            <path d="M4 4h16v16H4z" opacity="0.25" />
-            <path d="M9 9h6M9 13h6M7 4v16" />
+      {/* Header */}
+      <div className="users-header">
+        <div className="users-header-content">
+          <div className="users-icon-wrapper">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <div className="users-title-area">
+            <h2>Cadastro de Usuários</h2>
+            <p>Gerencie os usuários do sistema</p>
+          </div>
+        </div>
+        <button className="btn btn-primary btn-new-user" onClick={abrirModalNovo}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
           </svg>
+          Novo Usuário
+        </button>
+        <div className="users-header-decoration"></div>
+      </div>
+
+      {/* Alerts */}
+      {erro && <div className="alert-modern alert-danger-modern">{erro}</div>}
+      {mensagem && <div className="alert-modern alert-success-modern">{mensagem}</div>}
+
+      {/* Stats Cards */}
+      <div className="users-stats-grid">
+        <div className="user-stat-card primary">
+          <div className="user-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="user-stat-info">
+            <span className="user-stat-number">{usuarios.length}</span>
+            <span className="user-stat-label">Total de Usuários</span>
+          </div>
         </div>
-        <div className="form-hero-content">
-          <h1>Cadastro de Usuários</h1>
-          <p>Gerencie os usuários do sistema (criação, edição e reset de senha).</p>
+        <div className="user-stat-card active">
+          <div className="user-stat-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div className="user-stat-info">
+            <span className="user-stat-number">{activeUsers.length}</span>
+            <span className="user-stat-label">Usuários Ativos</span>
+          </div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button type="button" className="btn btn-primary" onClick={abrirModalNovo}>
-            Novo Usuário
-          </button>
+        <div className="user-stat-card inactive">
+          <div className="user-stat-icon gray">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+            </svg>
+          </div>
+          <div className="user-stat-info">
+            <span className="user-stat-number">{inactiveUsers.length}</span>
+            <span className="user-stat-label">Usuários Inativos</span>
+          </div>
         </div>
       </div>
 
-      {erro && <div className="alert alert-danger">{erro}</div>}
-      {mensagem && <div className="alert alert-success">{mensagem}</div>}
+      {/* Search Bar */}
+      <div className="users-search-section">
+        <div className="search-input-wrapper">
+          <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Buscar por nome, email, cargo ou setor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="search-clear" onClick={() => setSearchTerm('')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
 
-      <div className="card" style={{ overflow: 'visible' }}>
-        <div className="card-header" style={{ marginBottom: 12 }}>
-          <div className="card-title">Lista de Usuários</div>
-          <div style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 700 }}>
-            {usuarios.length} {usuarios.length === 1 ? 'registro' : 'registros'}
+      {/* Users Table */}
+      <div className="users-table-card">
+        <div className="users-table-header">
+          <div className="users-table-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h18v18H3zM3 9h18M9 21V9" />
+            </svg>
+            <span>Lista de Usuários</span>
+          </div>
+          <div className="users-table-count">
+            <span className="count-badge">{filteredUsers.length}</span>
+            <span>{filteredUsers.length === 1 ? 'registro' : 'registros'}</span>
           </div>
         </div>
 
-        <div className="table-container">
+        <div className="table-container modern-table">
           <table>
             <thead>
               <tr>
-                <th style={{ width: 280 }}>Nome</th>
-                <th>Email</th>
-                <th style={{ width: 160 }}>Cargo</th>
-                <th style={{ width: 200 }}>Setor</th>
-                <th style={{ width: 140 }}>Nível</th>
-                <th style={{ width: 130 }}>Status</th>
-                <th style={{ width: 170 }}>Ações</th>
+                <th>Usuário</th>
+                <th>Cargo / Setor</th>
+                <th>Nível</th>
+                <th>Status</th>
+                <th style={{ width: 120 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {usuarios.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="empty-state small">Nenhum usuário cadastrado</td>
+                  <td colSpan="5">
+                    <div className="table-empty-state">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                      </svg>
+                      <h4>Nenhum usuário encontrado</h4>
+                      <p>{searchTerm ? 'Tente ajustar sua busca' : 'Cadastre o primeiro usuário'}</p>
+                    </div>
+                  </td>
                 </tr>
               ) : (
-                usuarios.map((u) => (
-                  <tr key={u.id}>
+                filteredUsers.map((u, index) => (
+                  <tr key={u.id} className="user-row" style={{ animationDelay: `${index * 30}ms` }}>
                     <td>
-                      <strong style={{ color: 'var(--gray-900)' }}>{u.nome}</strong>
+                      <div className="user-cell">
+                        <div className="user-avatar-small">
+                          {u.nome?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="user-cell-info">
+                          <span className="user-cell-name">{u.nome}</span>
+                          <span className="user-cell-email">{u.email}</span>
+                        </div>
+                      </div>
                     </td>
-                    <td>{u.email}</td>
-                    <td>{u.cargo}</td>
-                    <td>{u.setor}</td>
                     <td>
-                      <span className="badge" style={{ background: u.nivelAcesso === 'admin' ? '#dbeafe' : '#f3f4f6', color: u.nivelAcesso === 'admin' ? '#1e40af' : '#374151' }}>
+                      <div className="user-role-cell">
+                        <span className="user-role">{u.cargo}</span>
+                        <span className="user-sector">{u.setor}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`nivel-badge nivel-${u.nivelAcesso?.toLowerCase()}`}>
                         {u.nivelAcesso || 'operador'}
                       </span>
                     </td>
                     <td>
                       {u.primeiroAcesso === 1 ? (
-                        <span className="badge" style={{ background: 'var(--warning-light)', color: 'var(--warning)' }}>Pendente</span>
+                        <span className="status-badge warning">Pendente</span>
                       ) : (
-                        <span className={`badge badge-${u.ativo ? 'concluido' : 'arquivado'}`}>{u.ativo ? 'Ativo' : 'Inativo'}</span>
+                        <span className={`status-badge ${u.ativo ? 'active' : 'inactive'}`}>
+                          <span className={`status-dot ${u.ativo ? 'active' : ''}`}></span>
+                          {u.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
                       )}
                     </td>
                     <td>
-                      <div className="actions-dropdown" style={{ position: 'relative' }}>
-                        <AcoesDropdownLinha
-                          u={u}
-                          abrirModalEditar={abrirModalEditar}
-                          resetarSenha={resetarSenha}
-                          alterarAtivo={alterarAtivo}
-                        />
-                      </div>
+                      <AcoesDropdownLinha
+                        u={u}
+                        abrirModalEditar={abrirModalEditar}
+                        resetarSenha={resetarSenha}
+                        alterarAtivo={alterarAtivo}
+                      />
                     </td>
                   </tr>
                 ))
@@ -446,34 +560,37 @@ function CadastroUsuarios() {
         </div>
       </div>
 
+      {/* Modal */}
       {mostrarModal && (
         <div className="modal-overlay" onClick={fecharModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 780 }}>
-            <div className="modal-header">
-              <div className="form-hero" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
-                <div className="form-hero-icon" style={{ width: 52, height: 52 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" opacity="0.25" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </div>
-                <div className="form-hero-content" style={{ marginTop: 2 }}>
-                  <h1 style={{ fontSize: 24 }}>{editando ? 'Editar Usuário' : 'Novo Usuário'}</h1>
-                  <p style={{ marginTop: 2 }}>
-                    {editando ? 'Atualize os dados do usuário e seu status.' : 'Cadastre um novo usuário (senha temporária será exibida ao salvar).'}
-                  </p>
-                </div>
+          <div className="modal-content modal-modern" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header-modern">
+              <div className="modal-header-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
               </div>
+              <div className="modal-header-text">
+                <h2>{editando ? 'Editar Usuário' : 'Novo Usuário'}</h2>
+                <p>{editando ? 'Atualize os dados do usuário' : 'Cadastre um novo usuário no sistema'}</p>
+              </div>
+              <button className="modal-close" onClick={fecharModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body-modern">
               <form onSubmit={salvar}>
-                <div className="form-row-modern">
-                  <div className="form-group">
-                    <label>Nome *</label>
+                <div className="form-row-grid">
+                  <div className="form-group-modern">
+                    <label>Nome Completo <span className="required">*</span></label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.nome}
                       onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
                       required
@@ -482,11 +599,11 @@ function CadastroUsuarios() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Email *</label>
+                  <div className="form-group-modern">
+                    <label>E-mail <span className="required">*</span></label>
                     <input
                       type="email"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.email}
                       onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                       required
@@ -495,11 +612,11 @@ function CadastroUsuarios() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Cargo *</label>
+                  <div className="form-group-modern">
+                    <label>Cargo <span className="required">*</span></label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.cargo}
                       onChange={(e) => setForm((prev) => ({ ...prev, cargo: e.target.value }))}
                       required
@@ -508,10 +625,10 @@ function CadastroUsuarios() {
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label>Setor *</label>
+                  <div className="form-group-modern">
+                    <label>Setor <span className="required">*</span></label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.setor}
                       onChange={(e) => setForm((prev) => ({ ...prev, setor: e.target.value }))}
                       required
@@ -524,10 +641,10 @@ function CadastroUsuarios() {
                     </select>
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group-modern">
                     <label>Nível de Acesso</label>
                     <select
-                      className="form-control"
+                      className="form-control-modern"
                       value={form.nivelAcesso}
                       onChange={(e) => setForm((prev) => ({ ...prev, nivelAcesso: e.target.value }))}
                       disabled={somenteLeitura}
@@ -543,10 +660,10 @@ function CadastroUsuarios() {
                   </div>
 
                   {editando && (
-                    <div className="form-group">
+                    <div className="form-group-modern">
                       <label>Status</label>
                       <select
-                        className="form-control"
+                        className="form-control-modern"
                         value={form.ativo}
                         onChange={(e) => setForm((prev) => ({ ...prev, ativo: parseInt(e.target.value, 10) }))}
                         disabled={somenteLeitura}
@@ -558,14 +675,31 @@ function CadastroUsuarios() {
                   )}
                 </div>
 
-                {erro && <div className="alert alert-danger" style={{ marginTop: 14 }}>{erro}</div>}
+                {erro && <div className="alert-modern alert-danger-modern" style={{ marginTop: 16 }}>{erro}</div>}
 
-                <div className="modal-footer" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-secondary" onClick={fecharModal} disabled={salvando}>
-                    {editando ? 'Cancelar' : 'Cancelar'}
+                <div className="modal-actions">
+                  <button type="button" className="btn btn-secondary-modern" onClick={fecharModal} disabled={salvando}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                    Cancelar
                   </button>
-                  <button type="submit" className="btn btn-primary" disabled={salvando}>
-                    {salvando ? 'Salvando...' : editando ? 'Atualizar' : 'Salvar'}
+                  <button type="submit" className="btn btn-primary-modern" disabled={salvando}>
+                    {salvando ? (
+                      <>
+                        <span className="spinner"></span>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        {editando ? 'Atualizar' : 'Salvar'}
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
@@ -578,5 +712,3 @@ function CadastroUsuarios() {
 }
 
 export default CadastroUsuarios;
-
-
