@@ -391,48 +391,45 @@ function CaixaEntrada() {
   };
 
   const renderTable = (lista, title, contagem) => {
-    // contagem no backend está indexada por “encaminhado”
-    // mas para evitar inconsistência quando o backend mudar/retornar outra chave,
-    // calculamos o total sempre pelo tamanho da lista em tela.
     const total = lista.length || (contagem?.encaminhado ?? 0);
 
     return (
-      <div className="card" style={{ flex: 1, minWidth: 360 }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: 16 }}>{title}</h3>
-            <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>Aguardando recebimento</div>
+      <div className=”inbox-table-card”>
+        <div className=”inbox-table-header”>
+          <div className=”inbox-table-title”>
+            <h3>{title}</h3>
+            <span className=”inbox-table-badge”>{total}</span>
           </div>
-          <div style={{ fontWeight: 800, color: '#1e40af', background: '#dbeafe', border: '1px solid #93c5fd', borderRadius: 999, padding: '6px 12px' }}>
-            {total}
-          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Aguardando recebimento</div>
         </div>
 
-        <div className="table-container">
-          <table>
+        <div className=”inbox-table-container”>
+          <table className=”inbox-table”>
             <thead>
               <tr>
-                <th style={{ width: 1, textAlign: 'center' }}></th>
+                <th style={{ width: 50, textAlign: 'center' }}></th>
                 <th>Número</th>
                 <th>Tipo</th>
                 <th>Assunto</th>
-                <th>Interresado</th>
+                <th>Interessado</th>
                 <th>Prioridade</th>
                 <th>Situação</th>
                 <th>Setor</th>
                 <th>Data</th>
-                <th style={{ width: 1, whiteSpace: 'nowrap' }}>Ações</th>
+                <th style={{ width: 100 }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {lista.length === 0 ? (
                 <tr>
-                  <td colSpan="10">
-                    <div className="empty-state small">
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                      </svg>
-                      <h4 style={{ marginTop: 8 }}>Nenhum processo</h4>
+                  <td colSpan=”10”>
+                    <div className=”inbox-empty”>
+                      <div className=”inbox-empty-icon”>
+                        <svg fill=”none” stroke=”currentColor” viewBox=”0 0 24 24”>
+                          <path strokeLinecap=”round” strokeLinejoin=”round” strokeWidth={1.5} d=”M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4” />
+                        </svg>
+                      </div>
+                      <h4>Nenhum processo</h4>
                       <p>Filtre ou aguarde novos encaminhamentos.</p>
                     </div>
                   </td>
@@ -444,39 +441,23 @@ function CaixaEntrada() {
                       <button
                         onClick={() => toggleFavorito(p.id)}
                         title={p.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          padding: 4,
-                          color: p.favorito ? '#f59e0b' : '#94a3b8',
-                          transition: 'color 0.2s ease, transform 0.15s ease',
-                          transform: p.favorito ? 'scale(1.1)' : 'scale(1)',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!p.favorito) e.currentTarget.style.color = '#f59e0b';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!p.favorito) e.currentTarget.style.color = '#94a3b8';
-                        }}
+                        className={`inbox-favorite-btn ${p.favorito ? 'active' : ''}`}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill={p.favorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        <svg viewBox=”0 0 24 24” fill={p.favorito ? 'currentColor' : 'none'} stroke=”currentColor” strokeWidth=”2” strokeLinecap=”round” strokeLinejoin=”round”>
+                          <polygon points=”12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2” />
                         </svg>
                       </button>
                     </td>
                     <td>
-                      <Link to={`/processos/${p.id}`} className="table-link">
+                      <Link to={`/processos/${p.id}`} className=”inbox-process-link”>
                         {p.numero}
                       </Link>
                     </td>
                     <td>{p.tipo}</td>
                     <td>{p.assunto}</td>
                     <td>{p.requerente}</td>
-                    <td className={`priority-${p.prioridade}`}>{p.prioridade}</td>
-                    <td>
-                      <span className={`badge badge-${p.situacao}`}>{p.situacao}</span>
-                    </td>
+                    <td><span className={`inbox-priority ${p.prioridade}`}>{p.prioridade}</span></td>
+                    <td><span className={`inbox-badge ${p.situacao}`}>{p.situacao}</span></td>
                     <td>{p.setorAtual}</td>
                     <td>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td>
@@ -494,53 +475,27 @@ function CaixaEntrada() {
 
   return (
     <div className="page-content">
-      <div className="top-bar" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ minWidth: 0 }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            Caixa de Entrada
-            {user?.nome && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: '#1e40af',
-                  background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-                  padding: '6px 14px 6px 10px',
-                  borderRadius: 24,
-                  border: '1px solid #93c5fd',
-                  boxShadow: '0 1px 3px rgba(59, 130, 246, 0.12)',
-                  letterSpacing: 0.2,
-                }}
-              >
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50%',
-                    background: '#3b82f6',
-                    color: '#fff',
-                    fontSize: 11,
-                    fontWeight: 700,
-                  }}
-                >
-                  {user.nome
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase()}
-                </span>
-                {user.nome}
-              </span>
-            )}
-          </h2>
+      {/* Modern Header */}
+      <div className="inbox-header">
+        <div className="inbox-header-left">
+          <div className="inbox-header-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="inbox-header-title">Caixa de Entrada</h2>
+            <p className="inbox-header-subtitle">Gerencie os processos encaminhados para você</p>
+          </div>
         </div>
+        {user?.nome && (
+          <div className="inbox-user-badge">
+            <div className="inbox-user-avatar">
+              {user.nome.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+            {user.nome}
+          </div>
+        )}
         <button className="btn btn-primary" onClick={() => navigate('/processos/novo')}>
           <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ marginRight: 6 }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -549,56 +504,66 @@ function CaixaEntrada() {
         </button>
       </div>
 
-      <div className="card" style={{ marginBottom: 24, padding: '16px 24px' }}>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Buscar por número, Interresado ou assunto..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
+      {/* Modern Filters Bar */}
+      <div className="inbox-filters-bar">
+        <div className="inbox-search-wrapper">
+          <svg className="inbox-search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            className="inbox-search-input"
+            placeholder="Buscar por número, interessado ou assunto..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
 
-          <select className="form-control" style={{ width: 180 }} value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
-            <option value="">Todas as prioridades</option>
-            <option value="urgente">Urgente</option>
-            <option value="alta">Alta</option>
-            <option value="normal">Normal</option>
-            <option value="baixa">Baixa</option>
-          </select>
+        <select className="inbox-filter-select" value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
+          <option value="">Todas as situações</option>
+          <option value="encaminhado">Encaminhado</option>
+          <option value="recebido">Recebido</option>
+          <option value="retornado">Retornado</option>
+          <option value="pausado">Suspenso</option>
+          <option value="aprovado">Deferido</option>
+          <option value="arquivado">Arquivado</option>
+        </select>
 
-          <button
-            className={`btn ${filtroFavorito ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setFiltroFavorito((v) => !v)}
-            title="Filtrar favoritos"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        <button
+          className={`inbox-filter-btn ${filtroFavorito ? 'active' : ''}`}
+          onClick={() => setFiltroFavorito((v) => !v)}
+          title="Filtrar favoritos"
+        >
+          <svg viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          Favoritos
+        </button>
+
+        <button
+          className="inbox-filter-btn"
+          onClick={() => {
+            setBusca('');
+            setFiltroPrioridade('encaminhado');
+            setFiltroFavorito(false);
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Limpar
+        </button>
+
+        <div className="inbox-stats">
+          <div className="inbox-stats-total">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            {filtroFavorito ? 'Favoritos' : 'Favoritos'}
-          </button>
-
-          <button
-            className="btn btn-secondary limpar-btn"
-            onClick={() => {
-              setBusca('');
-              // não pode ficar '' porque o render filtra por p.situacao === filtroPrioridade
-              setFiltroPrioridade('encaminhado');
-              setFiltroFavorito(false);
-            }}
-          >
-            Limpar
-          </button>
-
-          <span style={{ fontSize: 13, color: 'var(--gray-500)', fontWeight: 600, marginLeft: 'auto' }}>
             {listaSetor.length + listaUsuario.length} processos
-          </span>
-          <span style={{ fontSize: 12, color: 'var(--gray-500)', fontWeight: 600 }}>
-            (setor: {listaSetor.length} • usuário: {listaUsuario.length})
-          </span>
+          </div>
+          <div className="inbox-stats-divider"></div>
+          <span>Setor: <strong>{listaSetor.length}</strong></span>
+          <span>Usuário: <strong>{listaUsuario.length}</strong></span>
         </div>
       </div>
 
