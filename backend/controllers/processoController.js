@@ -1304,7 +1304,7 @@ export const criarProcessoFilho = async (req, res) => {
 
 export const relatorioAndamento = async (req, res) => {
   try {
-    const { dataInicio, dataFim, setor, tipo } = req.query;
+    const { dataInicio, dataFim, setor, tipo, status } = req.query;
     let sql = "SELECT * FROM processos WHERE 1=1";
     const params = [];
 
@@ -1326,6 +1326,10 @@ export const relatorioAndamento = async (req, res) => {
     if (tipo) {
       sql += " AND tipo = ?";
       params.push(tipo);
+    }
+    if (status) {
+      sql += " AND status = ?";
+      params.push(status);
     }
 
     const [processos] = await pool.query(sql, params);

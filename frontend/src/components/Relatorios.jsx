@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 
 function Relatorios() {
-  const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', setor: '', tipo: '' });
+  const [filtros, setFiltros] = useState({ dataInicio: '', dataFim: '', setor: '', tipo: '', status: '' });
   const [relatorio, setRelatorio] = useState(null);
   const [loading, setLoading] = useState(false);
   const [tipos, setTipos] = useState([]);
@@ -30,6 +30,7 @@ function Relatorios() {
       if (filtros.dataFim) params.append('dataFim', filtros.dataFim);
       if (filtros.setor) params.append('setor', filtros.setor);
       if (filtros.tipo) params.append('tipo', filtros.tipo);
+      if (filtros.status) params.append('status', filtros.status);
 
       const response = await api.get(`/processos/relatorio?${params}`);
       setRelatorio(response.data);
@@ -77,6 +78,7 @@ function Relatorios() {
     'Pendente': { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', icon: '⏳' },
     'Arquivado': { bg: 'linear-gradient(135deg, #4b5563 0%, #6b7280 100%)', icon: '📁' },
     'Cancelado': { bg: 'linear-gradient(135deg, #eb3349 0%, #ef4060 100%)', icon: '❌' },
+    'Indeferido': { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', icon: '🚫' },
     'default': { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', icon: '📋' }
   };
 
@@ -199,6 +201,28 @@ function Relatorios() {
                 {tipos.map(t => (
                   <option key={t.id} value={t.nome}>{t.nome}</option>
                 ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="filter-group">
+            <label>Status</label>
+            <div className="input-icon-wrapper">
+              <svg className="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              <select
+                className="form-control modern-input"
+                value={filtros.status}
+                onChange={e => setFiltros({ ...filtros, status: e.target.value })}
+              >
+                <option value="">Todos os Status</option>
+                <option value="Em Andamento">Em Andamento</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Indeferido">Indeferido</option>
+                <option value="Cancelado">Cancelado</option>
+                <option value="Arquivado">Arquivado</option>
               </select>
             </div>
           </div>

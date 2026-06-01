@@ -7,10 +7,10 @@ const normalizeIP = (req) => {
   return ip.replace(/^::ffff:/, '');
 };
 
-// Rate limiter geral - 100 requisições por 15 minutos
+// Rate limiter geral - 500 requisições por 15 minutos
 export const limiterGeral = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: 'Muitas requisições deste IP, tente novamente em 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
