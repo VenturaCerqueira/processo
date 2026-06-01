@@ -11726,6 +11726,174 @@ tr:hover td {
   transform: none;
 }
 
+/* Dark Mode - Relatorios */
+[data-theme="dark"] .report-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+}
+
+[data-theme="dark"] .filter-section,
+[data-theme="dark"] .empty-state-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .filter-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .filter-group label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .modern-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .modern-input:focus {
+  border-color: #6366f1;
+  background: #1e293b;
+}
+
+[data-theme="dark"] .modern-input option {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .empty-state-card h4 {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .empty-state-visual {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+[data-theme="dark"] .empty-state-visual svg {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .empty-state-hint {
+  background: #0f172a;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .stat-card.modern-stat {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .stat-number {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .stat-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .chart-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .chart-header {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .chart-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .chart-body {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .chart-empty {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .sector-item {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .sector-item:hover {
+  background: #334155;
+}
+
+[data-theme="dark"] .sector-info svg {
+  color: #64748b;
+}
+
+[data-theme="dark"] .sector-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .sector-count {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .sector-percentage {
+  color: #94a3b8;
+  background: #334155;
+}
+
+[data-theme="dark"] .status-bar-label {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .status-bar-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .status-bar-track {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .table-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .table-header {
+  border-color: #334155;
+}
+
+[data-theme="dark"] .table-title {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .table-icon {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+[data-theme="dark"] .table-container.modern-table thead tr {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .table-container.modern-table th {
+  color: #94a3b8;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .table-container.modern-table td {
+  color: #e2e8f0;
+  border-color: #334155;
+  background: #1e293b;
+}
+
+[data-theme="dark"] .table-container.modern-table tbody tr:hover td {
+  background: #334155;
+}
+
+[data-theme="dark"] .table-empty h4,
+[data-theme="dark"] .table-empty p {
+  color: #94a3b8;
+}
+
 /* Table Styles */
 .table-container.modern-table {
   overflow-x: auto;
