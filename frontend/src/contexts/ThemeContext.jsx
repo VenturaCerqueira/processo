@@ -12,7 +12,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     // Apply theme on mount
     if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.setAttribute('data-theme', 'dark');
     } else {
       document.documentElement.setAttribute('data-theme', 'light');
     }

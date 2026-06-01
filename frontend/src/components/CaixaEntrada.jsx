@@ -107,7 +107,7 @@ function CaixaEntrada() {
 
   // Filtros (aplicados em cada caixa)
   const [busca, setBusca] = useState('');
-  // Padrão: ao abrir a Caixa de Entrada, deixar selecionado “Encaminhado”
+  // Padrão: ao abrir a Caixa de Entrada, deixar selecionado "Encaminhado"
   const [filtroPrioridade, setFiltroPrioridade] = useState('encaminhado');
   const [filtroFavorito, setFiltroFavorito] = useState(false);
 
@@ -394,17 +394,17 @@ function CaixaEntrada() {
     const total = lista.length || (contagem?.encaminhado ?? 0);
 
     return (
-      <div className=”inbox-table-card”>
-        <div className=”inbox-table-header”>
-          <div className=”inbox-table-title”>
+      <div className="inbox-table-card">
+        <div className="inbox-table-header">
+          <div className="inbox-table-title">
             <h3>{title}</h3>
-            <span className=”inbox-table-badge”>{total}</span>
+            <span className="inbox-table-badge">{total}</span>
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Aguardando recebimento</div>
         </div>
 
-        <div className=”inbox-table-container”>
-          <table className=”inbox-table”>
+        <div className="inbox-table-container">
+          <table className="inbox-table">
             <thead>
               <tr>
                 <th style={{ width: 50, textAlign: 'center' }}></th>
@@ -422,11 +422,11 @@ function CaixaEntrada() {
             <tbody>
               {lista.length === 0 ? (
                 <tr>
-                  <td colSpan=”10”>
-                    <div className=”inbox-empty”>
-                      <div className=”inbox-empty-icon”>
-                        <svg fill=”none” stroke=”currentColor” viewBox=”0 0 24 24”>
-                          <path strokeLinecap=”round” strokeLinejoin=”round” strokeWidth={1.5} d=”M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4” />
+                  <td colSpan="10">
+                    <div className="inbox-empty">
+                      <div className="inbox-empty-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                       </div>
                       <h4>Nenhum processo</h4>
@@ -443,13 +443,13 @@ function CaixaEntrada() {
                         title={p.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                         className={`inbox-favorite-btn ${p.favorito ? 'active' : ''}`}
                       >
-                        <svg viewBox=”0 0 24 24” fill={p.favorito ? 'currentColor' : 'none'} stroke=”currentColor” strokeWidth=”2” strokeLinecap=”round” strokeLinejoin=”round”>
-                          <polygon points=”12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2” />
+                        <svg viewBox="0 0 24 24" fill={p.favorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                         </svg>
                       </button>
                     </td>
                     <td>
-                      <Link to={`/processos/${p.id}`} className=”inbox-process-link”>
+                      <Link to={`/processos/${p.id}`} className="inbox-process-link">
                         {p.numero}
                       </Link>
                     </td>
@@ -506,65 +506,76 @@ function CaixaEntrada() {
 
       {/* Modern Filters Bar */}
       <div className="inbox-filters-bar">
-        <div className="inbox-search-wrapper">
-          <svg className="inbox-search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            className="inbox-search-input"
-            placeholder="Buscar por número, interessado ou assunto..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </div>
-
-        <select className="inbox-filter-select" value={filtroPrioridade} onChange={(e) => setFiltroPrioridade(e.target.value)}>
-          <option value="">Todas as situações</option>
-          <option value="encaminhado">Encaminhado</option>
-          <option value="recebido">Recebido</option>
-          <option value="retornado">Retornado</option>
-          <option value="pausado">Suspenso</option>
-          <option value="aprovado">Deferido</option>
-          <option value="arquivado">Arquivado</option>
-        </select>
-
-        <button
-          className={`inbox-filter-btn ${filtroFavorito ? 'active' : ''}`}
-          onClick={() => setFiltroFavorito((v) => !v)}
-          title="Filtrar favoritos"
-        >
-          <svg viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          Favoritos
-        </button>
-
-        <button
-          className="inbox-filter-btn"
-          onClick={() => {
-            setBusca('');
-            setFiltroPrioridade('encaminhado');
-            setFiltroFavorito(false);
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Limpar
-        </button>
-
-        <div className="inbox-stats">
-          <div className="inbox-stats-total">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <div className="inbox-search-container">
+          <div className="inbox-search-wrapper">
+            <svg className="inbox-search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            {listaSetor.length + listaUsuario.length} processos
+            <input
+              type="text"
+              className="inbox-search-input"
+              placeholder="Buscar por número, interessado ou assunto..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setBusca('');
+                  e.target.blur();
+                }
+              }}
+            />
+            {busca && (
+              <button className="inbox-search-clear" onClick={() => setBusca('')} title="Limpar busca">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            <span className="inbox-search-hint">
+              <kbd>Esc</kbd>
+            </span>
           </div>
-          <div className="inbox-stats-divider"></div>
-          <span>Setor: <strong>{listaSetor.length}</strong></span>
-          <span>Usuário: <strong>{listaUsuario.length}</strong></span>
+          {busca && (
+            <div className="inbox-search-results">
+              <div className="inbox-search-results-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Buscando em tempo real...</span>
+              </div>
+            </div>
+          )}
         </div>
+
+        <div className="inbox-filter-actions">
+          <button
+            className={`inbox-filter-btn ${filtroFavorito ? 'active' : ''}`}
+            onClick={() => setFiltroFavorito((v) => !v)}
+            title="Filtrar favoritos"
+          >
+            <svg viewBox="0 0 24 24" fill={filtroFavorito ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span className="inbox-filter-btn-text">Favoritos</span>
+            {filtroFavorito && <span className="inbox-filter-btn-badge">1</span>}
+          </button>
+
+          <button
+            className="inbox-filter-btn"
+            onClick={() => {
+              setBusca('');
+              setFiltroPrioridade('encaminhado');
+              setFiltroFavorito(false);
+            }}
+            title="Limpar filtros"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="inbox-filter-btn-text">Limpar</span>
+          </button>
+        </div>
+
       </div>
 
       {/* ====== Opções antigas (recebido, deferido, arquivado etc.) ====== */}
