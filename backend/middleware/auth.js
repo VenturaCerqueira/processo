@@ -40,3 +40,10 @@ export const adminOnly = (req, res, next) => {
   next();
 };
 
+export const isStaff = (req, res, next) => {
+  if (req.user.tipo !== 'staff') {
+    return res.status(403).json({ message: 'Acesso restrito a colaboradores.' });
+  }
+  next();
+};
+

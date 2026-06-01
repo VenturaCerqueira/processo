@@ -5,8 +5,17 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Processo Eletrônico</title>
-    <script type="module" crossorigin src="/assets/index-44aa19f2.js"></script>
-    <link rel="stylesheet" href="/assets/index-4a848fb1.css">
+    <script>
+      // Apply theme immediately to avoid flash
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-66030ec5.js"></script>
+    <link rel="stylesheet" href="/assets/index-41871734.css">
   </head>
   <body>
     <div id="root"></div>

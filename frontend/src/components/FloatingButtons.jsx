@@ -1,16 +1,10 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
 function FloatingButtons() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // Only show on public routes
-  const isPublicRoute = ['/login', '/primeiro-acesso', '/esqueci-senha', '/redefinir-senha', '/requerente/login', '/requerente/cadastro', '/requerente/esqueci-senha'].includes(location.pathname);
-
-  if (!isPublicRoute) return null;
 
   return (
     <>
