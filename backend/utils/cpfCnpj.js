@@ -2,8 +2,8 @@ export const onlyDigits = (value) => String(value ?? '').replace(/\D/g, '');
 
 export const detectarTipoPessoa = (cpfCnpj) => {
   const v = onlyDigits(cpfCnpj);
-  if (v.length === 14) return 'Juridico';
-  if (v.length === 11) return 'Fisica';
+  if (v.length === 14) return 'juridica';
+  if (v.length === 11) return 'fisica';
   return null;
 };
 

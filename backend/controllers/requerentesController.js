@@ -12,18 +12,23 @@ export const listarRequerentes = async (req, res) => {
       const digits = onlyDigits(buscaStr);
       const tipo = detectarTipoPessoa(digits);
 
+      // Escapa curingas LIKE para evitar SQL injection via payload LIKE
+      const escapeLike = (str) => str.replace(/[%_\\]/g, (match) => {
+        if (match === '\\') return '\\\\';
+        if (match === '%') return '\\%';
+        if (match === '_') return '\\_';
+        return match;
+      });
+
       // Busca por nome continua como LIKE.
       // Para CPF/CNPJ fazemos comparação normalizada por dígitos.
-      if (tipo === 'Fisica' || tipo === 'Juridico') {
+      if (tipo === 'fisica' || tipo === 'juridica') {
         const normalizado = normalizarCpfCnpj(digits);
-        // Escapa curingas LIKE para evitar SQL injection via payload LIKE
-        const escapeLike = (str) => str.replace(/[%_\\]/g, '\\$&');
-        sql += ' AND (nome LIKE ? ESCAPE "\\" OR cpfCnpj LIKE ? ESCAPE "\\" OR cpfCnpj = ?)';
-        params.push(`%${escapeLike(buscaStr)}%`, `%${escapeLike(buscaStr)}%`, normalizado);
+        sql += ' AND (nome LIKE ? ESCAPE "\\" OR cpfCnpj = ?)';
+        params.push(`%${escapeLike(buscaStr)}%`, normalizado);
       } else {
-        const escapeLike = (str) => str.replace(/[%_\\]/g, '\\$&');
-        sql += ' AND (nome LIKE ? ESCAPE "\\" OR cpfCnpj LIKE ? ESCAPE "\\")';
-        params.push(`%${escapeLike(buscaStr)}%`, `%${escapeLike(buscaStr)}%`);
+        sql += ' AND nome LIKE ? ESCAPE "\\"';
+        params.push(`%${escapeLike(buscaStr)}%`);
       }
     }
 

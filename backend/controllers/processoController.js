@@ -220,6 +220,7 @@ export const criarProcesso = async (req, res) => {
 
     let especieDisponivel = null;
     let usuarioResponsavelFinal = usuarioResponsavel ?? null;
+    let tipoFinal = tipoFinalInput;
 
     // Garantir consistência + disponibilidade: espécie deve pertencer ao tipo e estar disponível para abertura
     // (validações ficam dentro do if abaixo)
@@ -258,14 +259,14 @@ export const criarProcesso = async (req, res) => {
 
         const tipoDaEspecieNome = especieDisponivel.tipo_processo_nome;
 
-        if (tipoFinal && tipoDaEspecieNome && tipoFinal !== tipoDaEspecieNome) {
+        if (tipoFinalInput && tipoDaEspecieNome && tipoFinalInput !== tipoDaEspecieNome) {
           return res.status(400).json({
             message:
               "A espécie selecionada não pertence ao tipo do processo escolhido.",
           });
         }
 
-        tipoFinal = tipoDaEspecieNome || tipoFinal;
+        tipoFinal = tipoDaEspecieNome || tipoFinalInput;
 
         // Validação de prazo (se o cliente informar prazo)
         // - no banco: prazo_minimo/prazo_maximo são INT (dias)

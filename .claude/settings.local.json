@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(npm run build)",
-      "Bash(node -e \"console.log\\(''Testing Node''\\)\")"
+      "Bash(node -e \"console.log\\(''Testing Node''\\)\")",
+      "Bash(node -e \"const { normalizarCpfCnpj, onlyDigits, detectarTipoPessoa } = require\\(''./utils/cpfCnpj.js''\\); const busca = ''074.876.295-70''; const digits = onlyDigits\\(busca\\); console.log\\(''digits:'', digits\\); const tipo = detectarTipoPessoa\\(digits\\); console.log\\(''tipo:'', tipo\\); const normalizado = normalizarCpfCnpj\\(digits\\); console.log\\(''normalizado:'', normalizado\\);\")",
+      "Bash(node -e \"const { validateCpfCnpj } = require\\(''./utils/validators.js''\\); const result = validateCpfCnpj\\(''07487629570''\\); console.log\\(''valid:'', result.valid, ''tipo:'', result.tipo\\);\")",
+      "Bash(timeout 5 node server.js)"
     ]
   }
 }
