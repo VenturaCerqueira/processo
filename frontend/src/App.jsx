@@ -22,6 +22,7 @@ import RequerenteDetalhe from './components/RequerenteDetalhe';
 import CadastroNiveisAcesso from './components/CadastroNiveisAcesso';
 import CadastroEspeciesProcesso from './components/CadastroEspeciesProcesso';
 import ProcessosAnteriores from './components/ProcessosAnteriores';
+import ImportarProcesso from './components/ImportarProcesso';
 import RequerenteLogin from './components/RequerenteLogin';
 import RequerenteCadastro from './components/RequerenteCadastro';
 import RequerenteCaixaEntrada from './components/RequerenteCaixaEntrada';
@@ -225,6 +226,7 @@ function AppContent() {
           <Route path="/processos/:id" element={user ? <DetalheProcesso /> : <Navigate to="/login" />} />
           <Route path="/relatorios" element={user && user.tipo !== 'requerente' ? <Relatorios /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/processos-anteriores" element={user && user.tipo !== 'requerente' ? <ProcessosAnteriores /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
+          <Route path="/processos/importar" element={user && user.tipo !== 'requerente' ? <ImportarProcesso /> : <Navigate to={user ? '/requerente/inbox' : '/login'} />} />
           <Route path="/perfil" element={user ? <MeuPerfil onUpdateUser={handleUpdateUser} /> : <Navigate to="/login" />} />
           <Route
             path="/usuarios"

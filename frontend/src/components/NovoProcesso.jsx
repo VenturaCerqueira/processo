@@ -141,6 +141,7 @@ function NovoProcesso() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const processoPaiId = searchParams.get('processoPaiId');
+  const importadoId = searchParams.get('importadoId');
 
   const [form, setForm] = useState({
     tipo: '', // nome do tipo (tp.nome) - enviado ao backend
@@ -169,6 +170,7 @@ function NovoProcesso() {
   const [erroEspecies, setErroEspecies] = useState('');
   const [processoPai, setProcessoPai] = useState(null);
   const [especieSelecionada, setEspecieSelecionada] = useState(null);
+  const [processoImportadoInfo, setProcessoImportadoInfo] = useState(null);
 
   // Representantes legais (CNPJ/jurídico)
   const [requerenteIdAtual, setRequerenteIdAtual] = useState(null);
@@ -209,9 +211,27 @@ function NovoProcesso() {
         }));
       } catch (error) { console.error('Erro ao carregar processo pai:', error); }
     }
+
+    async function carregarProcessoImportado() {
+      if (!importadoId) return;
+      try {
+        const { data } = await api.get(`/processos/${importadoId}`);
+        setForm(prev => ({
+          ...prev,
+          requerente: data.requerente || '',
+          cpfCnpj: data.cpfCnpj || '',
+          endereco: data.endereco || '',
+          telefone: data.telefone || '',
+          email: data.email || ''
+        }));
+        // Salva info do processo importado para exibir na UI
+        setProcessoImportadoInfo({ numero: data.numero });
+      } catch (error) { console.error('Erro ao carregar processo importado:', error); }
+    }
     carregarProcessoPai();
+    carregarProcessoImportado();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processoPaiId]);
+  }, [processoPaiId, importadoId]);
 
   useEffect(() => {
     (async () => {
@@ -382,11 +402,24 @@ function NovoProcesso() {
         anexosValores: anexosValoresSemArquivo,
       };
 
-      const response = processoPaiId
-        ? await api.post(`/processos/${processoPaiId}/filho`, payloadBase)
-        : await api.post('/processos', payloadBase);
+      let novoProcessoId;
+      let response;
 
-      const novoProcessoId = response?.data?.id;
+      if (processoPaiId) {
+        response = await api.post(`/processos/${processoPaiId}/filho`, payloadBase);
+        novoProcessoId = response?.data?.id;
+      } else if (importadoId) {
+        // Complementa o processo importado via endpoint dedicado
+        response = await api.post(`/processos/${importadoId}/complementar`, {
+          ...payloadBase,
+          situacao: 'recebido',
+          status: 'em_analise',
+        });
+        novoProcessoId = importadoId;
+      } else {
+        response = await api.post('/processos', payloadBase);
+        novoProcessoId = response?.data?.id;
+      }
       if (!novoProcessoId) {
         throw new Error('Processo criado, mas id não foi retornado pelo backend.');
       }
@@ -458,7 +491,7 @@ function NovoProcesso() {
       <div className="breadcrumb">
         <Link to="/caixa-entrada">Caixa de Entrada</Link>
         <span>/</span>
-        <span>Novo Processo</span>
+        <span>{importadoId ? 'Complementar Processo Importado' : 'Novo Processo'}</span>
       </div>
 
       <div className="form-hero">
@@ -466,10 +499,24 @@ function NovoProcesso() {
           <IconDocumento />
         </div>
         <div className="form-hero-content">
-          <h1>{processoPaiId ? `Novo Processo Filho` : 'Novo Processo'}</h1>
-          <p>Preencha os dados abaixo para criar um novo processo judicial.</p>
+          <h1>{importadoId ? 'Complementar Processo Importado' : (processoPaiId ? 'Novo Processo Filho' : 'Novo Processo')}</h1>
+          <p>{importadoId ? 'Complete os dados restantes para dar continuidade ao processo importado.' : 'Preencha os dados abaixo para criar um novo processo judicial.'}</p>
         </div>
       </div>
+
+      {processoImportadoInfo && (
+        <div className="alert-import">
+          <div className="alert-import-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div className="alert-import-content">
+            <div className="alert-import-title">Processo importado — aguardando complementação</div>
+            <div className="alert-import-text">Complete os dados restantes para dar continuidade ao processo.</div>
+          </div>
+        </div>
+      )}
 
       {processoPai && (
         <div className="alert alert-info" style={{ marginBottom: 24 }}>

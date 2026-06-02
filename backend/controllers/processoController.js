@@ -1348,3 +1348,133 @@ export const relatorioAndamento = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const listarProcessosImportados = async (req, res) => {
+  try {
+    const { busca, pagina = 1, limite = 20 } = req.query;
+    const offset = (pagina - 1) * limite;
+
+    let sql = `SELECT p.id, p.numero, p.tipo, p.assunto, p.requerente, p.cpfCnpj,
+               p.situacao, p.status, p.prioridade, p.createdAt,
+               u.nome as responsavelNome
+               FROM processos p
+               LEFT JOIN users u ON u.id = p.usuarioResponsavel
+               WHERE p.situacao = 'importado' AND p.deletedAt IS NULL`;
+    const params = [];
+
+    if (busca) {
+      sql += ` AND (p.numero LIKE ? OR p.assunto LIKE ? OR p.requerente LIKE ?)`;
+      const termo = `%${busca}%`;
+      params.push(termo, termo, termo);
+    }
+
+    const [processos] = await pool.query(sql + ` ORDER BY p.createdAt DESC LIMIT ? OFFSET ?`, [...params, Number(limite), Number(offset)]);
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM processos WHERE situacao = 'importado' AND deletedAt IS NULL`);
+
+    res.json({
+      processos,
+      total,
+      pagina: Number(pagina),
+      limite: Number(limite),
+      totalPaginas: Math.ceil(total / limite),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const complementarProcessoImportado = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const [rows] = await connection.query(
+      "SELECT * FROM processos WHERE id = ?",
+      [req.params.id],
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Processo não encontrado." });
+    }
+    const processo = rows[0];
+
+    if (processo.situacao !== 'importado') {
+      return res.status(400).json({ message: "Este processo não foi importado." });
+    }
+
+    const {
+      tipo,
+      assunto,
+      requerente,
+      cpfCnpj,
+      endereco,
+      telefone,
+      email,
+      descricao,
+      setorAtual,
+      prioridade,
+      prazo,
+      especie_id,
+      status,
+      situacao,
+    } = req.body;
+
+    const alteracoes = [];
+    const campos = [];
+    const valores = [];
+
+    const adicionarCampo = (key, valor) => {
+      campos.push(`${key} = ?`);
+      valores.push(valor);
+      if (processo[key] !== valor) {
+        alteracoes.push(`${key}: ${processo[key] || '—'} → ${valor || '—'}`);
+      }
+    };
+
+    if (tipo !== undefined) adicionarCampo('tipo', tipo);
+    if (assunto !== undefined) adicionarCampo('assunto', assunto);
+    if (requerente !== undefined) adicionarCampo('requerente', requerente);
+    if (cpfCnpj !== undefined) adicionarCampo('cpfCnpj', cpfCnpj);
+    if (endereco !== undefined) adicionarCampo('endereco', endereco);
+    if (telefone !== undefined) adicionarCampo('telefone', telefone);
+    if (email !== undefined) adicionarCampo('email', email);
+    if (descricao !== undefined) adicionarCampo('descricao', descricao);
+    if (setorAtual !== undefined) adicionarCampo('setorAtual', setorAtual);
+    if (prioridade !== undefined) adicionarCampo('prioridade', prioridade);
+    if (prazo !== undefined) adicionarCampo('prazo', prazo);
+    if (especie_id !== undefined) adicionarCampo('especie_id', especie_id);
+    if (status !== undefined) adicionarCampo('status', status);
+    if (situacao !== undefined) adicionarCampo('situacao', situacao);
+
+    if (campos.length === 0) {
+      return res.status(400).json({ message: "Nenhum campo para atualizar." });
+    }
+
+    valores.push(req.params.id);
+    await connection.query(
+      `UPDATE processos SET ${campos.join(', ')} WHERE id = ?`,
+      valores,
+    );
+
+    if (alteracoes.length > 0) {
+      await connection.query(
+        `INSERT INTO historico (processoId, tipo, descricao, usuario, metadata) VALUES (?, ?, ?, ?, ?)`,
+        [
+          req.params.id,
+          'edicao',
+          `Processo importado complementado. Campos alterados: ${alteracoes.join('; ')}`,
+          req.user.id,
+          JSON.stringify({ alteracoes }),
+        ],
+      );
+    }
+
+    const [atualizado] = await connection.query(
+      "SELECT * FROM processos WHERE id = ?",
+      [req.params.id],
+    );
+
+    res.json(atualizado[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  } finally {
+    connection.release();
+  }
+};

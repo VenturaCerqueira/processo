@@ -1467,6 +1467,85 @@ tr:hover td {
   border: 1px solid #fde68a;
 }
 
+.alert-import {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.alert-import::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 100%);
+}
+
+.alert-import .alert-import-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.alert-import .alert-import-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alert-import .alert-import-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.alert-import .alert-import-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #3b82f6;
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .alert-import {
+  background: linear-gradient(135deg, #1e3a5f 0%, #172554 100%);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .alert-import::before {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+[data-theme="dark"] .alert-import .alert-import-icon {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+[data-theme="dark"] .alert-import .alert-import-title {
+  color: #dbeafe;
+}
+
+[data-theme="dark"] .alert-import .alert-import-text {
+  color: #93c5fd;
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -15437,5 +15516,107 @@ body[data-theme="dark"] .inbox-table tbody tr:hover td * { background: #334155 !
 [data-theme="dark"] .inbox-table tbody tr:hover .inbox-badge { color: #1e293b !important; font-weight: 700; }
 [data-theme="dark"] .inbox-table tbody tr:hover .inbox-priority { color: #1e293b !important; font-weight: 700; }
 [data-theme="dark"] .table-container.modern-table tbody tr:hover td { background: #334155 !important; color: #e2e8f0 !important; }
+
+/* Importar Processo - Upload Zone */
+.upload-zone {
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(0, 0, 0, 0.02);
+}
+.upload-zone:hover,
+.upload-zone-active {
+  border-color: var(--primary-color);
+  background: rgba(37, 99, 235, 0.04);
+}
+.upload-zone-icon {
+  color: rgba(0, 0, 0, 0.3);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+.upload-zone-active .upload-zone-icon {
+  color: var(--primary-color);
+}
+.upload-zone-text {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 6px 0;
+}
+.upload-zone-hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  margin: 0;
+}
+
+/* File Preview Card */
+.file-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.025);
+}
+.file-preview-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.file-preview-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.file-preview-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.file-preview-icon {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+.file-preview-details {
+  min-width: 0;
+}
+.file-preview-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.file-preview-size {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
+}
+.file-preview-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.4);
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.file-preview-remove:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
 
 

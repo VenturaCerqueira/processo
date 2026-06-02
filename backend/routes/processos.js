@@ -12,12 +12,14 @@ import {
   arquivarProcesso,
   indeferirProcesso,
   listarCaixaEntrada,
+  listarProcessosImportados,
   adicionarObservacao,
   relatorioAndamento,
   favoritarProcesso,
   criarProcessoFilho,
   excluirProcesso,
-  salvarAnexosValoresProcesso
+  salvarAnexosValoresProcesso,
+  complementarProcessoImportado
 } from '../controllers/processoController.js';
 import { auth } from '../middleware/auth.js';
 import { requirePermission } from '../middleware/rbac.js';
@@ -35,6 +37,7 @@ const router = express.Router();
 // Leitura - permissão processos_ver
 router.get('/', auth, requirePermission('processos_ver'), validatePaginacao, handleValidationErrors, listarProcessos);
 router.get('/caixa-entrada', auth, requirePermission('processos_ver'), listarCaixaEntrada);
+router.get('/importados', auth, requirePermission('processos_ver'), listarProcessosImportados);
 router.get('/relatorio', auth, requirePermission('processos_ver'), relatorioAndamento);
 router.get('/:id', auth, requirePermission('processos_ver'), validateParamId, handleValidationErrors, obterProcesso);
 
@@ -53,6 +56,7 @@ router.post('/:id/indeferir', auth, requirePermission('processos_editar'), valid
 router.post('/:id/observacao', auth, requirePermission('processos_editar'), validateParamId, validateAdicionarObservacao, handleValidationErrors, adicionarObservacao);
 router.post('/:id/favoritar', auth, requirePermission('processos_ver'), validateParamId, handleValidationErrors, favoritarProcesso);
 router.post('/:id/filho', auth, requirePermission('processos_criar'), validateParamId, validateCriarProcesso, handleValidationErrors, criarProcessoFilho);
+router.post('/:id/complementar', auth, requirePermission('processos_criar'), validateParamId, handleValidationErrors, complementarProcessoImportado);
 router.post('/:id/anexos-valores', auth, requirePermission('processos_editar'), validateParamId, handleValidationErrors, salvarAnexosValoresProcesso);
 
 // Exclusão - permissão processos_excluir (só admin/gestor)
