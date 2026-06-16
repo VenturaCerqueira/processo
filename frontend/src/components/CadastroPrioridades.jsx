@@ -148,6 +148,21 @@ function CadastroPrioridades() {
         <div className="prioridade-header-decoration"></div>
       </div>
 
+      {/* Stats Card */}
+      <div className="prioridade-stats-grid">
+        <div className="prioridade-stat-card">
+          <div className="prioridade-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 7h10M7 12h10M7 17h10" />
+            </svg>
+          </div>
+          <div className="prioridade-stat-info">
+            <span className="prioridade-stat-number">{prioridades.length}</span>
+            <span className="prioridade-stat-label">Total de Prioridades</span>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Filter */}
       <div className="prioridade-controls">
         <div className="search-input-wrapper">

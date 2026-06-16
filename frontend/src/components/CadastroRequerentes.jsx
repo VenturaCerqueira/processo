@@ -354,6 +354,22 @@ function CadastroRequerentes() {
         <div className="requerente-header-decoration"></div>
       </div>
 
+      {/* Stats Card */}
+      <div className="requerente-stats-grid">
+        <div className="requerente-stat-card">
+          <div className="requerente-stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="requerente-stat-info">
+            <span className="requerente-stat-number">{requerentes.length}</span>
+            <span className="requerente-stat-label">Total de Interessados</span>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Filter */}
       <div className="requerente-controls">
         <div className="search-input-wrapper">
